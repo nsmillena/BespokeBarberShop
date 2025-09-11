@@ -131,3 +131,17 @@ hr{
     transform: translateY(0);
 }
 
+.offcanvas {
+    background-color: black; /* fundo preto */
+  }
+  
+  .offcanvas .nav-link {
+    color: white; /* texto branco */
+    border: none; /* tira a borda dourada se não quiser */
+  }
+  
+  .offcanvas .nav-link:hover {
+    background-color: #daa520;
+    color: black;
+  }
+
