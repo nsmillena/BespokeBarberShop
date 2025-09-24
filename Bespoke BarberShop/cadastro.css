@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600&display=swap');
+
+/* Corpo da página */
+.cadastro-body {
+  background-color: black;
+  color: white;
+}
+
+/* Container externo para sombra */
+.card-container {
+  max-width: 500px;
+  width: 100%;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(218, 165, 32, 0.8);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-container:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 15px 35px rgba(218, 165, 32, 1);
+}
+
+/* Card interno */
+.cadastro-card {
+  background-color: #111111;
+  border: 2px solid #daa520;
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+/* Título do cadastro */
+.cadastro-title {
+  font-family: Teko, sans-serif;
+  color: #daa520;
+}
+
+/* Botão de cadastro */
+.btn-cadastrar {
+  font-family: Teko, sans-serif;  
+  font-size: larger;
+  background-color: #000000;
+  color: #daa520;
+  font-weight: bold;
+  width: 100%;
+  border-style: outset;
+  border-color: #daa520;
+}
+
+.btn-cadastrar:hover {
+  background-color: #daa520; 
+  color: black;
+  
+  box-shadow: 0 5px 15px rgba(218, 165, 32, 0.7); 
+}
+
+/* Link de login */
+.link-login, .link-site{
+  color: #daa520;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.link-login:hover, .link-site:hover {
+  text-decoration: underline;
+}
+
+/* Inputs */
+.cadastro-card .form-control {
+  background-color: #2a2a2a;
+  color: white;
+  border: 1px solid #555;
+}
+
+.cadastro-card .form-control:focus {
+  border-color: #daa520;
+  box-shadow: 0 0 5px #daa520;
+  background-color: #2a2a2a;
+  color: white;
+}
