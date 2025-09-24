@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
   <body>
     
-    <nav class="navbar sticky-top navbar-expand-lg" style="background-color: black;">
+   <nav class="navbar sticky-top navbar-expand-lg" style="background-color: black;">
   <div class="container-fluid">
     <a class="navbar-brand" href="#">
       <img src="imagens/Logo.jpeg" alt="Bootstrap" class="logo">
@@ -39,41 +39,94 @@ document.addEventListener("DOMContentLoaded", function () {
     <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
       <span class="navbar-toggler-icon"></span>
     </button>
+
+    
     <div class="offcanvas offcanvas-end" style="background-color: black;" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
       <div class="offcanvas-header">
         <h5 class="offcanvas-title text-white" id="offcanvasNavbarLabel">Menu</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
       </div>
-      <div class="offcanvas-body">
-        <ul class="navbar-nav gap-lg-5">
-          <li class="nav-item">
-            <a class="nav-link" href="#Inicio">Início</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#SobreNos">Sobre Nós</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#Espaco">Espaço</a>
-          </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              Serviços
-            </a>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#">Cabelo</a></li>
-              <li><a class="dropdown-item" href="#">Barba</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="#">Inspirações</a></li>
-            </ul>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Localização</a>
-          </li>
+      <div class="offcanvas-body d-flex flex-column justify-content-between">
+
+        
+        <!--Navbar Desktop-->
+    <ul class="navbar-nav d-none d-lg-flex gap-5">
+      <li class="nav-item">
+        <a class="nav-link" href="#Inicio">Início</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#SobreNos">Sobre Nós</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#Espaco">Espaço</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          Serviços
+        </a>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#">Cabelo</a></li>
+        <li><a class="dropdown-item" href="#">Barba</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="#">Inspirações</a></li>
+      </ul>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#Localizacao">Localização</a>
+      </li>
+    </ul>
+
+        <!-- Navbar Offcanvas -->
+    <ul class="navbar-nav d-lg-none flex-column gap-2">
+      <li class="nav-item">
+        <a class="nav-link" href="#Inicio">Início</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#SobreNos">Sobre Nós</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#Espaco">Espaço</a>
+      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          Serviços
+        </a>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="#">Cabelo</a></li>
+          <li><a class="dropdown-item" href="#">Barba</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="#">Inspirações</a></li>
         </ul>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#Localizacao">Localização</a>
+      </li>
+    </ul>
+
+        
+        <div class="d-lg-none d-flex flex-column gap-3 mt-4">
+          <a href="login.html" class="btn btn-outline-warning fw-bold btn-lg">
+            Login
+          </a>
+          <a href="cadastro.html" class="btn btn-warning fw-bold text-dark btn-lg">
+            Cadastro
+          </a>
+        </div>
       </div>
+    </div>
+
+    
+    <div class="d-none d-lg-flex gap-2 ms-auto ">
+      <a href="login.html" class="btn btn-outline-warning fw-bold px-3">
+        Login
+      </a>
+      <a href="cadastro.html" class="btn btn-warning fw-bold text-dark px-3">
+        Cadastro
+      </a>
     </div>
   </div>
 </nav>
+
 
     <a href="#" class="botao_agen"><span>Marque já seu horário</span></a>
     <div class="container" style="background-image: url(imagens/Fundo.jpeg);" id="Inicio">

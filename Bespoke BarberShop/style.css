@@ -95,6 +95,29 @@ hr{
 .navbar-toggler-icon {
     color-scheme:#daa520; 
 }
+
+/* Botão Login */
+.btn-login {
+  border: 2px solid #daa520;
+  color: #daa520;
+  background-color: transparent;
+  font-weight: bold;
+}
+
+/* Botão Cadastro */
+.btn-cadastro {
+  background-color: #daa520;
+  color: black;
+  font-weight: bold;
+  border: none;
+}
+
+/* Ajuste de tamanho grande (pode manter a classe btn-lg do Bootstrap) */
+.btn-lg {
+  padding: 0.5rem 1.5rem;
+  font-size: 1.125rem;
+}
+
 .title{
     font-family: 'Yellowtail';
     font-size: 80px;

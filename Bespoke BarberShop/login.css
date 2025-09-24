@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600&display=swap');
+
+/* Corpo da página */
+.login-body {
+  background-color: #1b1b1b;
+  color: white;
+}
+/* Container externo para a sombra */
+.card-container {
+  max-width: 400px;
+  width: 100%;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(218, 165, 32, 0.8); /* sombra dourada visível */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Hover padrão (desktop) */
+.card-container:hover {
+  transform: translateY(-5px) scale(1.5);
+  box-shadow: 0 15px 35px rgba(218, 165, 32, 1);
+}
+
+/* Para telas pequenas (celular) */
+@media (max-width: 767px) {
+  .card-container:hover {
+    transform: translateY(-3px) scale(1.05); /* aumenta só 5% no mobile */
+    box-shadow: 0 12px 25px rgba(218, 165, 32, 0.9);
+  }
+}
+
+/* Card interno sem sombra, apenas o background e borda */
+.login-card {
+  background-color: #1a1a1a;
+  border: 2px solid #daa520;
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+
+label{
+    font-family: Teko, sans-serif;
+    color: #daa520;
+    font-size: x-large;
+}
+
+p{
+    font-family: Teko, sans-serif;
+    color: white;
+    font-size: large;
+}
+
+/* Título do login */
+.login-title {
+  font-family: Teko, sans-serif;
+  color: #daa520;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: xx-large;
+}
+
+/* Botão de login */
+.btn-login {
+  font-family: Teko, sans-serif;  
+  font-size: larger;
+  background-color: #000000;
+  color: #daa520;
+  font-weight: bold;
+  width: 100%;
+  border-style: outset;
+  border-color: #daa520;
+}
+
+.btn-login:hover {
+  background-color: #daa520; 
+  color: black;
+  
+  box-shadow: 0 5px 15px rgba(218, 165, 32, 0.7); 
+}
+
+.link-container {
+  margin-top: 0.5rem;   
+  margin-bottom: 0.5rem; 
+}
+
+.link-cadastro, .link-site {
+  color: #daa520;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.link-cadastro:hover, .link-site:hover {
+  text-decoration: underline;
+}
+
