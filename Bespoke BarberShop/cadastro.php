@@ -39,10 +39,10 @@
           </form>
 
           <p class="text-center mt-3">
-            Já tem conta? <a href="login.html" class="link-login">Faça login</a>
+            Já tem conta? <a href="login.php" class="link-login">Faça login</a>
           </p>
           <p class="text-center mt-3">
-            <a href="index.html" class="link-site">Voltar ao Site</a>
+            <a href="index.php" class="link-site">Voltar ao Site</a>
           </p>
         </div>
       </div>
