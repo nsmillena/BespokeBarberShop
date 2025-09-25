@@ -20,6 +20,18 @@
   box-shadow: 0 15px 35px rgba(218, 165, 32, 1);
 }
 
+label{
+  font-family: Teko, sans-serif;
+  color: #daa520;
+  font-size: x-large;
+}
+
+p{
+  font-family: Teko, sans-serif;
+  color: white;
+  font-size: large;
+}
+
 /* Card interno */
 .cadastro-card {
   background-color: #111111;

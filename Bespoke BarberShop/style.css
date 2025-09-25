@@ -57,7 +57,7 @@ hr{
     margin: 0%;
 }
 .navbar .nav-link {
-    transition: all 0.3s ease; /* suaviza cor e fundo */
+    transition: all 0.3s ease; 
     border-style: outset;
     border: #daa520;
     border-radius: 10px;
@@ -65,8 +65,8 @@ hr{
 }
 
 .navbar .nav-link:hover {
-    background-color: #daa520; /* fundo dourado */
-    color: black; /* texto preto */
+    background-color: #daa520; 
+    color: black; 
     border-color: #daa520;
 }
 .navbar .nav-link:focus,
@@ -76,27 +76,27 @@ hr{
     border-color: #daa520;
 }
 .navbar .dropdown-menu {
-    background-color: black; /* fundo preto */
-    border-color: #daa520;   /* borda dourada */
+    background-color: rgb(0, 0, 0); 
+    border-color: #daa520;   
 }
 
 .navbar .dropdown-menu .dropdown-item {
-    color: white; /* texto branco */
+    color: white; 
     transition: all 0.3s ease;
 }
 
 .navbar .dropdown-menu .dropdown-item:hover {
-    background-color: #daa520; /* fundo dourado no hover */
-    color: black; /* texto preto para contraste */
+    background-color: #daa520; 
+    color: black; /
 }
 .navbar-toggler {
-    border-color: #daa520; /* borda dourada */
+    border-color: #daa520; 
 }
 .navbar-toggler-icon {
     color-scheme:#daa520; 
 }
 
-/* Botão Login */
+
 .btn-login {
   border: 2px solid #daa520;
   color: #daa520;
@@ -104,7 +104,7 @@ hr{
   font-weight: bold;
 }
 
-/* Botão Cadastro */
+
 .btn-cadastro {
   background-color: #daa520;
   color: black;
@@ -112,7 +112,7 @@ hr{
   border: none;
 }
 
-/* Ajuste de tamanho grande (pode manter a classe btn-lg do Bootstrap) */
+
 .btn-lg {
   padding: 0.5rem 1.5rem;
   font-size: 1.125rem;
@@ -126,6 +126,7 @@ hr{
     text-align: center;
     padding-top: 10%;
 }
+
 .subtitle {
     font-family: 'Arapey', serif;
     font-size: 45px;
@@ -135,32 +136,53 @@ hr{
     margin-top: 10px;
     
 }
+
+@media (max-width: 767px){
+    .title{
+        font-family: 'Yellowtail';
+        font-size: 40px;
+        color: #DAA520;
+        margin: 0;
+        text-align: center;
+        padding-top: 10%;
+    }
+    .subtitle {
+        font-family: 'Arapey', serif;
+        font-size: 27px;
+        color: #fff;
+        margin-bottom: 10px;
+        text-align: center;
+        margin-top: 10px;
+        
+    }
+}
+
 .divider {
     width: 50%; 
     height: 3px; 
     background-color: #DAA520; 
     margin: 20px auto; 
 }
-/* Estado inicial: invisível e levemente deslocado */
+
 .scroll-anim {
     opacity: 0;
     transform: translateY(30px);
     transition: opacity 0.8s ease, transform 0.8s ease;
 }
 
-/* Estado visível: aparece e volta à posição */
+
 .scroll-anim.show {
     opacity: 1;
     transform: translateY(0);
 }
 
 .offcanvas {
-    background-color: black; /* fundo preto */
+    background-color: black; 
   }
   
   .offcanvas .nav-link {
-    color: white; /* texto branco */
-    border: none; /* tira a borda dourada se não quiser */
+    color: white; 
+    border: none; 
   }
   
   .offcanvas .nav-link:hover {
