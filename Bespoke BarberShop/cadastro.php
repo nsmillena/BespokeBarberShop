@@ -25,8 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($stmt->num_rows > 0) {
             $erro = "E-mail já cadastrado!";
         } else {
-            // Salva a senha de forma segura
-            $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
+            $senhaHash = $senha;
 
             $stmt = $conn->prepare("INSERT INTO Cliente (nomeCliente, emailCliente, telefoneCliente, senhaCliente) VALUES (?, ?, ?, ?)");
             $stmt->bind_param("ssss", $nome, $email, $telefone, $senhaHash);
