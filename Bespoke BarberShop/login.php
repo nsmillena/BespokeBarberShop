@@ -1,6 +1,9 @@
 <?php
 session_start();
-include "includes/conexao.php";
+include "includes/db.php";
+
+$bd = new Banco();
+$conn = $bd->getConexao();
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email = $_POST['email'];
