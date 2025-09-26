@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resumo do Agendamento</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { 
+    background-color: #111; 
+    color: #f5f5f5; 
+    font-family: 'Montserrat', sans-serif; 
+  }
+
+  header { 
+    background: linear-gradient(90deg, #111, #1a1a1a); 
+    padding: 25px 20px; 
+    text-align: center; 
+    border-bottom: 3px solid #ffcc00; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    border-radius: 0 0 15px 15px;
+  }
+  header h1 { 
+    color: #ffcc00; 
+    margin: 0; 
+    font-size: 2rem;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 5px rgba(0,0,0,0.5);
+  }
+
+  .card { 
+    background-color: #1c1c1c; 
+    border: 2px solid #333; 
+    border-radius: 15px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6); 
+    transition: all 0.3s ease; 
+  }
+  .card:hover { 
+    transform: translateY(-5px); 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.8); 
+    border-color: #ffcc00;
+  }
+
+  .card-title { 
+    color: #ffcc00; 
+    font-weight: 600;
+    font-size: 1.6rem;
+    text-align: center;
+  }
+
+  .card-body p { 
+    font-size: 1rem; 
+    margin-bottom: 12px; 
+  }
+
+  /* Títulos em amarelo e informações em branco */
+  .card-body p strong { color: #ffcc00; }
+  .card-body p span { color: #ffffff; }
+
+  .card-body i { 
+    margin-right: 10px; 
+    font-size: 1.2rem; 
+  }
+
+  .bi-shop { color: #ff9900; }
+  .bi-calendar-event { color: #ff6666; }
+  .bi-clock { color: #66ccff; }
+  .bi-scissors { color: #ffcc00; }
+  .bi-star { color: #ff66ff; }
+  .bi-cash-coin { color: #00cc66; }
+  .bi-hourglass-split { color: #ff9966; }
+
+  .btn-custom { 
+    background-color: #ffcc00; 
+    color: #000; 
+    border-radius: 25px; 
+    transition: all 0.3s; 
+    font-weight: 600;
+    padding: 10px 22px;
+  }
+  .btn-custom i { margin-right: 12px; } /* maior espaçamento interno nos ícones */
+  .btn-custom:hover { 
+    background-color: #b9962d; 
+    color: #fff; 
+    transform: scale(1.05); 
+  }
+
+  .btn-secondary { 
+    padding: 10px 22px; 
+  }
+  .btn-secondary i { margin-right: 12px; } /* maior espaçamento interno nos ícones */
+
+  .fade-in { 
+    opacity: 0; 
+    transform: translateY(20px); 
+    animation: fadeInUp 0.8s forwards; 
+  }
+  @keyframes fadeInUp { 
+    to { opacity: 1; transform: translateY(0); } 
+  }
+
+  .alert a { color: #ffcc00; text-decoration: underline; }
+  .alert i { margin-right: 6px; }
+
+  @media(max-width: 576px){
+    .card-body p { font-size: 0.95rem; }
+    .btn-custom { font-size: 0.9rem; padding: 8px 18px; }
+    .btn-secondary { font-size: 0.9rem; padding: 8px 18px; }
+    header h1 { font-size: 1.6rem; }
+  }
+
+  /* Efeito ao confirmar agendamento */
+  .btn-confirmed {
+    animation: pulseConfirm 0.6s ease forwards;
+  }
+  @keyframes pulseConfirm {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Resumo do Agendamento</h1>
+</header>
+
+<main class="container py-5">
+  <div id="conteudoResumo" class="fade-in"></div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const container = document.getElementById("conteudoResumo");
+  const agendamento = JSON.parse(localStorage.getItem("agendamento"));
+
+  if (agendamento) {
+    let endereco = '';
+    if(agendamento.unidade==='matilde') endereco = 'R. José Mascarenhas, 861';
+    else if(agendamento.unidade==='carrao') endereco = 'R. João Vieira Prioste, 785';
+
+    container.innerHTML = `
+      <div class="card p-4">
+        <h2 class="card-title mb-4">Detalhes do Agendamento</h2>
+        <div class="card-body">
+          <p><i class="bi bi-shop"></i> <strong>Unidade:</strong> <span>${agendamento.unidade === 'matilde' ? 'Vila Matilde' : 'Vila Carrão'} - ${endereco}</span></p>
+          <p><i class="bi bi-calendar-event"></i> <strong>Data:</strong> <span>${agendamento.data}</span></p>
+          <p><i class="bi bi-clock"></i> <strong>Hora:</strong> <span>${agendamento.hora}</span></p>
+          <p><i class="bi bi-scissors"></i> <strong>Barbeiro:</strong> <span>${agendamento.barbeiro}</span></p>
+          <p><i class="bi bi-star"></i> <strong>Serviço:</strong> <span>${agendamento.servico}</span></p>
+          <p><i class="bi bi-cash-coin"></i> <strong>Valor:</strong> <span>${agendamento.preco}</span></p>
+          <p><i class="bi bi-hourglass-split"></i> <strong>Duração:</strong> <span>${agendamento.duracao}</span></p>
+        </div>
+        <div class="d-flex flex-column flex-md-row justify-content-between mt-4 gap-2">
+          <a href="agendamento.html" class="btn btn-secondary d-flex align-items-center justify-content-center">
+            <i class="bi bi-arrow-left-circle"></i> Reagendar
+          </a>
+          <button class="btn btn-custom d-flex align-items-center justify-content-center" id="confirmarBtn">
+            <i class="bi bi-check-circle"></i> Confirmar
+          </button>
+        </div>
+      </div>
+    `;
+
+    const btnConfirm = document.getElementById("confirmarBtn");
+    btnConfirm.addEventListener("click", () => {
+      btnConfirm.innerHTML = '<i class="bi bi-check2-all"></i> Agendamento Confirmado!';
+      btnConfirm.disabled = true;
+      btnConfirm.classList.remove("btn-custom");
+      btnConfirm.classList.add("btn-success", "btn-confirmed");
+    });
+
+  } else {
+    container.innerHTML = `
+      <div class="alert alert-warning text-center">
+        <i class="bi bi-exclamation-triangle"></i> Nenhum agendamento encontrado. 
+        <a href="agendamento.html">Clique aqui para agendar</a>.
+      </div>
+    `;
+  }
+});
+</script>
+</body>
+</html>
