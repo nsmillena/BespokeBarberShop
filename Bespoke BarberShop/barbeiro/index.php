@@ -14,6 +14,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['papel'] !== 'barbeiro') {
 <body>
     <h1>Bem-vindo, Barbeiro!</h1>
     <p>Seu ID: <?= $_SESSION['usuario_id'] ?></p>
+    <a href="agendamentos.php" class="btn btn-primary">Ver meus agendamentos</a>
+    <br><br>
     <a href="../logout.php">Sair</a>
 </body>
 </html>

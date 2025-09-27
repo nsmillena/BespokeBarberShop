@@ -1,5 +1,28 @@
 <?php
-// Arquivo convertido de HTML para PHP
+include "includes/db.php";
+$bd = new Banco();
+$conn = $bd->getConexao();
+
+// Buscar unidades
+$unidades = [];
+$resUnidades = $conn->query("SELECT idUnidade, nomeUnidade, endereco FROM Unidade");
+while($row = $resUnidades->fetch_assoc()) {
+  $unidades[] = $row;
+}
+
+// Buscar barbeiros agrupados por unidade
+$barbeiros = [];
+$resBarb = $conn->query("SELECT b.idBarbeiro, b.nomeBarbeiro, u.idUnidade, u.nomeUnidade FROM Barbeiro b JOIN Unidade u ON b.Unidade_idUnidade = u.idUnidade WHERE b.statusBarbeiro = 'Ativo'");
+while($row = $resBarb->fetch_assoc()) {
+  $barbeiros[$row['idUnidade']][] = $row;
+}
+
+// Buscar serviços
+$servicos = [];
+$resServ = $conn->query("SELECT idServico, nomeServico, precoServico, duracaoPadrao FROM Servico");
+while($row = $resServ->fetch_assoc()) {
+  $servicos[] = $row;
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -10,98 +33,7 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-<style>
-   body {
-    background-color: #0d0d0d;
-    color: white;
-  }
-  .step-card { max-width: 850px; margin: 0 auto; }
-  .card-custom {
-    background-color: #111;
-    border-radius: 15px;
-    padding: 15px;
-    box-shadow: 0 0 10px rgba(255,204,0,0.4);
-    margin-bottom: 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-  .card-custom:hover { transform: scale(1.03); box-shadow: 0 0 18px rgba(255,204,0,0.7); }
-  .card-custom.selected { border: 2px solid #ff9900; background-color: #222; }
-  .card-custom h5 { color: #ffcc00; font-weight: 600; margin-bottom: 10px; font-size: 1.3rem; }
-  .unit-name { font-weight: 600; font-size: 1.1rem; }
-  .unit-address { font-size: 0.9rem; color: #ccc; margin-top: 4px; }
-  .btn-custom {
-    background-color: transparent;
-    border: 1px solid #ffcc00;
-    color: #ffcc00;
-    border-radius: 10px;
-    padding: 6px 15px;
-    transition: 0.3s;
-    font-size: 1rem;
-  }
-  .btn-custom:hover { background-color: #ffcc00; color: black; transform: scale(1.05); }
-  .btn-back { margin-top: 15px; font-size: 0.9rem; }
-  .btn-custom[disabled] { opacity: 0.5; cursor: not-allowed; transform: none; }
-  .progress-container { display: flex; justify-content: space-between; margin-bottom: 30px; }
-  .step { text-align: center; flex: 1; position: relative; }
-  .step .circle {
-    width: 35px; height: 35px; border-radius: 50%;
-    background: #111; border: 2px solid #ffcc00;
-    color: #ffcc00; display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 8px; font-size: 1rem; font-weight: bold; transition: 0.3s;
-  }
-  .step.active .circle, .step.completed .circle { background: #ffcc00; color: black; }
-  .step::after {
-    content: "";
-    position: absolute; top: 17px; left: 50%;
-    width: 100%; height: 2px; background: #555; z-index: -1;
-  }
-  .step:last-child::after { display: none; }
-  .step.completed::after { background: #ffcc00; }
-
-  /* Calendário */
-  .calendar { width: 320px; padding: 15px; border-radius: 12px; background: #1a1a1a; color: white; font-size: 0.9rem; }
-  .calendar-header { display: flex; justify-content: space-between; align-items: center; color: #ffcc00; font-weight: 600; font-size: 1.1rem; margin-bottom: 10px; }
-  .month-year { display: flex; align-items: center; gap: 5px; }
-  .change-btn { cursor: pointer; padding: 3px 6px; border-radius: 5px; transition: 0.3s; color: #ffcc00; font-size: 1rem; }
-  .change-btn:hover { background: #ffcc00; color: black; }
-  .calendar-week-day, .calendar-day { display: grid; grid-template-columns: repeat(7,1fr); text-align: center; gap: 3px; }
-  .calendar-week-day div { font-weight: 600; color: #ffcc00; font-size: 0.8rem; }
-  .calendar-day div {
-    padding: 10px; border-radius: 5px; background: #111; font-size: 0.9rem; cursor: pointer; transition: all 0.3s;
-  }
-  .calendar-day div:hover { background: #ffcc00; color: black; font-weight: 600; transform: scale(1.05); }
-  .current-date { background: #ffcc00 !important; color: black !important; font-weight: 600; }
-  .selected-date { background: #ff9900 !important; color: black !important; font-weight: 600; }
-
-  /* Horários */
-  .time-btn { border: 1px solid #ffcc00; border-radius: 8px; padding: 8px 12px; background: transparent; color: white; margin: 4px 0; font-size: 1rem; transition: all 0.3s; cursor: pointer; width: 100px; text-align: center; display: block; }
-  .time-btn:hover { background: #ffcc00; color: black; transform: scale(1.05); }
-  .time-btn.selected { background: #ff9900; color: black; font-weight: 600; }
-  .time-scroll { max-height: 320px; overflow-y: auto; overflow-x: hidden; padding-right: 6px; }
-
-  /* Serviços */
-  .service-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; }
-  .service-card {
-    background: #1a1a1a; border: 1px solid #ffcc00; border-radius: 10px; padding: 15px; font-size: 0.95rem; color: white; cursor: pointer; transition: all 0.3s; width: 180px; text-align: center;
-  }
-  .service-card:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(255,204,0,0.6); }
-  .service-card.selected { border: 2px solid #ff9900; background-color: #222; }
-  .service-card h6 { color: #ffcc00; margin-bottom: 5px; font-size: 1rem; font-weight: 600; }
-  .service-card small { display: block; font-size: 0.85rem; color: #ccc; }
-
-  /* Unidades quadradas */
-  .unit-btn { width: 180px; height: 180px; color: #ffcc00 ; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.2rem; margin: 0 auto; }
-  .unit-btn .address { font-size: 0.8rem; color: #ccc; margin-top: 6px; }
-
-  @media (max-width: 900px) {
-    .calendar { width: 100%; }
-    .time-scroll { width: 100%; max-height: 200px; }
-    .service-card, .unit-btn { width: 140px; height: auto; }
-    .step-card { padding: 12px; }
-  }
-</style>
+<link rel="stylesheet" href="agendamento.css">
 </head>
 <body class="container py-5">
 
@@ -117,14 +49,12 @@
   <div class="card-custom step-card" data-step="1">
     <h5>Escolha a Unidade</h5>
     <div class="d-flex gap-4 justify-content-center flex-wrap">
-      <div class="card-custom unit-btn" onclick="selectUnit('matilde', this)">
-        <span class="unit-name">Vila Matilde</span>
-        <span class="unit-address">R. José Mascarenhas, 861</span>
-      </div>
-      <div class="card-custom unit-btn" onclick="selectUnit('carrao', this)">
-        <span class="unit-name">Vila Carrão</span>
-        <span class="unit-address">R. João Vieira Prioste, 785</span>
-      </div>
+      <?php foreach($unidades as $unidade): ?>
+        <div class="card-custom unit-btn" onclick="selectUnit(<?= $unidade['idUnidade'] ?>, this)">
+          <span class="unit-name"><?= htmlspecialchars($unidade['nomeUnidade']) ?></span>
+          <span class="unit-address"><?= htmlspecialchars($unidade['endereco']) ?></span>
+        </div>
+      <?php endforeach; ?>
     </div>
   </div>
 
@@ -157,30 +87,32 @@
   <div class="card-custom step-card d-none" data-step="3">
     <h5>Escolha o Barbeiro</h5>
     <div class="d-flex gap-3 justify-content-center flex-wrap" id="barber-container"></div>
-    <button class="btn-custom mt-3" onclick="nextStep(3)">Continuar</button>
-    <button class="btn-custom btn-back" onclick="prevStep(3)">← Voltar</button>
+    <div class="d-flex justify-content-center gap-3 mt-3">
+      <button class="btn-custom" onclick="prevStep(3)">← Voltar</button>
+      <button class="btn-custom" onclick="nextStep(3)">Continuar</button>
+    </div>
   </div>
 
   <div class="card-custom step-card d-none" data-step="4">
     <h5>Escolha o Serviço</h5>
     <div class="service-container">
-      <div class="service-card" onclick="selectService(this)"><h6>Corte</h6><small>R$ 35,00 | 30min</small></div>
-      <div class="service-card" onclick="selectService(this)"><h6>Barba</h6><small>R$ 25,00 | 20min</small></div>
-      <div class="service-card" onclick="selectService(this)"><h6>Corte + Barba</h6><small>R$ 55,00 | 50min</small></div>
-      <div class="service-card" onclick="selectService(this)"><h6>Sobrancelha</h6><small>R$ 15,00 | 10min</small></div>
-      <div class="service-card" onclick="selectService(this)"><h6>Luzes</h6><small>R$ 120,00 | 150min</small></div>
-      <div class="service-card" onclick="selectService(this)"><h6>Pigmentação</h6><small>R$ 80,00 | 40min</small></div>
-      <div class="service-card" onclick="selectService(this)"><h6>Hidratação</h6><small>R$ 60,00 | 30min</small></div>
-      <div class="service-card" onclick="selectService(this)"><h6>Limpeza de Pele</h6><small>R$ 50,00 | 30min</small></div>
+      <?php foreach($servicos as $serv): ?>
+        <div class="service-card" data-id="<?= $serv['idServico'] ?>" onclick="selectService(this)">
+          <h6><?= htmlspecialchars($serv['nomeServico']) ?></h6>
+          <small>R$ <?= number_format($serv['precoServico'],2,',','.') ?> | <?= $serv['duracaoPadrao'] ?>min</small>
+        </div>
+      <?php endforeach; ?>
     </div>
-    <div class="d-flex justify-content-center gap-3 mt-3">
+    <div class="d-flex justify-content-center gap-3 mt-3 align-items-center" style="gap: 16px;">
       <button class="btn-custom btn-back" onclick="prevStep(4)">← Voltar</button>
-      <form id="form-agendamento" method="POST" action="resumo.php" style="display:inline;">
+      <form id="form-agendamento" method="POST" action="resumo.php" class="d-flex align-items-center" style="gap: 16px;">
         <input type="hidden" name="unidade" id="form-unidade">
         <input type="hidden" name="data" id="form-data">
         <input type="hidden" name="hora" id="form-hora">
         <input type="hidden" name="barbeiro" id="form-barbeiro">
-        <input type="hidden" name="servico" id="form-servico">
+        <input type="hidden" name="barbeiro_id" id="form-barbeiro-id">
+  <input type="hidden" name="servico" id="form-servico">
+  <input type="hidden" name="servico_id" id="form-servico-id">
         <input type="hidden" name="preco" id="form-preco">
         <input type="hidden" name="duracao" id="form-duracao">
         <button id="finalize-btn" class="btn-custom" disabled type="button" onclick="finalizeAgendamento()">Finalizar Agendamento</button>
@@ -197,11 +129,8 @@ let selectedService = null;
 let selectedDay = null;
 let selectedTime = null;
 
-// Barbeiros reais por unidade
-const barbersData = {
-  'matilde':['Carlos Silva','Ricardo Mendes','João Pedro'],
-  'carrao':['Felipe Santos','André Oliveira','Lucas Ferreira']
-};
+// Barbeiros reais por unidade (do PHP)
+const barbersData = <?php echo json_encode($barbeiros); ?>;
 
 function updateProgress(step){
   for(let i=1;i<=4;i++){
@@ -245,11 +174,14 @@ function selectService(el){
 function populateBarbers(){
   const container = document.getElementById('barber-container');
   container.innerHTML = '';
-  const list = barbersData[currentUnit] || [];
-  list.forEach(name=>{
+  // Junte todos barbeiros ativos de todas as unidades
+  let list = [];
+  Object.values(barbersData).forEach(arr => list = list.concat(arr));
+  list.forEach(barb=>{
     const div = document.createElement('div');
     div.className = 'card-custom p-3';
-    div.textContent = '👤 ' + name;
+    div.textContent = '👤 ' + barb.nomeBarbeiro;
+    div.setAttribute('data-id', barb.idBarbeiro);
     div.onclick = ()=>selectBarber(div);
     container.appendChild(div);
   });
@@ -334,7 +266,9 @@ function finalizeAgendamento(){
   const yyyy=selectedDay.year;
   const dataFormatada=`${dd}/${mm}/${yyyy}`;
   const barbeiroNome=selectedBarber.textContent.replace(/^👤\s*/,'').trim();
+  const barbeiroId=selectedBarber.getAttribute('data-id');
   const servNome=selectedService.querySelector('h6')?selectedService.querySelector('h6').textContent.trim():selectedService.textContent.trim();
+  const servId=selectedService.getAttribute('data-id');
   const servInfo=selectedService.querySelector('small')?selectedService.querySelector('small').textContent.trim():'';
   let preco='', duracao='';
   if(servInfo){ const parts=servInfo.split('|'); preco=parts[0]?parts[0].trim():'', duracao=parts[1]?parts[1].trim():''; }
@@ -343,7 +277,9 @@ function finalizeAgendamento(){
   document.getElementById('form-data').value = dataFormatada;
   document.getElementById('form-hora').value = selectedTime;
   document.getElementById('form-barbeiro').value = barbeiroNome;
+  document.getElementById('form-barbeiro-id').value = barbeiroId;
   document.getElementById('form-servico').value = servNome;
+  document.getElementById('form-servico-id').value = servId;
   document.getElementById('form-preco').value = preco;
   document.getElementById('form-duracao').value = duracao;
   // Submeter o formulário

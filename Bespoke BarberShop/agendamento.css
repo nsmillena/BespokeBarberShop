@@ -1,0 +1,100 @@
+/* agendamento.css */
+body {
+  background-color: #0d0d0d;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+}
+.step-card { max-width: 850px; margin: 0 auto; }
+.card-custom {
+  background-color: #111;
+  border-radius: 15px;
+  padding: 15px;
+  box-shadow: 0 0 10px rgba(255,204,0,0.4);
+  margin-bottom: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.card-custom:hover { transform: scale(1.03); box-shadow: 0 0 18px rgba(255,204,0,0.7); }
+.card-custom.selected { border: 2px solid #ff9900; background-color: #222; }
+.card-custom h5 { color: #ffcc00; font-weight: 600; margin-bottom: 10px; font-size: 1.3rem; }
+.unit-name { font-weight: 600; font-size: 1.1rem; }
+.unit-address { font-size: 0.9rem; color: #ccc; margin-top: 4px; }
+.btn-custom {
+  background-color: transparent;
+  border: 1px solid #ffcc00;
+  color: #ffcc00;
+  border-radius: 10px;
+  padding: 6px 15px;
+  transition: 0.3s;
+  font-size: 1rem;
+  margin: 0 5px;
+}
+.btn-custom:hover { background-color: #ffcc00; color: black; transform: scale(1.05); }
+.btn-back { margin-top: 15px; font-size: 0.9rem; }
+.btn-custom[disabled] { opacity: 0.5; cursor: not-allowed; transform: none; }
+.progress-container { display: flex; justify-content: space-between; margin-bottom: 30px; }
+.step { text-align: center; flex: 1; position: relative; }
+.step .circle {
+  width: 35px; height: 35px; border-radius: 50%;
+  background: #111; border: 2px solid #ffcc00;
+  color: #ffcc00; display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 8px; font-size: 1rem; font-weight: bold; transition: 0.3s;
+}
+.step.active .circle, .step.completed .circle { background: #ffcc00; color: black; }
+.step::after {
+  content: "";
+  position: absolute; top: 17px; left: 50%;
+  width: 100%; height: 2px; background: #555; z-index: -1;
+}
+.step:last-child::after { display: none; }
+.step.completed::after { background: #ffcc00; }
+
+/* Calendário */
+.calendar { width: 320px; padding: 15px; border-radius: 12px; background: #1a1a1a; color: white; font-size: 0.9rem; }
+.calendar-header { display: flex; justify-content: space-between; align-items: center; color: #ffcc00; font-weight: 600; font-size: 1.1rem; margin-bottom: 10px; }
+.month-year { display: flex; align-items: center; gap: 5px; }
+.change-btn { cursor: pointer; padding: 3px 6px; border-radius: 5px; transition: 0.3s; color: #ffcc00; font-size: 1rem; }
+.change-btn:hover { background: #ffcc00; color: black; }
+.calendar-week-day, .calendar-day { display: grid; grid-template-columns: repeat(7,1fr); text-align: center; gap: 3px; }
+.calendar-week-day div { font-weight: 600; color: #ffcc00; font-size: 0.8rem; }
+.calendar-day div {
+  padding: 10px; border-radius: 5px; background: #111; font-size: 0.9rem; cursor: pointer; transition: all 0.3s;
+}
+.calendar-day div:hover { background: #ffcc00; color: black; font-weight: 600; transform: scale(1.05); }
+.current-date { background: #ffcc00 !important; color: black !important; font-weight: 600; }
+.selected-date { background: #ff9900 !important; color: black !important; font-weight: 600; }
+
+/* Horários */
+.time-btn { border: 1px solid #ffcc00; border-radius: 8px; padding: 8px 12px; background: transparent; color: white; margin: 4px 0; font-size: 1rem; transition: all 0.3s; cursor: pointer; width: 100px; text-align: center; display: block; }
+.time-btn:hover { background: #ffcc00; color: black; transform: scale(1.05); }
+.time-btn.selected { background: #ff9900; color: black; font-weight: 600; }
+.time-scroll { max-height: 320px; overflow-y: auto; overflow-x: hidden; padding-right: 6px; }
+
+/* Serviços */
+.service-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; }
+.service-card {
+  background: #1a1a1a; border: 1px solid #ffcc00; border-radius: 10px; padding: 15px; font-size: 0.95rem; color: white; cursor: pointer; transition: all 0.3s; width: 180px; text-align: center;
+}
+.service-card:hover { transform: scale(1.05); box-shadow: 0 0 15px rgba(255,204,0,0.6); }
+.service-card.selected { border: 2px solid #ff9900; background-color: #222; }
+.service-card h6 { color: #ffcc00; margin-bottom: 5px; font-size: 1rem; font-weight: 600; }
+.service-card small { display: block; font-size: 0.85rem; color: #ccc; }
+
+/* Unidades quadradas */
+.unit-btn { width: 180px; height: 180px; color: #ffcc00 ; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.2rem; margin: 0 auto; }
+.unit-btn .address { font-size: 0.8rem; color: #ccc; margin-top: 6px; }
+
+@media (max-width: 900px) {
+  .calendar { width: 100%; }
+  .time-scroll { width: 100%; max-height: 200px; }
+  .service-card, .unit-btn { width: 140px; height: auto; }
+  .step-card { padding: 12px; }
+}
+
+.d-flex.justify-content-center.gap-3.mt-3 {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+}
