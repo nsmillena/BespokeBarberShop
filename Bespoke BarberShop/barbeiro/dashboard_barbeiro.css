@@ -1,55 +1,228 @@
-// Este arquivo será renomeado para dashboard_barbeiro.css
-/* Dashboard do Barbeiro */
-.dashboard-barbeiro {
-  background: #181818;
-  min-height: 100vh;
-  color: #fff;
-  font-family: 'Montserrat', sans-serif;
+body, .dashboard-barbeiro-novo {
+    background: #181818;
+    color: #daa520;
+    font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+    min-height: 100vh;
 }
-.dashboard-barbeiro .dashboard-card {
-  background: #232323;
-  border-radius: 12px;
-  box-shadow: 0 4px 18px rgba(218,165,32,0.10);
-  padding: 2rem 1.5rem;
-  margin-bottom: 2rem;
-  border: 1px solid #daa52033;
+
+
+.dashboard-barbeiro-novo .container {
+    max-width: 1100px;
+    margin: 0 auto;
 }
-.dashboard-barbeiro .dashboard-title {
-  color: #daa520;
-  font-size: 2rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
+
+.dashboard-barbeiro-novo .row.g-4 {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: stretch;
+    gap: 1.5rem 2rem;
 }
-.dashboard-barbeiro .dashboard-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.2rem;
-  margin-bottom: 1.5rem;
+
+.dashboard-barbeiro-novo .col-12.col-lg-7,
+.dashboard-barbeiro-novo .col-12.col-lg-5 {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    height: 100%;
 }
-.dashboard-barbeiro .dashboard-action {
-  background: #daa520;
-  color: #181818;
-  border: none;
-  border-radius: 8px;
-  padding: 0.9rem 1.5rem;
-  font-size: 1.08rem;
-  font-weight: 600;
-  transition: background 0.2s, color 0.2s;
-  cursor: pointer;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+
+.dashboard-barbeiro-novo .col-12.col-lg-7 {
+    justify-content: flex-start;
+    order: 1;
 }
-.dashboard-barbeiro .dashboard-action:hover {
-  background: #fff;
-  color: #daa520;
-  text-decoration: underline;
+
+.dashboard-barbeiro-novo .col-12.col-lg-5 {
+    gap: 1.5rem;
+    order: 2;
 }
-.dashboard-barbeiro .dashboard-section-title {
-  color: #fff;
-  font-size: 1.2rem;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  font-weight: 500;
+
+.dashboard-barbeiro-novo .dashboard-card {
+    background: #232323;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(224,185,115,0.10);
+    padding: 2rem 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e0b97333;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 100%;
 }
+
+.dashboard-barbeiro-novo .dashboard-title {
+    margin-bottom: 1rem;
+    font-weight: 700;
+    font-size: 2.1rem;
+    color: #daa520;
+    letter-spacing: 0.5px;
+}
+
+.dashboard-barbeiro-novo .dashboard-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+    margin-bottom: 1.5rem;
+}
+
+.dashboard-barbeiro-novo .dashboard-action {
+    border-radius: 8px;
+    padding: 0.9rem 1.5rem;
+    font-size: 1.08rem;
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dashboard-barbeiro-novo .dashboard-action:hover {
+    text-decoration: underline;
+}
+
+.dashboard-barbeiro-novo .dashboard-info-list {
+    list-style: disc inside;
+    color: #e0b973;
+    margin-bottom: 0;
+    padding-left: 1rem;
+}
+
+.dashboard-barbeiro-novo .dashboard-btn-logout {
+    border: 1px solid #e0b973;
+    margin-top: 1rem;
+    transition: background 0.2s, color 0.2s;
+}
+
+/* Botões menores e mais sutis para editar perfil e sair */
+.dashboard-btn-sutil {
+    background: transparent !important;
+    color: #daa520 !important;
+    border: 1px solid #daa520 !important;
+    border-radius: 7px !important;
+    padding: 0.35rem 0.9rem !important;
+    font-size: 0.93rem !important;
+    font-weight: 500 !important;
+    box-shadow: none !important;
+    transition: background 0.2s, color 0.2s, border 0.2s;
+    margin-top: 0.5rem;
+    margin-bottom: 0 !important;
+    text-align: center;
+}
+.dashboard-btn-sutil:hover,
+.dashboard-btn-sutil:focus {
+    background: #daa520 !important;
+    color: #181818 !important;
+    border-color: #daa520 !important;
+}
+
+.dashboard-action,
+.dashboard-btn-small,
+.dashboard-btn-logout {
+    background: #daa520 !important;
+    color: #181818 !important;
+    border: none !important;
+}
+.dashboard-action:hover,
+.dashboard-btn-small:hover,
+.dashboard-btn-logout:hover {
+    background: #bfa12a !important;
+    color: #fff !important;
+}
+.dashboard-btn-logout {
+    margin-top: 1rem;
+}
+.dashboard-table th {
+    color: #daa520;
+}
+.dashboard-btn-medium {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.98rem !important;
+}
+.row.g-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 2rem 2.5rem;
+    align-items: stretch;
+    justify-items: center;
+}
+@media (max-width: 991px) {
+    .row.g-3 {
+        grid-template-columns: 1fr;
+        gap: 1.2rem 0;
+    }
+}
+
+@media (max-width: 900px) {
+    .dashboard-barbeiro-novo .container {
+        max-width: 98vw;
+        padding: 0 0.5rem;
+    }
+    .dashboard-barbeiro-novo .dashboard-title {
+        font-size: 1.3rem;
+    }
+    .dashboard-barbeiro-novo .dashboard-card {
+        padding: 1.2rem 0.7rem;
+    }
+    .dashboard-barbeiro-novo .row.g-4 {
+        gap: 1.2rem 0.5rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .dashboard-barbeiro-novo .dashboard-title {
+        font-size: 1.1rem;
+    }
+    .dashboard-barbeiro-novo .dashboard-action {
+        font-size: 0.95rem;
+        padding: 0.6rem 1rem;
+    }
+    .dashboard-barbeiro-novo .row.g-4 {
+        flex-direction: column;
+        gap: 1rem 0;
+    }
+    .dashboard-barbeiro-novo .col-12.col-lg-7,
+    .dashboard-barbeiro-novo .col-12.col-lg-5 {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+    .dashboard-barbeiro-novo .container {
+        max-width: 98vw;
+        padding: 0 0.5rem;
+    }
+    .dashboard-barbeiro-novo .dashboard-title {
+        font-size: 1.3rem;
+    }
+    .dashboard-barbeiro-novo .dashboard-card {
+        padding: 1.2rem 0.7rem;
+    }
+    .dashboard-barbeiro-novo .row.g-4 {
+        gap: 1.2rem 0.5rem;
+    }
+
+@media (max-width: 600px) {
+    .dashboard-barbeiro-novo .dashboard-title {
+        font-size: 1.1rem;
+    }
+    .dashboard-barbeiro-novo .dashboard-action {
+        font-size: 0.95rem;
+        padding: 0.6rem 1rem;
+    }
+    .dashboard-barbeiro-novo .row.g-4 {
+        flex-direction: column;
+        gap: 1rem 0;
+    }
+    .dashboard-barbeiro-novo .col-12.col-lg-7,
+    .dashboard-barbeiro-novo .col-12.col-lg-5 {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+    .dashboard-barbeiro-novo .col-12.col-lg-7,
+    .dashboard-barbeiro-novo .col-12.col-lg-5 {
+        width: 100%;
+        max-width: 100%;
+    }
+
