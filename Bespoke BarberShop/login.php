@@ -29,11 +29,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
                 // Redireciona conforme papel
                 if ($row['papel'] === 'admin') {
-                    header("Location: admin/index.php");
+                    header("Location: admin/index_admin.php");
                 } elseif ($row['papel'] === 'barbeiro') {
-                    header("Location: barbeiro/index.php");
+                    header("Location: barbeiro/index_barbeiro.php");
                 } else {
-                    header("Location: usuario/index.php");
+                    header("Location: usuario/index_usuario.php");
                 }
                 exit;
             }

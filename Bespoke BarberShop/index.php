@@ -127,7 +127,7 @@ document.addEventListener("DOMContentLoaded", function () {
 </nav>
 
 
-    <a href="#" class="botao_agen"><span>Marque já seu horário</span></a>
+    <a href="login.php" class="botao_agen"><span>Marque já seu horário</span></a>
     <div class="container" style="background-image: url(imagens/Fundo.jpeg);" id="Inicio">
         <h1 class="title scroll-anim">Bespoke BarberShop</h1>
         <p class="subtitle scroll-anim">A barbearia pensada para o seu conforto.</p>

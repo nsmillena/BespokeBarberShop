@@ -3,12 +3,11 @@
 /* Corpo da página */
 .cadastro-body {
   background-color: black;
-  color: white;
 }
 
-/* Container externo para sombra */
 .card-container {
-  max-width: 500px;
+  max-width: 380px ;
+  min-width: 0;
   width: 100%;
   border-radius: 10px;
   box-shadow: 0 10px 25px rgba(218, 165, 32, 0.8);
@@ -20,42 +19,64 @@
   box-shadow: 0 15px 35px rgba(218, 165, 32, 1);
 }
 
-label{
-  font-family: Teko, sans-serif;
-  color: #daa520;
-  font-size: x-large;
-}
 
-p{
-  font-family: Teko, sans-serif;
-  color: white;
-  font-size: large;
-}
-
-/* Card interno */
+label, .cadastro-card .form-label {
+  font-family: Teko, sans-serif !important;
+  color: #daa520 !important;
 .cadastro-card {
   background-color: #111111;
   border: 2px solid #daa520;
   border-radius: 10px;
-  padding: 1.5rem;
+  padding: 0.7rem 1rem 0.5rem 1rem !important;
+  font-size: 1rem !important;
+}
 }
 
-/* Título do cadastro */
+.cadastro-card {
+  background-color: #111111;
+  border: 2px solid #daa520;
+  border-radius: 10px;
+  padding: 1rem 1rem 0.8rem 1rem !important;
+label, .cadastro-card .form-label {
+  font-family: Teko, sans-serif !important;
+  color: #daa520 !important;
+  font-size: 1rem !important;
+  margin-bottom: 0.15rem !important;
+  margin-top: 0.15rem !important;
+}
+  font-size: 1rem !important;
+}
+
 .cadastro-title {
   font-family: Teko, sans-serif;
   color: #daa520;
+  font-size: 1.12rem;
 }
 
-/* Botão de cadastro */
 .btn-cadastrar {
-  font-family: Teko, sans-serif;  
-  font-size: larger;
+  font-family: Teko, sans-serif !important;
+  font-size: 1rem !important;
   background-color: #000000;
   color: #daa520;
   font-weight: bold;
   width: 100%;
   border-style: outset;
   border-color: #daa520;
+  padding: 7px 0 !important;
+}
+
+.form-control, .cadastro-card .form-control {
+  font-size: 1rem !important;
+  padding: 6px 8px !important;
+}
+
+.link-login, .link-site {
+  font-size: 1rem !important;
+}
+
+@media (max-width: 400px) {
+  .card-container { max-width: 98vw !important; }
+  .cadastro-title { font-size: 0.97rem !important; }
 }
 
 .btn-cadastrar:hover {
@@ -88,4 +109,10 @@ p{
   box-shadow: 0 0 5px #daa520;
   background-color: #2a2a2a;
   color: white;
+}
+
+p{
+  font-family: Teko, sans-serif !important;
+  color: white;
+  font-size: 1rem !important;
 }

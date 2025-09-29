@@ -1,0 +1,55 @@
+// Este arquivo será renomeado para dashboard_admin.css
+/* Dashboard do Admin */
+.dashboard-admin {
+  background: #181818;
+  min-height: 100vh;
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+}
+.dashboard-admin .dashboard-card {
+  background: #232323;
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(218,165,32,0.10);
+  padding: 2rem 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid #daa52033;
+}
+.dashboard-admin .dashboard-title {
+  color: #daa520;
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+.dashboard-admin .dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+.dashboard-admin .dashboard-action {
+  background: #daa520;
+  color: #181818;
+  border: none;
+  border-radius: 8px;
+  padding: 0.9rem 1.5rem;
+  font-size: 1.08rem;
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.dashboard-admin .dashboard-action:hover {
+  background: #fff;
+  color: #daa520;
+  text-decoration: underline;
+}
+.dashboard-admin .dashboard-section-title {
+  color: #fff;
+  font-size: 1.2rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}

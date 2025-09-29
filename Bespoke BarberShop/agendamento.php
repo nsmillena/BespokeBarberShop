@@ -46,6 +46,7 @@ while($row = $resServ->fetch_assoc()) {
 
 <div id="step-content">
 
+  <!-- PASSO 1: Escolha a Unidade (cards) -->
   <div class="card-custom step-card" data-step="1">
     <h5>Escolha a Unidade</h5>
     <div class="d-flex gap-4 justify-content-center flex-wrap">
@@ -84,6 +85,7 @@ while($row = $resServ->fetch_assoc()) {
     <button class="btn-custom btn-back" onclick="prevStep(2)">← Voltar</button>
   </div>
 
+  <!-- PASSO 3: Escolha o Barbeiro (cards filtrados) -->
   <div class="card-custom step-card d-none" data-step="3">
     <h5>Escolha o Barbeiro</h5>
     <div class="d-flex gap-3 justify-content-center flex-wrap" id="barber-container"></div>
@@ -174,10 +176,11 @@ function selectService(el){
 function populateBarbers(){
   const container = document.getElementById('barber-container');
   container.innerHTML = '';
-  // Junte todos barbeiros ativos de todas as unidades
-  let list = [];
-  Object.values(barbersData).forEach(arr => list = list.concat(arr));
-  list.forEach(barb=>{
+  if (!currentUnit || !barbersData[currentUnit]) {
+    container.innerHTML = '<div class="text-warning">Selecione uma unidade para ver os barbeiros disponíveis.</div>';
+    return;
+  }
+  barbersData[currentUnit].forEach(barb => {
     const div = document.createElement('div');
     div.className = 'card-custom p-3';
     div.textContent = '👤 ' + barb.nomeBarbeiro;
@@ -286,6 +289,41 @@ function finalizeAgendamento(){
   document.getElementById('form-agendamento').submit();
 }
 updateFinalizeButtonState();
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const unidadeSelect = document.getElementById('select-unidade');
+  const barbeiroSelect = document.getElementById('select-barbeiro');
+  unidadeSelect.addEventListener('change', function() {
+    const unidadeId = this.value;
+    barbeiroSelect.innerHTML = '<option value="">Carregando barbeiros...</option>';
+    barbeiroSelect.disabled = true;
+    if (!unidadeId) {
+      barbeiroSelect.innerHTML = '<option value="">Selecione a unidade primeiro</option>';
+      barbeiroSelect.disabled = true;
+      return;
+    }
+    fetch('includes/barbeiros_por_unidade.php?unidade_id=' + unidadeId)
+      .then(resp => resp.json())
+      .then(data => {
+        barbeiroSelect.innerHTML = '';
+        if (data.length === 0) {
+          barbeiroSelect.innerHTML = '<option value="">Nenhum barbeiro disponível</option>';
+        } else {
+          barbeiroSelect.innerHTML = '<option value="">Selecione o barbeiro</option>';
+          data.forEach(barbeiro => {
+            barbeiroSelect.innerHTML += `<option value="${barbeiro.idBarbeiro}">${barbeiro.nomeBarbeiro}</option>`;
+          });
+        }
+        barbeiroSelect.disabled = false;
+      })
+      .catch(() => {
+        barbeiroSelect.innerHTML = '<option value="">Erro ao carregar barbeiros</option>';
+        barbeiroSelect.disabled = true;
+      });
+  });
+});
 </script>
 
 </body>

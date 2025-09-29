@@ -15,14 +15,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['idAgendamento'])) {
     $stmt = $conn->prepare("DELETE FROM Agendamento WHERE idAgendamento = ? AND Cliente_idCliente = ?");
     $stmt->bind_param("ii", $idAgendamento, $_SESSION['usuario_id']);
     if ($stmt->execute()) {
-        header("Location: usuario/agendamentos.php?apagado=1");
+        header("Location: usuario/agendamentos_usuario.php?apagado=1");
         exit;
     } else {
-        header("Location: usuario/agendamentos.php?erro=1");
+        header("Location: usuario/agendamentos_usuario.php?erro=1");
         exit;
     }
 } else {
-    header("Location: usuario/agendamentos.php");
+    header("Location: usuario/agendamentos_ususario.php");
     exit;
 }
 ?>

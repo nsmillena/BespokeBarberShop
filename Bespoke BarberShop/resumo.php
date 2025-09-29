@@ -35,7 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $stmtServ->bind_param("iidd", $idAgendamento, $servicoId, $precoF, $duracaoF);
       $stmtServ->execute();
       $stmtServ->close();
-      $msg = "<div class='alert alert-success text-center'>Agendamento realizado com sucesso! <a href='usuario/agendamentos.php'>Ver meus agendamentos</a></div>";
+      $msg = "<div class='alert alert-success text-center'>Agendamento realizado com sucesso! <a href='usuario/agendamentos_usuario.php'>Ver meus agendamentos</a></div>";
     }
   } catch (mysqli_sql_exception $e) {
     if (strpos($e->getMessage(), 'uk_Barbeiro_Horario') !== false) {

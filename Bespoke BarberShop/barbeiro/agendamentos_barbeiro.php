@@ -57,6 +57,6 @@ $result = $stmt->get_result();
             <?php endwhile; ?>
         </tbody>
     </table>
-    <a href='index.php' class='btn btn-secondary'>Voltar</a>
+    <a href='index_barbeiro.php' class='btn btn-secondary'>Voltar</a>
 </body>
 </html>
