@@ -80,6 +80,7 @@
             <li class="nav-item">
               <a class="nav-link" href="#Espaco">Espaço</a>
             </li>
+
             <li class="nav-item">
               <a class="nav-link" href="#Localizacao">Localização</a>
             </li>
@@ -110,6 +111,7 @@
   </nav>
 
 
+
   <a href="login.php" class="botao_agen"><span>Marque já seu horário</span></a>
   <div class="container" style="background-image: url(imagens/Fundo.jpeg);" id="Inicio">
     <h1 class="title scroll-anim">Bespoke BarberShop</h1>
@@ -131,6 +133,27 @@
   <div class="container" style="background-image: url(imagens/WhatsApp\ Image\ 2024-09-21\ at\ 20.05.33.jpeg);" id="Espaco"> </div>
   <hr>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+
+
+
+  <a href="login.php" class="botao_agen"><span>Marque já seu horário</span></a>
+  <div class="container" style="background-image: url(imagens/Fundo.jpeg);" id="Inicio">
+    <h1 class="title scroll-anim">Bespoke BarberShop</h1>
+    <p class="subtitle scroll-anim">A barbearia pensada para o seu conforto.</p>
+    <div class="divider"></div>
+
+  </div>
+  <hr>
+  <div class="container" style="background-image: url(imagens/WhatsApp\ Image\ 2024-09-21\ at\ 20.05.33.jpeg);" id="SobreNos">
+
+  </div>
+  <hr>
+  <div class="container" style="background-image: url(imagens/image\ 1.png);" id="Espaco">
+
+  </div>
+  <hr>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+
 
 </body>
 
