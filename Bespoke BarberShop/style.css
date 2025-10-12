@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600&display=swap');
 
-.container{
+.container {
     max-width: 100%;
     height: 100vh;
     background-repeat: no-repeat;
@@ -8,123 +8,141 @@
     background-position: center;
     padding: 0%;
 }
+
 .botao_agen {
     text-decoration: none;
-    position: fixed;  
-    bottom: 20px;     
-    right: 20px;      
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
     padding: 15px 25px;
-    background-color: #000000;  
-    color: #daa520;      
-    font-size: 16px;       
+    background-color: #000000;
+    color: #daa520;
+    font-size: 16px;
     border-style: outset;
-    border-radius: 10px; 
-    cursor: pointer;  
-    z-index: 1000;     
+    border-radius: 10px;
+    cursor: pointer;
+    z-index: 1000;
     transition: transform 0.3s ease;
     border-color: #DAA520;
 }
-  
-  .botao_agen:hover {
-    transform: scale(1.05); 
+
+.botao_agen:hover {
+    transform: scale(1.05);
 }
-  
-  .botao_agen span {
+
+.botao_agen span {
     font-family: "Teko", sans-serif;
     font-size: 30px;
     position: sticky;
     font-weight: 600;
 }
-  
-  .botao_agen:hover {
+
+.botao_agen:hover {
     background: #4b4b4b;
     color: #daa520;
 }
-nav img.logo{
+
+nav img.logo {
     width: 100%;
     max-width: 150px;
 }
-a.nav-link{
+
+a.nav-link {
     border-style: solid;
     border-color: #daa520;
     color: white;
 }
-hr{
+
+hr {
     color: #daa520;
     height: 2px;
     background-color: #daa520;
     opacity: 100%;
     margin: 0%;
 }
+
 .navbar .nav-link {
-    transition: all 0.3s ease; 
+    transition: all 0.3s ease;
     border-style: outset;
     border: #daa520;
     border-radius: 10px;
-    
+
 }
 
 .navbar .nav-link:hover {
-    background-color: #daa520; 
-    color: black; 
+    background-color: #daa520;
+    color: black;
     border-color: #daa520;
 }
+
 .navbar .nav-link:focus,
 .navbar .nav-link.active {
     background-color: #daa520;
     color: black;
     border-color: #daa520;
 }
+
 .navbar .dropdown-menu {
-    background-color: rgb(0, 0, 0); 
-    border-color: #daa520;   
+    background-color: rgb(0, 0, 0);
+    border-color: #daa520;
 }
 
 .navbar .dropdown-menu .dropdown-item {
-    color: white; 
+    color: white;
     transition: all 0.3s ease;
 }
 
 .navbar .dropdown-menu .dropdown-item:hover {
-    background-color: #daa520; 
-    color: black; /
+    background-color: #daa520;
+    color: black;/
 }
+
 .navbar-toggler {
-    border-color: #daa520; 
+    border-color: #daa520;
 }
+
 .navbar-toggler-icon {
-    color-scheme:#daa520; 
+    color-scheme: #daa520;
 }
 
 
 .btn-login {
-  border: 2px solid #daa520;
-  color: #daa520;
-  background-color: transparent;
-  font-weight: bold;
+    border: 2px solid #daa520;
+    color: #daa520;
+    background-color: transparent;
+    font-weight: bold;
 }
 
 
 .btn-cadastro {
-  background-color: #daa520;
-  color: black;
-  font-weight: bold;
-  border: none;
+    background-color: #daa520;
+    color: black;
+    font-weight: bold;
+    border: none;
 }
 
 
 .btn-lg {
-  padding: 0.5rem 1.5rem;
-  font-size: 1.125rem;
+    padding: 0.5rem 1.5rem;
+    font-size: 1.125rem;
 }
 
-.title{
+.title {
     font-family: 'Yellowtail';
     font-size: 80px;
     color: #DAA520;
     margin: 0;
     text-align: center;
     padding-top: 10%;
+}
+
+.titleSobreNos {
+    font-family: 'Yellowtail';
+    font-size: 80px;
+    color: #fff;
+    margin: 0;
+    text-align: center;
+    padding-top: 5%;
 }
 
 .subtitle {
@@ -134,34 +152,53 @@ hr{
     margin-bottom: 10px;
     text-align: center;
     margin-top: 10px;
-    
+
 }
 
-@media (max-width: 767px){
-    .title{
-        font-family: 'Yellowtail';
+.text p {
+    color: #fff;
+    text-align: center;
+    font-size: 25px;
+    margin: 20px auto;
+    /* distancia entre parágrafos e centraliza */
+    max-width: 800px;
+    /* limite máximo de largura em telas grandes */
+    width: 100%;
+    /* ocupa 100% do container em telas menores */
+    padding: 0 15px;
+    /* espaço interno lateral */
+    box-sizing: border-box;
+    /* inclui padding na largura */
+}
+
+@media (max-width: 767px) {
+    .titleSobreNos {
         font-size: 40px;
-        color: #DAA520;
-        margin: 0;
-        text-align: center;
-        padding-top: 10%;
     }
+
+    .title {
+        font-size: 40px;
+    }
+
     .subtitle {
-        font-family: 'Arapey', serif;
         font-size: 27px;
-        color: #fff;
-        margin-bottom: 10px;
-        text-align: center;
-        margin-top: 10px;
-        
+    }
+
+    .text p {
+        font-size: 18px;
+    }
+
+    .divider {
+        width: 70%;
     }
 }
+
 
 .divider {
-    width: 50%; 
-    height: 3px; 
-    background-color: #DAA520; 
-    margin: 20px auto; 
+    width: 50%;
+    height: 3px;
+    background-color: #DAA520;
+    margin: 20px auto;
 }
 
 .scroll-anim {
@@ -177,16 +214,15 @@ hr{
 }
 
 .offcanvas {
-    background-color: black; 
-  }
-  
-  .offcanvas .nav-link {
-    color: white; 
-    border: none; 
-  }
-  
-  .offcanvas .nav-link:hover {
+    background-color: black;
+}
+
+.offcanvas .nav-link {
+    color: white;
+    border: none;
+}
+
+.offcanvas .nav-link:hover {
     background-color: #daa520;
     color: black;
-  }
-
+}

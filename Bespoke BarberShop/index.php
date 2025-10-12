@@ -111,6 +111,31 @@
   </nav>
 
 
+
+  <a href="login.php" class="botao_agen"><span>Marque já seu horário</span></a>
+  <div class="container" style="background-image: url(imagens/Fundo.jpeg);" id="Inicio">
+    <h1 class="title scroll-anim">Bespoke BarberShop</h1>
+    <p class="subtitle scroll-anim">A barbearia pensada para o seu conforto.</p>
+    <div class="divider"></div>
+
+  </div>
+  <hr>
+  <div class="container" style="background-image: url(imagens/fundoSobreNos.png);" id="SobreNos">
+    <h1 class="titleSobreNos scroll-anim">Nós Somos Bespoke</h1>
+    <div class="divider"></div>
+    <div class="text scroll-anim">
+      <p> Nós sabemos o quão importante é o cuidado com a nossa aparência e como precisamos de profissionais de confiança e um ambiente confortável para isso. </p>
+      <p> Com isso em mente, criamos a Bespoke BarberShop, a sua barbearia favorita que conta com profissionais extremamente qualificados para te o fornecer cuidado que você merece. </p>
+      <p> Oferecemos um ambiente descontraído onde você pode assistir o jogo do seu time, jogar uma sinuca ou tomar uma cervejinha, existe algo melhor? </p>
+    </div>
+  </div>
+  <hr>
+  <div class="container" style="background-image: url(imagens/WhatsApp\ Image\ 2024-09-21\ at\ 20.05.33.jpeg);" id="Espaco"> </div>
+  <hr>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+
+
+
   <a href="login.php" class="botao_agen"><span>Marque já seu horário</span></a>
   <div class="container" style="background-image: url(imagens/Fundo.jpeg);" id="Inicio">
     <h1 class="title scroll-anim">Bespoke BarberShop</h1>
@@ -128,6 +153,7 @@
   </div>
   <hr>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+
 
 </body>
 
