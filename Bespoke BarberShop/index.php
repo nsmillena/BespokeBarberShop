@@ -21,14 +21,14 @@
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          entry.target.classList.add("show"); // Aparece
+          entry.target.classList.add("show");
         } else {
-          entry.target.classList.remove("show"); // Some quando sai da tela
+          entry.target.classList.remove("show");
         }
       });
     }, {
       threshold: 0.6
-    }); // 20% visível já ativa
+    });
 
     elements.forEach(el => observer.observe(el));
   });
@@ -130,28 +130,40 @@
     </div>
   </div>
   <hr>
-  <div class="container" style="background-image: url(imagens/WhatsApp\ Image\ 2024-09-21\ at\ 20.05.33.jpeg);" id="Espaco"> </div>
+
+  <div class="container-fluid py-5" id="Espaco" style="background-image: url('imagens/image 3.png'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+    <div class="container">
+      <div class="row gy-4 align-items-center">
+
+        <!-- Texto -->
+        <div class="col-12 col-lg-6 text-center text-lg-start scroll-anim">
+          <h1 class="text-warning fw-bold mb-4" style="font-family: 'Yellowtail', cursive; font-size: 3.5rem;">
+            COMO É O NOSSO ESPAÇO?
+          </h1>
+          <p class="text-white fs-5" style="font-family: 'Arapey', serif;">
+            Sem filas, estresse ou tédio, a Bespoke conta com um espaço ideal para o seu tempo sagrado conosco.
+          </p>
+          <p class="text-white fs-5" style="font-family: 'Arapey', serif;">
+            Um ambiente entre amigos te proporciona a confiança em nossos profissionais e um momento de relaxamento enquanto cuidamos da sua aparência.
+          </p>
+          <p class="text-white fs-5" style="font-family: 'Arapey', serif;">
+            Desfrute de um lugar tranquilo com música boa, cerveja gelada, conversas engraçadas e entretenimento. Estamos te esperando!
+          </p>
+        </div>
+
+        <div class="col-12 col-lg-6 text-center">
+          <img src="imagens/Frame 21.png" alt="Espaço" class="img-fluid rounded-3 shadow-lg frame21">
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <hr>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
 
 
 
-  <a href="login.php" class="botao_agen"><span>Marque já seu horário</span></a>
-  <div class="container" style="background-image: url(imagens/Fundo.jpeg);" id="Inicio">
-    <h1 class="title scroll-anim">Bespoke BarberShop</h1>
-    <p class="subtitle scroll-anim">A barbearia pensada para o seu conforto.</p>
-    <div class="divider"></div>
-
-  </div>
-  <hr>
-  <div class="container" style="background-image: url(imagens/WhatsApp\ Image\ 2024-09-21\ at\ 20.05.33.jpeg);" id="SobreNos">
-
-  </div>
-  <hr>
-  <div class="container" style="background-image: url(imagens/image\ 1.png);" id="Espaco">
-
-  </div>
-  <hr>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
 
 
