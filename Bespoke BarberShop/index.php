@@ -167,6 +167,64 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
 
 
+<footer class="text-white text-center text-lg-start" style="background-color: #000;">
+  <div class="footer-container p-4">
+    <div class="row mt-4">
+      
+      <!-- Mapa do Site -->
+      <div class="col-lg-4 col-md-12 mb-4 mb-md-0 text-center">
+        <h5 class="text-uppercase mb-4">MAPA DO SITE</h5>
+        <a href="#Inicio" class="d-block mb-2">Início</a>
+        <a href="#SobreNos" class="d-block mb-2">Sobre Nós</a>
+        <a href="#Espaco" class="d-block mb-2">Espaço</a>
+        <a href="#Localizacao" class="d-block mb-2">Localização</a>
+      </div>
+
+      <!-- Atendimento -->
+      <div class="col-lg-4 col-md-6 mb-4 mb-md-0 text-center">
+        <h5 class="text-uppercase mb-4 pb-1">ATENDIMENTO</h5>
+        <p class="mb-1">Telefone</p>
+        <p class="mb-3">(00) 0 0000-0000</p>
+        <p class="mb-1">E-mail</p>
+        <p>contato@bespokebarbershop.com.br</p>
+      </div>
+
+      <!-- Redes Sociais -->
+      <div class="col-lg-4 col-md-6 mb-4 mb-md-0 text-center">
+        <h5 class="text-uppercase mb-4">REDES SOCIAIS</h5>
+
+        <p class="d-flex align-items-center justify-content-center mb-2">
+          <img src="imagens/Facebook.png" alt="Facebook" class="me-2" style="width:20px; height:20px;">
+          Bespoke BS
+        </p>
+        <p class="d-flex align-items-center justify-content-center mb-2">
+          <img src="imagens/Instagram.png" alt="Instagram" class="me-2" style="width:20px; height:20px;">
+          bespoke_barbershop
+        </p>
+        <p class="d-flex align-items-center justify-content-center mb-2">
+          <img src="imagens/Tiktok.png" alt="TikTok" class="me-2" style="width:20px; height:20px;">
+          bespokebarbershop
+        </p>
+        <p class="d-flex align-items-center justify-content-center mb-2">
+          <img src="imagens/Whatsapp.png" alt="Whatsapp" class="me-2" style="width:20px; height:20px;">
+          (00) 0 0000-0000
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Copyright -->
+  <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2);">
+    <p class="d-flex align-items-center justify-content-center mb-2">
+      <img src="imagens/LogoBespoke.png" alt="LogoBespoke" class="me-2" style="width:100px; height:100px;">
+      Copyright © 2024 Bespoke Barber Cia. Todos os direitos reservados.
+    </p>
+  </div>
+</footer>
+
+
+  
 </body>
 
 </html>

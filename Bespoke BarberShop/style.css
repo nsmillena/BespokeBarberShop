@@ -203,6 +203,29 @@ hr {
     box-shadow: 0 4px 20px rgba(218, 165, 32, 0.6);
 }
 
+.footer-container {
+  height: auto !important;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+footer a {
+  color: white;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+footer a:hover {
+  color: #daa520;
+  text-decoration: underline;
+}
+
+footer h5 {
+  color: #daa520;
+  font-family: "Teko", sans-serif;
+  font-weight: 600;
+}
 
 
 @media (max-width: 991px) {
