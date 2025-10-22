@@ -14,7 +14,7 @@ $stmt->execute();
 $stmt->bind_result($nomeCompleto, $email, $telefone);
 $stmt->fetch();
 $stmt->close();
-$primeiroNome = explode(' ', trim($nomeCompleto))[0];
+$primeiroNome = explode(' ', trim($nomeCompleto))[0;
 
 // Buscar agendamentos do dia
 $dataHoje = date('Y-m-d');
@@ -48,24 +48,24 @@ $temAgendamentosHoje = $resultHoje->num_rows > 0;
     <div class="row mb-4">
         <div class="col-12">
             <div class="dashboard-card dashboard-welcome-card">
-                <span class="dashboard-title"><i class="bi bi-scissors"></i> Bem-vindo, Barbeiro <?= htmlspecialchars($primeiroNome) ?>!</span>
+                <span class="dashboard-title fs-1 fs-md-2 fs-lg-1"><i class="bi bi-scissors"></i> Bem-vindo, Barbeiro <?= htmlspecialchars($primeiroNome) ?>!</span>
             </div>
         </div>
     </div>
-    <div class="row g-3">
+    <div class="row g-4 justify-content-center">
         <!-- Card Agendamentos -->
-        <div class="col-12 col-lg-7">
-            <div class="dashboard-card p-3 flex-fill">
-                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                    <div class="dashboard-section-title mb-0"><i class="bi bi-calendar-event"></i> Meus Agendamentos de Hoje</div>
+        <div class="col-12 col-lg-7 d-flex align-items-stretch">
+            <div class="dashboard-card p-3 flex-fill d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div class="dashboard-section-title mb-0 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-calendar-event"></i> Meus Agendamentos de Hoje</div>
                     <div class="row gx-2">
                         <div class="col-auto">
-                            <a href="agendamentos_barbeiro.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-pencil"></i> Ver Todos</a>
+                            <a href="agendamentos_barbeiro.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-eye"></i> Ver Todos</a>
                         </div>
                     </div>
                 </div>
                 <?php if($temAgendamentosHoje): ?>
-                <div class="table-responsive flex-fill mb-2">
+                <div class="table-responsive flex-fill mb-2 table-container-fix">
                     <table class="table table-dark table-striped table-sm align-middle mb-0 dashboard-table">
                         <thead>
                             <tr>
@@ -80,37 +80,43 @@ $temAgendamentosHoje = $resultHoje->num_rows > 0;
                         <tbody>
                             <?php while($row = $resultHoje->fetch_assoc()) { ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($row['hora']) ?></td>
-                                    <td><?= htmlspecialchars($row['nomeCliente']) ?></td>
-                                    <td><?= htmlspecialchars($row['nomeServico']) ?></td>
-                                    <td>R$ <?= number_format($row['precoFinal'],2,',','.') ?></td>
-                                    <td><?= $row['tempoEstimado'] ?> min</td>
-                                    <td><?= htmlspecialchars($row['statusAgendamento']) ?></td>
+                                    <td title="<?= htmlspecialchars($row['hora']) ?>"><?= substr($row['hora'], 0, 5) ?></td>
+                                    <td title="<?= htmlspecialchars($row['nomeCliente']) ?>"><?= substr(htmlspecialchars($row['nomeCliente']), 0, 12) ?></td>
+                                    <td title="<?= htmlspecialchars($row['nomeServico']) ?>"><?= substr(htmlspecialchars($row['nomeServico']), 0, 15) ?></td>
+                                    <td title="R$ <?= number_format($row['precoFinal'],2,',','.') ?>">R$ <?= number_format($row['precoFinal'],0,',','.') ?></td>
+                                    <td title="<?= $row['tempoEstimado'] ?> minutos"><?= $row['tempoEstimado'] ?>m</td>
+                                    <td title="<?= htmlspecialchars($row['statusAgendamento']) ?>"><?= substr(htmlspecialchars($row['statusAgendamento']), 0, 8) ?></td>
                                 </tr>
                             <?php } ?>
                         </tbody>
                     </table>
                 </div>
+                <?php else: ?>
+                <div class="flex-fill">
+                    <div class="text-center text-warning mb-3">
+                        <p>Nenhum agendamento para hoje.</p>
+                    </div>
+                </div>
                 <?php endif; ?>
-                <ul class="dashboard-info-list text-warning mb-2" style="font-size:1rem;">
+                <ul class="dashboard-info-list text-warning mb-2 fs-5 fs-md-6 fs-lg-5" style="font-size:1rem;">
                     <li>Visualize todos os seus agendamentos e detalhes dos clientes.</li>
                     <li>Mantenha-se atento aos horários e serviços marcados.</li>
                 </ul>
             </div>
         </div>
         <!-- Card Perfil e Info -->
-        <div class="col-12 col-lg-5">
+        <div class="col-12 col-lg-5 d-flex flex-column gap-4">
             <div class="dashboard-card p-3 flex-fill mb-0">
-                <div class="dashboard-section-title mb-2"><i class="bi bi-person-circle"></i> Meu Perfil</div>
-                <div class="mb-1"><b>Nome:</b> <?= htmlspecialchars($nomeCompleto) ?></div>
-                <div class="mb-1"><b>Email:</b> <?= htmlspecialchars($email) ?></div>
-                <div class="mb-1"><b>Telefone:</b> <?= htmlspecialchars($telefone) ?></div>
-                <a href="editar_perfil.php" class="dashboard-btn-sutil mt-2 w-100"><i class="bi bi-pencil-square"></i> Editar Perfil</a>
-                <a href="../logout.php" class="dashboard-btn-sutil mt-2 w-100"><i class="bi bi-box-arrow-right"></i> Sair</a>
+                <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-person-circle"></i> Meu Perfil</div>
+                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Nome:</b> <?= htmlspecialchars($nomeCompleto) ?></div>
+                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Email:</b> <?= htmlspecialchars($email) ?></div>
+                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Telefone:</b> <?= htmlspecialchars($telefone) ?></div>
+                <a href="editar_perfil.php" class="dashboard-action mt-2 w-100"><i class="bi bi-pencil-square"></i> Editar Perfil</a>
+                <a href="../logout.php" class="dashboard-action mt-2 w-100 dashboard-btn-logout"><i class="bi bi-box-arrow-right"></i> Sair</a>
             </div>
             <div class="dashboard-card p-3 flex-fill mb-0">
-                <div class="dashboard-section-title mb-2"><i class="bi bi-info-circle"></i> Informações úteis</div>
-                <ul class="dashboard-info-list">
+                <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-info-circle"></i> Informações úteis</div>
+                <ul class="dashboard-info-list fs-5 fs-md-6 fs-lg-5">
                     <li>Consulte seus agendamentos para se organizar melhor.</li>
                     <li>Em caso de dúvidas, entre em contato com a administração.</li>
                 </ul>

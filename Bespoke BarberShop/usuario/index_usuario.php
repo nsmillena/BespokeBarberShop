@@ -46,7 +46,7 @@ $result = $stmt2->get_result();
     <div class="row mb-4">
         <div class="col-12">
             <div class="dashboard-card dashboard-welcome-card">
-                <span class="dashboard-welcome-text">Olá, <?= htmlspecialchars($primeiroNome) ?></span>
+                <span class="dashboard-welcome-text fs-1 fs-md-2 fs-lg-1">Olá, <?= htmlspecialchars($primeiroNome) ?></span>
             </div>
         </div>
     </div>
@@ -55,7 +55,7 @@ $result = $stmt2->get_result();
         <div class="col-12 col-lg-7 d-flex align-items-stretch">
             <div class="dashboard-card p-3 flex-fill d-flex flex-column">
                 <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                    <div class="dashboard-section-title mb-0"><i class="bi bi-calendar-event"></i> Meus Agendamentos</div>
+                    <div class="dashboard-section-title mb-0 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-calendar-event"></i> Meus Agendamentos</div>
                     <div class="row gx-2">
                         <div class="col-auto">
                             <a href="../agendamento.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-plus-circle"></i> Novo</a>
@@ -65,7 +65,7 @@ $result = $stmt2->get_result();
                         </div>
                     </div>
                 </div>
-                <div class="table-responsive flex-fill">
+                <div class="table-responsive flex-fill table-container-fix">
                 <table class="table table-dark table-striped table-sm align-middle mb-0 dashboard-table">
                     <thead>
                         <tr>
@@ -83,14 +83,14 @@ $result = $stmt2->get_result();
                         <?php if($result->num_rows > 0): ?>
                             <?php while($row = $result->fetch_assoc()) { ?>
                                 <tr>
-                                    <td><?= date('d/m/Y', strtotime($row['data'])) ?></td>
-                                    <td><?= $row['hora'] ?></td>
-                                    <td><?= htmlspecialchars($row['nomeUnidade']) ?></td>
-                                    <td><?= htmlspecialchars($row['nomeBarbeiro']) ?></td>
-                                    <td><?= htmlspecialchars($row['nomeServico']) ?></td>
-                                    <td>R$ <?= number_format($row['precoFinal'],2,',','.') ?></td>
-                                    <td><?= $row['tempoEstimado'] ?> min</td>
-                                    <td><?= htmlspecialchars($row['statusAgendamento']) ?></td>
+                                    <td title="<?= date('d/m/Y', strtotime($row['data'])) ?>"><?= date('d/m', strtotime($row['data'])) ?></td>
+                                    <td title="<?= $row['hora'] ?>"><?= substr($row['hora'], 0, 5) ?></td>
+                                    <td title="<?= htmlspecialchars($row['nomeUnidade']) ?>"><?= substr(htmlspecialchars($row['nomeUnidade']), 0, 8) ?></td>
+                                    <td title="<?= htmlspecialchars($row['nomeBarbeiro']) ?>"><?= substr(htmlspecialchars($row['nomeBarbeiro']), 0, 10) ?></td>
+                                    <td title="<?= htmlspecialchars($row['nomeServico']) ?>"><?= substr(htmlspecialchars($row['nomeServico']), 0, 12) ?></td>
+                                    <td title="R$ <?= number_format($row['precoFinal'],2,',','.') ?>">R$ <?= number_format($row['precoFinal'],0,',','.') ?></td>
+                                    <td title="<?= $row['tempoEstimado'] ?> minutos"><?= $row['tempoEstimado'] ?>m</td>
+                                    <td title="<?= htmlspecialchars($row['statusAgendamento']) ?>"><?= substr(htmlspecialchars($row['statusAgendamento']), 0, 6) ?></td>
                                 </tr>
                             <?php } ?>
                         <?php else: ?>
@@ -104,16 +104,16 @@ $result = $stmt2->get_result();
         <!-- Card Perfil e Info -->
         <div class="col-12 col-lg-5 d-flex flex-column gap-4">
             <div class="dashboard-card p-3 flex-fill mb-0">
-                <div class="dashboard-section-title mb-2"><i class="bi bi-person-circle"></i> Meu Perfil</div>
-                <div class="mb-1"><b>Nome:</b> <?= htmlspecialchars($nomeCompleto) ?></div>
-                <div class="mb-1"><b>Email:</b> <?= htmlspecialchars($email) ?></div>
-                <div class="mb-1"><b>Telefone:</b> <?= htmlspecialchars($telefone) ?></div>
+                <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-person-circle"></i> Meu Perfil</div>
+                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Nome:</b> <?= htmlspecialchars($nomeCompleto) ?></div>
+                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Email:</b> <?= htmlspecialchars($email) ?></div>
+                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Telefone:</b> <?= htmlspecialchars($telefone) ?></div>
                 <a href="editar_perfil.php" class="dashboard-action mt-2 w-100"><i class="bi bi-pencil-square"></i> Editar Perfil</a>
                 <a href="../logout.php" class="dashboard-action mt-2 w-100 dashboard-btn-logout"><i class="bi bi-box-arrow-right"></i> Sair</a>
             </div>
             <div class="dashboard-card p-3 flex-fill mb-0">
-                <div class="dashboard-section-title mb-2"><i class="bi bi-info-circle"></i> Informações úteis</div>
-                <ul class="dashboard-info-list">
+                <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-info-circle"></i> Informações úteis</div>
+                <ul class="dashboard-info-list fs-5 fs-md-6 fs-lg-5">
                     <li>Você pode cancelar agendamentos neste painel.</li>
                     <li>Chegue com 5 minutos de antecedência para garantir seu horário.</li>
                     <li>Em caso de dúvidas, entre em contato pelo WhatsApp da barbearia.</li>

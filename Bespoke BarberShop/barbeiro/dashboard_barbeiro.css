@@ -1,22 +1,38 @@
 body, .dashboard-barbeiro-novo {
-    background: #181818;
+    background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #0f0f0f 100%);
     color: #daa520;
     font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
     min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.dashboard-barbeiro-novo::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(218,165,32,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(218,165,32,0.08) 0%, transparent 50%);
+    z-index: -1;
+    animation: subtle-pulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes subtle-pulse {
+    0% { opacity: 0.4; }
+    100% { opacity: 0.7; }
 }
 
 
 .dashboard-barbeiro-novo .container {
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 0 auto;
-}
-
-.dashboard-barbeiro-novo .row.g-4 {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: stretch;
-    gap: 1.5rem 2rem;
+    position: relative;
+    z-index: 1;
+    padding: 0 0.5rem;
 }
 
 .dashboard-barbeiro-novo .col-12.col-lg-7,
@@ -27,35 +43,189 @@ body, .dashboard-barbeiro-novo {
     height: 100%;
 }
 
-.dashboard-barbeiro-novo .col-12.col-lg-7 {
-    justify-content: flex-start;
-    order: 1;
-}
-
-.dashboard-barbeiro-novo .col-12.col-lg-5 {
-    gap: 1.5rem;
-    order: 2;
-}
-
 .dashboard-barbeiro-novo .dashboard-card {
-    background: #232323;
-    border-radius: 12px;
-    box-shadow: 0 4px 18px rgba(224,185,115,0.10);
-    padding: 2rem 1.5rem;
+    background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%);
+    border-radius: 16px;
+    box-shadow: 
+        0 8px 32px rgba(0,0,0,0.4),
+        0 2px 8px rgba(218,165,32,0.1),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+    padding: 2.2rem 2rem;
     margin-bottom: 2rem;
-    border: 1px solid #e0b97333;
+    border: 2px solid #daa520;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     height: 100%;
 }
 
+.dashboard-barbeiro-novo .dashboard-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(218,165,32,0.1), transparent);
+    transition: left 0.5s;
+}
+
+.dashboard-barbeiro-novo .dashboard-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 
+        0 16px 48px rgba(0,0,0,0.5),
+        0 8px 16px rgba(218,165,32,0.2),
+        inset 0 1px 0 rgba(255,255,255,0.15);
+    border-color: rgba(218,165,32,0.4);
+}
+
+.dashboard-barbeiro-novo .dashboard-card:hover::before {
+    left: 100%;
+}
+
 .dashboard-barbeiro-novo .dashboard-title {
     margin-bottom: 1rem;
     font-weight: 700;
-    font-size: 2.1rem;
+    font-size: 2rem;
     color: #daa520;
     letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Card de boas-vindas */
+.dashboard-barbeiro-novo .dashboard-welcome-card {
+    padding: 2.2rem 2rem;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: linear-gradient(145deg, #2d1810 0%, #1f1f1f 100%);
+    border-color: rgba(218,165,32,0.3);
+    margin-bottom: 0;
+    text-align: left;
+}
+
+.dashboard-barbeiro-novo .dashboard-welcome-text {
+    color: #daa520;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Container do header com botão */
+.dashboard-barbeiro-novo .d-flex.justify-content-between.align-items-center {
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+/* Responsividade do header */
+@media (max-width: 576px) {
+    .dashboard-barbeiro-novo .d-flex.justify-content-between.align-items-center {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+    }
+    
+    .dashboard-barbeiro-novo .dashboard-action.dashboard-btn-small {
+        align-self: flex-end;
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+}
+
+.dashboard-barbeiro-novo .dashboard-section-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #daa520;
+    margin-bottom: 0.7rem;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dashboard-barbeiro-novo .table {
+    font-size: 1.1rem;
+    color: #fff !important;
+    background: transparent !important;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.dashboard-barbeiro-novo .table th {
+    background: rgba(218,165,32,0.1) !important;
+    color: #daa520 !important;
+    border-color: rgba(218,165,32,0.2) !important;
+    font-weight: 600;
+    font-size: 1.1em;
+    opacity: 0.9;
+    transition: all 0.3s ease;
+}
+
+.dashboard-barbeiro-novo .table td {
+    border-color: rgba(218,165,32,0.1) !important;
+    color: #fff !important;
+    word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0.5rem 0.25rem;
+}
+
+/* Container da tabela sem scroll */
+.dashboard-barbeiro-novo .table-responsive {
+    margin-bottom: 0.5rem;
+    overflow-x: hidden !important;
+    max-width: 100%;
+}
+
+.dashboard-barbeiro-novo .table-container-fix {
+    overflow: hidden !important;
+    position: relative;
+    width: 100%;
+}
+
+/* Configurações específicas da tabela de agendamentos do barbeiro */
+.dashboard-barbeiro-novo .dashboard-table {
+    font-size: 0.98rem;
+    width: 100% !important;
+    table-layout: fixed;
+}
+
+.dashboard-barbeiro-novo .dashboard-table th,
+.dashboard-barbeiro-novo .dashboard-table td {
+    word-wrap: break-word !important;
+    white-space: nowrap;
+    padding: 0.5rem 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Larguras específicas para cada coluna */
+.dashboard-barbeiro-novo .dashboard-table th:nth-child(1), 
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(1) { width: 15%; } /* Hora */
+.dashboard-barbeiro-novo .dashboard-table th:nth-child(2), 
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(2) { width: 25%; } /* Cliente */
+.dashboard-barbeiro-novo .dashboard-table th:nth-child(3), 
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(3) { width: 25%; } /* Serviço */
+.dashboard-barbeiro-novo .dashboard-table th:nth-child(4), 
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(4) { width: 12%; } /* Preço */
+.dashboard-barbeiro-novo .dashboard-table th:nth-child(5), 
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(5) { width: 10%; } /* Duração */
+.dashboard-barbeiro-novo .dashboard-table th:nth-child(6), 
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(6) { width: 13%; } /* Status */
+
+/* Tooltip melhorado */
+.dashboard-barbeiro-novo .dashboard-table td[title] {
+    cursor: help;
+    position: relative;
+}
+
+.dashboard-barbeiro-novo .dashboard-table td[title]:hover {
+    background-color: rgba(218,165,32,0.1) !important;
 }
 
 .dashboard-barbeiro-novo .dashboard-actions {
@@ -67,19 +237,49 @@ body, .dashboard-barbeiro-novo {
 
 .dashboard-barbeiro-novo .dashboard-action {
     border-radius: 8px;
-    padding: 0.9rem 1.5rem;
-    font-size: 1.08rem;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.95rem;
     font-weight: 600;
-    transition: background 0.2s, color 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     text-decoration: none;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    position: relative;
+    overflow: hidden;
+    background: #daa520 !important;
+    color: #181818 !important;
+    border: 1px solid #daa520 !important;
+    box-shadow: 
+        0 3px 8px rgba(218,165,32,0.3),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+    white-space: nowrap;
+}
+
+.dashboard-barbeiro-novo .dashboard-action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(218,165,32,0.3), transparent);
+    transition: left 0.6s ease;
 }
 
 .dashboard-barbeiro-novo .dashboard-action:hover {
-    text-decoration: underline;
+    text-decoration: none;
+    transform: translateY(-1px);
+    background: #bfa12a !important;
+    color: #fff !important;
+    box-shadow: 
+        0 6px 16px rgba(218,165,32,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+.dashboard-barbeiro-novo .dashboard-action:hover::before {
+    left: 100%;
 }
 
 .dashboard-barbeiro-novo .dashboard-info-list {
@@ -140,30 +340,39 @@ body, .dashboard-barbeiro-novo {
     padding: 0.5rem 1rem !important;
     font-size: 0.98rem !important;
 }
-.row.g-3 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 2rem 2.5rem;
-    align-items: stretch;
-    justify-items: center;
-}
-@media (max-width: 991px) {
-    .row.g-3 {
-        grid-template-columns: 1fr;
-        gap: 1.2rem 0;
+
+@media (max-width: 1200px) {
+    .dashboard-barbeiro-novo .container {
+        max-width: 95vw;
+        padding: 0 0.5rem;
     }
 }
 
 @media (max-width: 900px) {
     .dashboard-barbeiro-novo .container {
-        max-width: 98vw;
-        padding: 0 0.5rem;
+        max-width: 100%;
+        padding: 0 1rem;
     }
     .dashboard-barbeiro-novo .dashboard-title {
-        font-size: 1.3rem;
+        font-size: 1.6rem;
     }
     .dashboard-barbeiro-novo .dashboard-card {
-        padding: 1.2rem 0.7rem;
+        padding: 1.8rem 1.5rem;
+        border: 2px solid #daa520;
+    }
+    .dashboard-barbeiro-novo .dashboard-welcome-card {
+        font-size: 1.8rem;
+        padding: 1.8rem 1.5rem;
+        border: 2px solid #daa520;
+    }
+    .dashboard-barbeiro-novo .dashboard-welcome-text {
+        font-size: 1.8rem;
+    }
+    .dashboard-barbeiro-novo .dashboard-section-title {
+        font-size: 1.2rem;
+    }
+    .dashboard-barbeiro-novo .table {
+        font-size: 0.95rem;
     }
     .dashboard-barbeiro-novo .row.g-4 {
         gap: 1.2rem 0.5rem;
@@ -172,7 +381,25 @@ body, .dashboard-barbeiro-novo {
 
 @media (max-width: 600px) {
     .dashboard-barbeiro-novo .dashboard-title {
-        font-size: 1.1rem;
+        font-size: 1.4rem;
+    }
+    .dashboard-barbeiro-novo .dashboard-card {
+        padding: 1.8rem 1.5rem;
+        border: 2px solid #daa520;
+    }
+    .dashboard-barbeiro-novo .dashboard-welcome-card {
+        font-size: 1.6rem;
+        padding: 1.8rem 1.5rem;
+        border: 2px solid #daa520;
+    }
+    .dashboard-barbeiro-novo .dashboard-welcome-text {
+        font-size: 1.6rem;
+    }
+    .dashboard-barbeiro-novo .dashboard-section-title {
+        font-size: 1.2rem;
+    }
+    .dashboard-barbeiro-novo .table {
+        font-size: 0.95rem;
     }
     .dashboard-barbeiro-novo .dashboard-action {
         font-size: 0.95rem;
@@ -188,6 +415,8 @@ body, .dashboard-barbeiro-novo {
         max-width: 100%;
     }
 }
+
+@media (max-width: 576px) {
     .dashboard-barbeiro-novo .container {
         max-width: 98vw;
         padding: 0 0.5rem;
@@ -196,13 +425,29 @@ body, .dashboard-barbeiro-novo {
         font-size: 1.3rem;
     }
     .dashboard-barbeiro-novo .dashboard-card {
-        padding: 1.2rem 0.7rem;
+        padding: 1.5rem 1.2rem;
+        border: 2px solid #daa520;
+    }
+    .dashboard-barbeiro-novo .dashboard-welcome-card {
+        font-size: 1.4rem;
+        padding: 1.5rem 1.2rem;
+        border: 2px solid #daa520;
+    }
+    .dashboard-barbeiro-novo .dashboard-welcome-text {
+        font-size: 1.4rem;
+    }
+    .dashboard-barbeiro-novo .dashboard-section-title {
+        font-size: 1.1rem;
+    }
+    .dashboard-barbeiro-novo .table {
+        font-size: 0.9rem;
     }
     .dashboard-barbeiro-novo .row.g-4 {
         gap: 1.2rem 0.5rem;
     }
+}
 
-@media (max-width: 600px) {
+/* Animações sutis */
     .dashboard-barbeiro-novo .dashboard-title {
         font-size: 1.1rem;
     }
@@ -219,10 +464,112 @@ body, .dashboard-barbeiro-novo {
         width: 100%;
         max-width: 100%;
     }
+
+/* Animações sutis */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+        box-shadow: 
+            0 4px 16px rgba(0,0,0,0.2),
+            0 1px 4px rgba(218,165,32,0.1);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        box-shadow: 
+            0 8px 32px rgba(0,0,0,0.4),
+            0 2px 8px rgba(218,165,32,0.1);
+    }
 }
-    .dashboard-barbeiro-novo .col-12.col-lg-7,
-    .dashboard-barbeiro-novo .col-12.col-lg-5 {
-        width: 100%;
-        max-width: 100%;
+
+.dashboard-barbeiro-novo .dashboard-card {
+    animation: slideInUp 0.7s ease-out forwards;
+    opacity: 0;
+}
+
+.dashboard-barbeiro-novo .dashboard-card:nth-child(1) { animation-delay: 0.1s; }
+.dashboard-barbeiro-novo .dashboard-card:nth-child(2) { animation-delay: 0.25s; }
+.dashboard-barbeiro-novo .dashboard-card:nth-child(3) { animation-delay: 0.4s; }
+.dashboard-barbeiro-novo .dashboard-card:nth-child(4) { animation-delay: 0.55s; }
+
+/* Responsividade melhorada para telas pequenas */
+@media (max-width: 768px) {
+    .dashboard-barbeiro-novo .dashboard-card {
+        padding: 1.2rem;
+    }
+    
+    .dashboard-barbeiro-novo .dashboard-title {
+        font-size: 1.3rem;
+    }
+    
+    .dashboard-barbeiro-novo .dashboard-section-title {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-barbeiro-novo .container {
+        padding: 0 0.5rem;
+    }
+    
+    .dashboard-barbeiro-novo .dashboard-card {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+    
+    .dashboard-barbeiro-novo .dashboard-title {
+        font-size: 1.1rem;
+    }
+    
+    .dashboard-barbeiro-novo .dashboard-action {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.9rem;
+        gap: 0.3rem;
+    }
+    
+    .dashboard-barbeiro-novo .table {
+        font-size: 0.8rem;
+    }
+    
+    .dashboard-barbeiro-novo .dashboard-info-list {
+        font-size: 0.85rem;
     }
 
+    /* Responsividade específica da tabela */
+    .dashboard-barbeiro-novo .dashboard-table {
+        font-size: 0.75rem !important;
+    }
+    
+    .dashboard-barbeiro-novo .dashboard-table th, 
+    .dashboard-barbeiro-novo .dashboard-table td {
+        padding: 0.3rem 0.15rem !important;
+        font-size: 0.75rem;
+    }
+    
+    /* Ajustar larguras em mobile */
+    .dashboard-barbeiro-novo .dashboard-table th:nth-child(1), 
+    .dashboard-barbeiro-novo .dashboard-table td:nth-child(1) { width: 12%; } /* Hora */
+    .dashboard-barbeiro-novo .dashboard-table th:nth-child(2), 
+    .dashboard-barbeiro-novo .dashboard-table td:nth-child(2) { width: 20%; } /* Cliente */
+    .dashboard-barbeiro-novo .dashboard-table th:nth-child(3), 
+    .dashboard-barbeiro-novo .dashboard-table td:nth-child(3) { width: 25%; } /* Serviço */
+    .dashboard-barbeiro-novo .dashboard-table th:nth-child(4), 
+    .dashboard-barbeiro-novo .dashboard-table td:nth-child(4) { width: 12%; } /* Preço */
+    .dashboard-barbeiro-novo .dashboard-table th:nth-child(5), 
+    .dashboard-barbeiro-novo .dashboard-table td:nth-child(5) { width: 10%; } /* Duração */
+    .dashboard-barbeiro-novo .dashboard-table th:nth-child(6), 
+    .dashboard-barbeiro-novo .dashboard-table td:nth-child(6) { width: 21%; } /* Status */
+}
+
+/* Responsividade para tablets */
+@media (min-width: 577px) and (max-width: 992px) {
+    .dashboard-barbeiro-novo .dashboard-table {
+        font-size: 0.9rem;
+    }
+    
+    .dashboard-barbeiro-novo .dashboard-table th, 
+    .dashboard-barbeiro-novo .dashboard-table td {
+        padding: 0.4rem 0.2rem;
+    }
+}

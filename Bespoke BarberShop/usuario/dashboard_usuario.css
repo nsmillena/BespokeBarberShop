@@ -1,49 +1,110 @@
 .dashboard-user {
-  background: #181818;
+  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #0f0f0f 100%);
+  position: relative;
+  overflow-x: hidden;
 }
-  body {
-    background: #181818;
+
+.dashboard-user::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(218,165,32,0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(218,165,32,0.08) 0%, transparent 50%);
+  z-index: -1;
+  animation: subtle-pulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes subtle-pulse {
+  0% { opacity: 0.3; }
+  100% { opacity: 0.6; }
+}
+
+body {
+    background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #0f0f0f 100%);
     color: #fff;
     font-family: 'Montserrat', Arial, sans-serif;
     min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(218,165,32,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(218,165,32,0.08) 0%, transparent 50%);
+    z-index: -1;
+    animation: subtle-pulse 8s ease-in-out infinite alternate;
 }
 
 .container {
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    padding: 0 0.5rem;
 }
 
-.row.g-3 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-    gap: 2rem 2.5rem;
-    align-items: stretch;
-    justify-items: center;
-}
+/* Layout removido - usando Bootstrap padrão com g-4 justify-content-center */
 
   .dashboard-card {
-    background: #232323;
+    background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%);
     border-radius: 18px;
-    box-shadow: 0 2px 16px 0 rgba(0,0,0,0.12);
+    box-shadow: 
+        0 8px 32px rgba(0,0,0,0.4),
+        0 2px 8px rgba(218,165,32,0.1),
+        inset 0 1px 0 rgba(255,255,255,0.1);
     color: #fff;
-    border: none;
+    border: 2px solid #daa520;
     margin-bottom: 0;
-    padding: 1.5rem 1.2rem 1.2rem 1.2rem;
-    transition: box-shadow 0.2s, transform 0.2s;
+    padding: 2.2rem 2rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     min-width: 320px;
     max-width: 100%;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
   }
+
+  .dashboard-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(218,165,32,0.1), transparent);
+    transition: left 0.5s;
+  }
+
   .dashboard-card:hover {
-    box-shadow: 0 4px 24px 0 rgba(218,165,32,0.10);
-    transform: translateY(-2px) scale(1.01);
+    box-shadow: 
+        0 16px 48px rgba(0,0,0,0.5),
+        0 8px 16px rgba(218,165,32,0.2),
+        inset 0 1px 0 rgba(255,255,255,0.15);
+    border-color: rgba(218,165,32,0.4);
+    transform: translateY(-8px);
+  }
+
+  .dashboard-card:hover::before {
+    left: 100%;
   }
 
     .dashboard-section-title {
-        font-size: 1.15rem;
+        font-size: 1.4rem;
         font-weight: 600;
         color: #daa520;
         margin-bottom: 0.7rem;
@@ -51,23 +112,46 @@
     }
 
     .dashboard-action {
-        background: #daa520;
+        background: linear-gradient(135deg, #daa520 0%, #b8941c 100%);
         color: #181818 !important;
-        border-radius: 8px;
+        border-radius: 10px;
         padding: 0.45rem 1.2rem;
         font-weight: 600;
         font-size: 1.08rem;
         text-decoration: none;
-        transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border: none;
         display: inline-block;
-        box-shadow: 0 2px 8px 0 rgba(218,165,32,0.10);
+        box-shadow: 
+            0 4px 12px rgba(218,165,32,0.3),
+            inset 0 1px 0 rgba(255,255,255,0.2);
         margin-bottom: 0.5rem;
+        position: relative;
+        overflow: hidden;
     }
+
+    .dashboard-action::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
     .dashboard-action:hover, .dashboard-action:focus {
-        background: #bfa12a;
-        color: #fff !important;
-        box-shadow: 0 4px 16px 0 rgba(218,165,32,0.18);
+        background: linear-gradient(135deg, #fff 0%, #f5f5f5 100%);
+        color: #daa520 !important;
+        box-shadow: 
+            0 8px 24px rgba(218,165,32,0.4),
+            inset 0 1px 0 rgba(218,165,32,0.1);
+        transform: translateY(-2px);
+    }
+
+    .dashboard-action:hover::before {
+        left: 100%;
     }
 
     .dashboard-card .dashboard-action {
@@ -78,18 +162,41 @@
 
     .table-responsive {
         margin-bottom: 0.5rem;
+        overflow-x: hidden !important;
+        max-width: 100%;
+    }
+
+    .table-container-fix {
+        overflow: hidden !important;
+        position: relative;
+        width: 100%;
+    }
+
+    .table-container-fix::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 20px;
+        height: 100%;
+        background: linear-gradient(to left, rgba(26,26,26,1), transparent);
+        pointer-events: none;
+        z-index: 1;
     }
 
     table.table {
         background: transparent;
         border-radius: 10px;
         overflow: hidden;
-        font-size: 0.98rem;
+        font-size: 1.1rem;
+        width: 100%;
     }
 
     table.table th, table.table td {
         border: none;
         vertical-align: middle;
+        word-wrap: break-word;
+        padding: 0.75rem 0.5rem;
     }
 
     table.table th {
@@ -112,7 +219,7 @@
     }
     ul li {
         color: #fff;
-        font-size: 0.98rem;
+        font-size: 1.1rem;
         margin-bottom: 0.4rem;
     }
 
@@ -126,22 +233,27 @@
 
     /* Card de boas-vindas */
 .dashboard-welcome-card {
-    padding: 2.2rem 1.5rem 2.2rem 2.2rem;
-    font-size: 1.7rem;
+    padding: 2.5rem 2.2rem;
+    font-size: 2.2rem;
     font-weight: 700;
     letter-spacing: 0.5px;
-    background: #232323;
+    background: linear-gradient(145deg, #2d1810 0%, #1f1f1f 100%);
     border-radius: 18px;
-    box-shadow: 0 2px 16px 0 rgba(0,0,0,0.12);
+    box-shadow: 
+        0 8px 32px rgba(0,0,0,0.4),
+        0 2px 8px rgba(218,165,32,0.1),
+        inset 0 1px 0 rgba(255,255,255,0.1);
     color: #daa520;
     margin-bottom: 0;
     text-align: left;
+    border: 2px solid #daa520;
 }
 .dashboard-welcome-text {
     color: #daa520;
-    font-size: 1.7rem;
+    font-size: 2.2rem;
     font-weight: 700;
     letter-spacing: 0.5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 /* Botões pequenos de agendamento */
@@ -161,35 +273,233 @@
 /* Tabela de agendamentos */
 .dashboard-table {
     font-size: 0.98rem;
+    width: 100% !important;
+    table-layout: fixed;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    word-wrap: break-word !important;
+    white-space: nowrap;
+    padding: 0.5rem 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Larguras específicas para cada coluna */
+.dashboard-table th:nth-child(1), .dashboard-table td:nth-child(1) { width: 10%; } /* Data */
+.dashboard-table th:nth-child(2), .dashboard-table td:nth-child(2) { width: 10%; } /* Hora */
+.dashboard-table th:nth-child(3), .dashboard-table td:nth-child(3) { width: 12%; } /* Unidade */
+.dashboard-table th:nth-child(4), .dashboard-table td:nth-child(4) { width: 15%; } /* Barbeiro */
+.dashboard-table th:nth-child(5), .dashboard-table td:nth-child(5) { width: 20%; } /* Serviço */
+.dashboard-table th:nth-child(6), .dashboard-table td:nth-child(6) { width: 10%; } /* Preço */
+.dashboard-table th:nth-child(7), .dashboard-table td:nth-child(7) { width: 8%; }  /* Duração */
+.dashboard-table th:nth-child(8), .dashboard-table td:nth-child(8) { width: 15%; } /* Status */
+
+/* Tooltip melhorado */
+.dashboard-table td[title] {
+    cursor: help;
+    position: relative;
+}
+
+.dashboard-table td[title]:hover {
+    background-color: rgba(218,165,32,0.1) !important;
+}
+
+/* Melhorias para responsividade */
+@media (max-width: 768px) {
+    .dashboard-table {
+        font-size: 0.85rem;
+    }
+    
+    .dashboard-table th,
+    .dashboard-table td {
+        padding: 0.4rem 0.2rem;
+        font-size: 0.8rem;
+    }
 }
 
 /* Lista de informações úteis */
 .dashboard-info-list {
     color: #fff;
     line-height: 1.7;
-    font-size: 0.98rem;
+    font-size: 1.1rem;
     margin-bottom: 0;
     padding-left: 1.2rem;
 }
 
-@media (max-width: 991px) {
-        .row.g-3 {
-        grid-template-columns: 1fr;
-        gap: 1.2rem 0;
-    }
-    .dashboard-card {
-        margin-bottom: 1.2rem;
-        padding: 1.1rem 0.7rem 0.9rem 0.7rem;
-    }
-    h2 {
-        font-size: 1.3rem;
-        margin-bottom: 1.2rem;
-    }
-    .dashboard-welcome-card {
-        font-size: 1.2rem;
-        padding: 1.2rem 0.7rem 1.2rem 1.2rem;
-    }
-    .dashboard-welcome-text {
-        font-size: 1.2rem;
+@media (max-width: 1200px) {
+    .container {
+        max-width: 95vw;
+        padding: 0 0.5rem;
     }
 }
+
+@media (max-width: 991px) {
+    .container {
+        max-width: 100%;
+        padding: 0 1rem;
+    }
+    
+    .dashboard-card {
+        margin-bottom: 1.5rem;
+        padding: 2rem 1.8rem;
+        border: 2px solid #daa520;
+    }
+    
+    h2 {
+        font-size: 1.7rem;
+        margin-bottom: 1.2rem;
+    }
+    
+    .dashboard-welcome-card {
+        font-size: 1.9rem;
+        padding: 2rem 1.8rem;
+        border: 2px solid #daa520;
+    }
+    
+    .dashboard-welcome-text {
+        font-size: 1.9rem;
+    }
+    
+    .dashboard-section-title {
+        font-size: 1.3rem;
+    }
+    
+    .dashboard-action {
+        padding: 0.8rem 1.4rem;
+        font-size: 1.1rem;
+    }
+    
+    .table {
+        font-size: 1rem;
+    }
+    
+    .dashboard-table th,
+    .dashboard-table td {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.15rem;
+    }
+    
+    .table-responsive {
+        overflow-x: hidden !important;
+    }
+    
+    .dashboard-info-list {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-card {
+        padding: 1.8rem 1.5rem;
+        border: 2px solid #daa520;
+    }
+    
+    .dashboard-welcome-card {
+        font-size: 1.6rem;
+        padding: 1.8rem 1.5rem;
+        border: 2px solid #daa520;
+    }
+    
+    .dashboard-welcome-text {
+        font-size: 1.6rem;
+    }
+    
+    .dashboard-section-title {
+        font-size: 1.2rem;
+    }
+    
+    .table {
+        font-size: 0.95rem;
+    }
+    
+    .dashboard-table th,
+    .dashboard-table td {
+        font-size: 0.85rem;
+        padding: 0.3rem 0.1rem;
+        white-space: normal;
+    }
+    
+    .table-responsive {
+        overflow-x: hidden !important;
+    }
+    
+    .dashboard-info-list {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .container {
+        padding: 0 0.5rem;
+    }
+    
+    .dashboard-card {
+        padding: 1rem;
+        border-radius: 12px;
+    }
+    
+    h2 {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .dashboard-welcome-card {
+        font-size: 1.1rem;
+        padding: 1rem 0.8rem;
+        border-radius: 12px;
+    }
+    
+    .dashboard-welcome-text {
+        font-size: 1.1rem;
+    }
+    
+    .dashboard-section-title {
+        font-size: 0.95rem;
+    }
+    
+    .dashboard-action {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .table {
+        font-size: 0.75rem;
+    }
+    
+    .dashboard-table th,
+    .dashboard-table td {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.1rem;
+    }
+    
+    .table-responsive {
+        overflow-x: hidden !important;
+    }
+    
+    .dashboard-info-list {
+        font-size: 0.85rem;
+    }
+}
+
+/* Animações sutis */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dashboard-card {
+    animation: slideInUp 0.6s ease-out;
+}
+
+.dashboard-card:nth-child(1) { animation-delay: 0.1s; }
+.dashboard-card:nth-child(2) { animation-delay: 0.2s; }
+.dashboard-card:nth-child(3) { animation-delay: 0.3s; }
+.dashboard-card:nth-child(4) { animation-delay: 0.4s; }
