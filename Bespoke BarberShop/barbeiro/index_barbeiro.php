@@ -14,7 +14,7 @@ $stmt->execute();
 $stmt->bind_result($nomeCompleto, $email, $telefone);
 $stmt->fetch();
 $stmt->close();
-$primeiroNome = explode(' ', trim($nomeCompleto))[0;
+$primeiroNome = explode(' ', trim($nomeCompleto))[0];
 
 // Buscar agendamentos do dia
 $dataHoje = date('Y-m-d');
@@ -24,10 +24,12 @@ FROM Agendamento a
 JOIN Cliente c ON a.Cliente_idCliente = c.idCliente
 JOIN Agendamento_has_Servico ahs ON a.idAgendamento = ahs.Agendamento_idAgendamento
 JOIN Servico s ON ahs.Servico_idServico = s.idServico
-WHERE a.Barbeiro_idBarbeiro = ? AND a.data = ?
+WHERE a.Barbeiro_idBarbeiro = ?
+    AND a.data = CURDATE()
+    AND a.statusAgendamento IN ('Agendado','Finalizado')
 ORDER BY a.hora ASC
 ");
-$stmt2->bind_param("is", $idBarbeiro, $dataHoje);
+$stmt2->bind_param("i", $idBarbeiro);
 $stmt2->execute();
 $resultHoje = $stmt2->get_result();
 $temAgendamentosHoje = $resultHoje->num_rows > 0;
@@ -65,6 +67,11 @@ $temAgendamentosHoje = $resultHoje->num_rows > 0;
                     </div>
                 </div>
                 <?php if($temAgendamentosHoje): ?>
+                <?php if (isset($_GET['msg'])): ?>
+                    <div class="alert alert-<?php echo (isset($_GET['ok']) && $_GET['ok'] === '1') ? 'success' : 'danger'; ?> py-2" role="alert">
+                        <?php echo htmlspecialchars($_GET['msg']); ?>
+                    </div>
+                <?php endif; ?>
                 <div class="table-responsive flex-fill mb-2 table-container-fix">
                     <table class="table table-dark table-striped table-sm align-middle mb-0 dashboard-table">
                         <thead>
@@ -75,6 +82,7 @@ $temAgendamentosHoje = $resultHoje->num_rows > 0;
                                 <th>Preço</th>
                                 <th>Duração</th>
                                 <th>Status</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -86,6 +94,16 @@ $temAgendamentosHoje = $resultHoje->num_rows > 0;
                                     <td title="R$ <?= number_format($row['precoFinal'],2,',','.') ?>">R$ <?= number_format($row['precoFinal'],0,',','.') ?></td>
                                     <td title="<?= $row['tempoEstimado'] ?> minutos"><?= $row['tempoEstimado'] ?>m</td>
                                     <td title="<?= htmlspecialchars($row['statusAgendamento']) ?>"><?= substr(htmlspecialchars($row['statusAgendamento']), 0, 8) ?></td>
+                                    <td>
+                                        <?php if ($row['statusAgendamento'] === 'Agendado'): ?>
+                                            <form method="post" action="concluir_agendamento.php" class="d-inline">
+                                                <input type="hidden" name="idAgendamento" value="<?= (int)$row['idAgendamento'] ?>">
+                                                <button type="submit" class="dashboard-action dashboard-btn-small"><i class="bi bi-check2-circle"></i> Concluir</button>
+                                            </form>
+                                        <?php else: ?>
+                                            <span class="badge bg-success">Finalizado</span>
+                                        <?php endif; ?>
+                                    </td>
                                 </tr>
                             <?php } ?>
                         </tbody>
