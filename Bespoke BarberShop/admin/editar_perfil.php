@@ -9,6 +9,7 @@ include_once "../includes/db.php";
 $bd = new Banco();
 $conn = $bd->getConexao();
 $admin_id = $_SESSION['usuario_id'];
+if (empty($_SESSION['csrf_token'])) { $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); }
 
 // Buscar dados atuais do admin
 $sql = $conn->prepare("SELECT nomeAdmin, emailAdmin, telefoneAdmin FROM Administrador WHERE idAdministrador = ?");
@@ -22,14 +23,22 @@ $sucesso = false;
 $erro = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF
+    $token = $_POST['csrf_token'] ?? '';
+    if (!hash_equals($_SESSION['csrf_token'], $token)) {
+        header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Falha de segurança. Atualize a página e tente novamente.'));
+        exit;
+    }
     $nome = trim($_POST['nome']);
     $email = trim($_POST['email']);
     $telefone = trim($_POST['telefone']);
     $senha_atual = $_POST['senha_atual'] ?? '';
     $nova_senha = $_POST['nova_senha'] ?? '';
+    $confirma_senha = $_POST['confirma_senha'] ?? '';
     
     if (empty($nome) || empty($email) || empty($telefone)) {
-        $erro = 'Nome, email e telefone são obrigatórios.';
+        header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Nome, email e telefone são obrigatórios.'));
+        exit;
     } else {
         // Verificar se o email já existe (exceto o próprio)
         $check = $conn->prepare("SELECT idAdministrador FROM Administrador WHERE emailAdmin = ? AND idAdministrador != ?");
@@ -38,7 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $check->store_result();
         
         if ($check->num_rows > 0) {
-            $erro = 'Este email já está sendo usado por outro administrador.';
+            $check->close();
+            header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Este email já está sendo usado por outro administrador.'));
+            exit;
         } else {
             $update_fields = "nomeAdmin = ?, emailAdmin = ?, telefoneAdmin = ?";
             $params = [$nome, $email, $telefone];
@@ -46,20 +57,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Se informou senha atual e nova senha
             if (!empty($senha_atual) && !empty($nova_senha)) {
-                // Verificar senha atual
+                if ($nova_senha !== $confirma_senha) {
+                    $check->close();
+                    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Confirmação de senha não confere.'));
+                    exit;
+                }
+                // Critérios de força: min 8, 1 maiúscula, 1 minúscula, 1 dígito, 1 especial, diferente da atual
+                $temMaiuscula = preg_match('/[A-Z]/', $nova_senha);
+                $temMinuscula = preg_match('/[a-z]/', $nova_senha);
+                $temDigito    = preg_match('/\d/', $nova_senha);
+                $temEspecial  = preg_match('/[^A-Za-z0-9]/', $nova_senha);
+                if (strlen($nova_senha) < 8 || !$temMaiuscula || !$temMinuscula || !$temDigito || !$temEspecial) {
+                    $check->close();
+                    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('A nova senha deve ter no mínimo 8 caracteres e incluir maiúscula, minúscula, dígito e símbolo.'));
+                    exit;
+                }
+                // Verificar senha atual (compatível com hash e possível legado em texto plano)
                 $check_pass = $conn->prepare("SELECT senhaAdmin FROM Administrador WHERE idAdministrador = ?");
                 $check_pass->bind_param("i", $admin_id);
                 $check_pass->execute();
                 $check_pass->bind_result($senha_hash);
                 $check_pass->fetch();
                 $check_pass->close();
-                
-                if (password_verify($senha_atual, $senha_hash)) {
+
+                $senhaConfere = false;
+                if (!empty($senha_hash)) {
+                    // Tenta verificar como hash
+                    if (password_verify($senha_atual, $senha_hash)) {
+                        $senhaConfere = true;
+                    } else {
+                        // Fallback: se banco tiver senha antiga em texto plano
+                        if (hash_equals((string)$senha_hash, (string)$senha_atual)) {
+                            $senhaConfere = true;
+                        }
+                    }
+                }
+
+                if ($senhaConfere) {
+                    if (hash_equals((string)$nova_senha, (string)$senha_atual)) {
+                        $check->close();
+                        header('Location: editar_perfil.php?ok=0&msg=' . urlencode('A nova senha deve ser diferente da senha atual.'));
+                        exit;
+                    }
                     $update_fields .= ", senhaAdmin = ?";
                     $params[] = password_hash($nova_senha, PASSWORD_DEFAULT);
                     $types .= "s";
                 } else {
-                    $erro = 'Senha atual incorreta.';
+                    $check->close();
+                    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Senha atual incorreta.'));
+                    exit;
                 }
             }
             
@@ -71,18 +117,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $update->bind_param($types, ...$params);
                 
                 if ($update->execute()) {
-                    $sucesso = true;
-                    // Atualizar variáveis locais
-                    $nome_atual = $nome;
-                    $email_atual = $email;
-                    $telefone_atual = $telefone;
+                    $update->close();
+                    $check->close();
+                    // Redirecionar com toast
+                    header('Location: editar_perfil.php?ok=1&msg=' . urlencode('Perfil atualizado com sucesso!'));
+                    exit;
                 } else {
-                    $erro = 'Erro ao atualizar perfil. Tente novamente.';
+                    $update->close();
+                    $check->close();
+                    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Erro ao atualizar perfil. Tente novamente.'));
+                    exit;
                 }
-                $update->close();
             }
         }
-        $check->close();
     }
 }
 ?>
@@ -98,6 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="dashboard-admin">
     <div class="container py-5">
+        <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3 bb-toast-container" id="toast-msg-container"></div>
         <div class="row justify-content-center">
             <div class="col-lg-6">
                 <div class="dashboard-card">
@@ -105,20 +153,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h2 class="dashboard-title mb-0"><i class="bi bi-person-circle"></i> Editar Perfil</h2>
                         <a href="index_admin.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> Voltar</a>
                     </div>
-                    
-                    <?php if ($sucesso): ?>
-                        <div class="alert alert-success" role="alert">
-                            <i class="bi bi-check-circle"></i> Perfil atualizado com sucesso!
-                        </div>
-                    <?php endif; ?>
-                    
-                    <?php if ($erro): ?>
-                        <div class="alert alert-danger" role="alert">
-                            <i class="bi bi-exclamation-triangle"></i> <?= htmlspecialchars($erro) ?>
-                        </div>
-                    <?php endif; ?>
-                    
                     <form method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                         <div class="mb-3">
                             <label for="nome" class="form-label">Nome Completo</label>
                             <input type="text" class="form-control" id="nome" name="nome" value="<?= htmlspecialchars($nome_atual) ?>" required>
@@ -147,6 +183,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="mb-4">
                             <label for="nova_senha" class="form-label">Nova Senha</label>
                             <input type="password" class="form-control" id="nova_senha" name="nova_senha">
+                            <small class="text-muted">Mínimo 8, com maiúscula, minúscula, número e símbolo.</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="confirma_senha" class="form-label">Confirmar Nova Senha</label>
+                            <input type="password" class="form-control" id="confirma_senha" name="confirma_senha">
                         </div>
                         
                         <button type="submit" class="dashboard-action w-100">
@@ -157,7 +199,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </div>
-    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function getParam(name){ const url = new URL(window.location.href); return url.searchParams.get(name); }
+        function showToast(message, ok){
+            const container = document.getElementById('toast-msg-container'); if(!container || !message) return;
+            const el = document.createElement('div');
+            el.className = `toast align-items-center ${ok==='1' ? 'text-bg-success' : 'text-bg-danger'} border-0`;
+            el.setAttribute('role','alert'); el.setAttribute('aria-live','assertive'); el.setAttribute('aria-atomic','true');
+            el.innerHTML = `<div class=\"d-flex\"><div class=\"toast-body\">${message}</div><button type=\"button\" class=\"btn-close btn-close-white me-2 m-auto\" data-bs-dismiss=\"toast\" aria-label=\"Close\"></button></div>`;
+            container.appendChild(el); new bootstrap.Toast(el, { delay: 3500 }).show();
+        }
+        const msg = getParam('msg'); const ok = getParam('ok'); if (msg) { try { showToast(decodeURIComponent(msg), ok); } catch(_) { showToast(msg, ok); } }
+    </script>
     <style>
         .form-control {
             background: rgba(255,255,255,0.1);
@@ -183,27 +237,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-weight: 500;
             margin-bottom: 0.5rem;
         }
-        
-        .alert {
-            border: none;
-            border-radius: 8px;
-        }
-        
-        .alert-success {
-            background: rgba(40,167,69,0.2);
-            color: #28a745;
-            border-left: 4px solid #28a745;
-        }
-        
-        .alert-danger {
-            background: rgba(220,53,69,0.2);
-            color: #dc3545;
-            border-left: 4px solid #dc3545;
-        }
+        /* Feedback via toasts; alerts removidos */
         
         .text-muted {
             color: rgba(255,255,255,0.6) !important;
         }
     </style>
+    <?php @include_once("../Footer/footer.html"); ?>
 </body>
 </html>

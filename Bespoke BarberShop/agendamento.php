@@ -81,17 +81,19 @@ while($row = $resServ->fetch_assoc()) {
         <div id="time-buttons-container"></div>
       </div>
     </div>
-    <button class="btn-custom mt-3" onclick="nextStep(2)">Continuar</button>
-    <button class="btn-custom btn-back" onclick="prevStep(2)">← Voltar</button>
+    <div class="d-flex justify-content-between mt-3 w-100">
+      <button class="btn-custom btn-back" onclick="prevStep(2)">← Voltar</button>
+      <button class="btn-custom" onclick="nextStep(2)">Continuar →</button>
+    </div>
   </div>
 
   <!-- PASSO 3: Escolha o Barbeiro (cards filtrados) -->
   <div class="card-custom step-card d-none" data-step="3">
     <h5>Escolha o Barbeiro</h5>
-    <div class="d-flex gap-3 justify-content-center flex-wrap" id="barber-container"></div>
-    <div class="d-flex justify-content-center gap-3 mt-3">
-      <button class="btn-custom" onclick="prevStep(3)">← Voltar</button>
-      <button class="btn-custom" onclick="nextStep(3)">Continuar</button>
+    <div class="d-flex gap-3 justify-content-center flex-wrap mt-3" id="barber-container"></div>
+    <div class="d-flex justify-content-between mt-3 w-100">
+      <button class="btn-custom btn-back" onclick="prevStep(3)">← Voltar</button>
+      <button class="btn-custom" onclick="nextStep(3)">Continuar →</button>
     </div>
   </div>
 
@@ -105,9 +107,9 @@ while($row = $resServ->fetch_assoc()) {
         </div>
       <?php endforeach; ?>
     </div>
-    <div class="d-flex justify-content-center gap-3 mt-3 align-items-center" style="gap: 16px;">
+    <div class="final-actions d-flex justify-content-between mt-3 align-items-center w-100" style="gap: 16px;">
       <button class="btn-custom btn-back" onclick="prevStep(4)">← Voltar</button>
-      <form id="form-agendamento" method="POST" action="resumo.php" class="d-flex align-items-center" style="gap: 16px;">
+      <form id="form-agendamento" method="POST" action="resumo.php" class="d-flex align-items-center ms-auto" style="gap: 16px;">
         <input type="hidden" name="unidade" id="form-unidade">
         <input type="hidden" name="data" id="form-data">
         <input type="hidden" name="hora" id="form-hora">
@@ -117,7 +119,7 @@ while($row = $resServ->fetch_assoc()) {
   <input type="hidden" name="servico_id" id="form-servico-id">
         <input type="hidden" name="preco" id="form-preco">
         <input type="hidden" name="duracao" id="form-duracao">
-        <button id="finalize-btn" class="btn-custom" disabled type="button" onclick="finalizeAgendamento()">Finalizar Agendamento</button>
+        <button id="finalize-btn" class="btn-custom finalize-btn" disabled type="button" onclick="finalizeAgendamento()">Finalizar Agendamento →</button>
       </form>
     </div>
   </div>
@@ -201,6 +203,8 @@ let currentMonth = today.getMonth();
 let currentYear = today.getFullYear();
 
 const months = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+// Limite de navegação: mês atual e próximo mês
+const maxDate = new Date(today.getFullYear(), today.getMonth() + 1, 1); // primeiro dia do próximo mês
 function renderCalendar(month, year){
   daysContainer.innerHTML = "";
   monthPicker.textContent = months[month];
@@ -223,12 +227,19 @@ function renderCalendar(month, year){
   }
 }
 prevMonth.addEventListener("click", ()=>{
-  if(currentYear < today.getFullYear() || (currentYear === today.getFullYear() && currentMonth <= today.getMonth())) return;
+  // Bloqueia voltar antes do mês atual
+  if (currentYear < today.getFullYear() || (currentYear === today.getFullYear() && currentMonth <= today.getMonth())) return;
   currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;}
   renderCalendar(currentMonth,currentYear);
 });
 nextMonth.addEventListener("click", ()=>{
+  // Bloqueia avançar além do próximo mês
+  const isAtOrBeyondNext = (currentYear > maxDate.getFullYear()) || (currentYear === maxDate.getFullYear() && currentMonth >= maxDate.getMonth());
+  if (isAtOrBeyondNext) return;
   currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;}
+  // Se passarmos do limite por virada de ano, corrige
+  const beyond = (currentYear > maxDate.getFullYear()) || (currentYear === maxDate.getFullYear() && currentMonth > maxDate.getMonth());
+  if (beyond) { currentYear = maxDate.getFullYear(); currentMonth = maxDate.getMonth(); }
   renderCalendar(currentMonth,currentYear);
 });
 renderCalendar(currentMonth,currentYear);

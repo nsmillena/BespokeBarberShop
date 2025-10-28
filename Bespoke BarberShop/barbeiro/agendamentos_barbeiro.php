@@ -11,26 +11,56 @@ $bd = new Banco();
 $conn = $bd->getConexao();
 $idBarbeiro = $_SESSION['usuario_id'];
 
-$stmt = $conn->prepare("
-SELECT a.idAgendamento, a.data, a.hora, a.statusAgendamento, c.nomeCliente, s.nomeServico, ahs.precoFinal, ahs.tempoEstimado
+// Filtro por status via GET (padrão: Agendado)
+$status = isset($_GET['status']) ? $_GET['status'] : 'Agendado';
+$statusPermitidos = ['Agendado','Cancelado','Finalizado','Todos'];
+if (!in_array($status, $statusPermitidos)) { $status = 'Agendado'; }
+
+// Monta cláusula de status
+switch ($status) {
+    case 'Cancelado':
+        $whereStatus = "AND a.statusAgendamento = 'Cancelado' AND a.data >= DATE_SUB(CURDATE(), INTERVAL 3 DAY)";
+        break;
+    case 'Finalizado':
+        $whereStatus = "AND a.statusAgendamento = 'Finalizado' AND a.data >= DATE_SUB(CURDATE(), INTERVAL 3 DAY)";
+        break;
+    case 'Todos':
+        $whereStatus = "AND a.statusAgendamento IN ('Agendado','Cancelado','Finalizado')";
+        break;
+    case 'Agendado':
+    default:
+        $whereStatus = "AND a.statusAgendamento = 'Agendado'";
+}
+
+$sqlLista = "
+SELECT a.idAgendamento, a.data, a.hora, a.statusAgendamento, c.nomeCliente,
+             GROUP_CONCAT(s.nomeServico SEPARATOR ', ') AS servicos,
+             SUM(ahs.precoFinal) AS precoTotal,
+             SUM(ahs.tempoEstimado) AS tempoTotal
 FROM Agendamento a
 JOIN Cliente c ON a.Cliente_idCliente = c.idCliente
 JOIN Agendamento_has_Servico ahs ON a.idAgendamento = ahs.Agendamento_idAgendamento
 JOIN Servico s ON ahs.Servico_idServico = s.idServico
 WHERE a.Barbeiro_idBarbeiro = ?
+    $whereStatus
+GROUP BY a.idAgendamento, a.data, a.hora, a.statusAgendamento, c.nomeCliente
 ORDER BY a.data DESC, a.hora DESC
-");
-SELECT a.data, a.hora, c.nomeCliente, s.nomeServico, ahs.precoFinal, ahs.tempoEstimado
-FROM Agendamento a
-JOIN Cliente c ON a.Cliente_idCliente = c.idCliente
-JOIN Agendamento_has_Servico ahs ON a.idAgendamento = ahs.Agendamento_idAgendamento
-JOIN Servico s ON ahs.Servico_idServico = s.idServico
-WHERE a.Barbeiro_idBarbeiro = ?
-ORDER BY a.data DESC, a.hora DESC
-");
-$stmt->bind_param("i", $idBarbeiro);
-$stmt->execute();
-$result = $stmt->get_result();
+";
+
+$stmt = $conn->prepare($sqlLista);
+if ($stmt) {
+    $stmt->bind_param("i", $idBarbeiro);
+    $stmt->execute();
+    if (method_exists($stmt, 'get_result')) {
+        $result = $stmt->get_result();
+    } else {
+        $idSafe = (int)$idBarbeiro;
+        $result = $conn->query(str_replace('?', $idSafe, $sqlLista));
+    }
+} else {
+    $idSafe = (int)$idBarbeiro;
+    $result = $conn->query(str_replace('?', $idSafe, $sqlLista));
+}
 ?>
 <!DOCTYPE html>
 <html lang='pt-br'>
@@ -52,18 +82,39 @@ $result = $stmt->get_result();
     <div class="row mb-4">
         <div class="col-12">
             <div class="dashboard-card dashboard-welcome-card">
-                <span class="dashboard-title"><i class="bi bi-calendar-week"></i> Todos os seus agendamentos</span>
+                <span class="dashboard-title"><i class="bi bi-calendar-week"></i> Todos os seus atendimentos</span>
             </div>
         </div>
     </div>
     <div class="row g-4">
+        <!-- Filtros -->
+        <div class="col-12">
+            <div class="dashboard-card p-3 mb-0">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="dashboard-section-title mb-0"><i class="bi bi-funnel"></i> Filtros</div>
+                    <button class="dashboard-action dashboard-btn-small" type="button" data-bs-toggle="collapse" data-bs-target="#filtros" aria-expanded="false" aria-controls="filtros">
+                        <i class="bi bi-sliders"></i> Filtrar
+                    </button>
+                </div>
+                <div class="collapse" id="filtros">
+                    <div class="d-flex flex-wrap gap-2">
+                        <?php 
+                        $mk = function($label){ return strtolower($label) === 'todos' ? 'bi-list-ul' : (strtolower($label)==='agendado' ? 'bi-calendar-check' : (strtolower($label)==='finalizado' ? 'bi-check2-circle' : 'bi-x-circle')); };
+                        $opts = ['Agendado','Cancelado','Finalizado','Todos'];
+                        foreach($opts as $opt):
+                            $active = ($status === $opt) ? 'style="background:#bfa12a !important;color:#fff !important;"' : '';
+                        ?>
+                        <a href="?status=<?= $opt ?>" class="dashboard-action dashboard-btn-small" <?= $active ?>><i class="bi <?= $mk($opt) ?>"></i> <?= $opt ?></a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <div class="mt-2 text-warning" style="font-size:0.95rem;">Filtro atual de atendimentos: <b><?= htmlspecialchars($status) ?></b></div>
+            </div>
+        </div>
         <div class="col-12">
             <div class="dashboard-card p-3">
-                <?php if (isset($_GET['msg'])): ?>
-                    <div class="alert alert-<?php echo (isset($_GET['ok']) && $_GET['ok'] === '1') ? 'success' : 'danger'; ?> py-2" role="alert">
-                        <?php echo htmlspecialchars($_GET['msg']); ?>
-                    </div>
-                <?php endif; ?>
+                <!-- Toast container for feedback messages -->
+                <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="toast-msg-container" style="z-index:1080;"></div>
                 <div class='table-responsive table-container-fix'>
                     <table class='table table-dark table-striped table-sm align-middle mb-0 dashboard-table'>
                         <thead>
@@ -71,8 +122,8 @@ $result = $stmt->get_result();
                                 <th>Data</th>
                                 <th>Hora</th>
                                 <th>Cliente</th>
-                                <th>Serviço</th>
-                                <th>Preço</th>
+                                <th>Serviços</th>
+                                <th>Total</th>
                                 <th>Duração</th>
                                 <th>Status</th>
                                 <th>Ações</th>
@@ -85,18 +136,22 @@ $result = $stmt->get_result();
                                 <td><?= date('d/m/Y', strtotime($row['data'])) ?></td>
                                 <td><?= substr($row['hora'], 0, 5) ?></td>
                                 <td><?= htmlspecialchars($row['nomeCliente']) ?></td>
-                                <td><?= htmlspecialchars($row['nomeServico']) ?></td>
-                                <td>R$ <?= number_format($row['precoFinal'],2,',','.') ?></td>
-                                <td><?= (int)$row['tempoEstimado'] ?> min</td>
+                                <td><?= htmlspecialchars($row['servicos']) ?></td>
+                                <td>R$ <?= number_format($row['precoTotal'],2,',','.') ?></td>
+                                <td><?= (int)$row['tempoTotal'] ?> min</td>
                                 <td><?= htmlspecialchars($status) ?></td>
                                 <td>
                                     <?php if ($status === 'Agendado' && $idAg > 0): ?>
-                                        <form method="post" action="concluir_agendamento.php" class="d-inline">
+                                        <form method="post" action="concluir_agendamento.php" class="d-inline form-concluir" data-id="<?= $idAg ?>">
                                             <input type="hidden" name="idAgendamento" value="<?= $idAg ?>">
-                                            <button type="submit" class="dashboard-action dashboard-btn-small"><i class="bi bi-check2-circle"></i> Concluir</button>
+                                            <button type="button" class="dashboard-action dashboard-btn-small btn-open-concluir btn-concluir"><i class="bi bi-check2-circle"></i> Concluir</button>
                                         </form>
-                                    <?php else: ?>
+                                    <?php elseif ($status === 'Cancelado'): ?>
+                                        <span class="badge bg-danger">Cancelado</span>
+                                    <?php elseif ($status === 'Finalizado'): ?>
                                         <span class="badge bg-success">Finalizado</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary">-</span>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -105,11 +160,69 @@ $result = $stmt->get_result();
                     </table>
                 </div>
                 <div class="mt-3">
-                    <a href='index_barbeiro.php' class='dashboard-action dashboard-btn-small'><i class="bi bi-arrow-left"></i> Voltar</a>
+                    <a href='index_barbeiro.php' class='dashboard-action dashboard-btn-small'><i class="bi bi-arrow-left"></i> Voltar ao painel</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+<!-- Modal de confirmação de conclusão -->
+<div class="modal fade" id="modalConcluir" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title"><i class="bi bi-check2-circle"></i> Confirmar conclusão</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                Deseja marcar este agendamento como concluído?
+            </div>
+            <div class="modal-footer border-secondary d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle"></i> Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnConfirmConcluir"><i class="bi bi-check"></i> Confirmar</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let formToSubmit = null;
+document.querySelectorAll('.btn-open-concluir').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        formToSubmit = btn.closest('form');
+        const modal = new bootstrap.Modal(document.getElementById('modalConcluir'));
+        modal.show();
+    });
+});
+document.getElementById('btnConfirmConcluir').addEventListener('click', ()=>{
+    if (formToSubmit) {
+        formToSubmit.submit();
+    }
+});
+
+// Toast feedback based on URL params
+function getParam(name){
+    const url = new URL(window.location.href);
+    return url.searchParams.get(name);
+}
+function showToast(message, ok){
+    const container = document.getElementById('toast-msg-container');
+    if(!container || !message) return;
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast align-items-center ${ok==='1' ? 'text-bg-success' : 'text-bg-danger'} border-0`;
+    toastEl.setAttribute('role','alert');
+    toastEl.setAttribute('aria-live','assertive');
+    toastEl.setAttribute('aria-atomic','true');
+    toastEl.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>`;
+    container.appendChild(toastEl);
+    const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+    toast.show();
+}
+const msg = getParam('msg');
+const ok = getParam('ok');
+if (msg) { try { showToast(decodeURIComponent(msg), ok); } catch(_) { showToast(msg, ok); } }
+</script>
 </body>
 </html>

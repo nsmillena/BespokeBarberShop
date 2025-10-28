@@ -69,7 +69,7 @@ body {
 .time-btn { border: 1px solid #ffcc00; border-radius: 8px; padding: 8px 12px; background: transparent; color: white; margin: 4px 0; font-size: 1rem; transition: all 0.3s; cursor: pointer; width: 100px; text-align: center; display: block; }
 .time-btn:hover { background: #ffcc00; color: black; transform: scale(1.05); }
 .time-btn.selected { background: #ff9900; color: black; font-weight: 600; }
-.time-scroll { max-height: 320px; overflow-y: auto; overflow-x: hidden; padding-right: 6px; }
+.time-scroll { max-height: 320px; overflow-y: auto; overflow-x: hidden; padding-right: 6px; min-width: 120px; }
 
 /* Serviços */
 .service-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; }
@@ -97,4 +97,43 @@ body {
   justify-content: center;
   gap: 16px;
   margin-top: 24px;
+}
+
+/* Melhorias responsivas leves sem alterar o design */
+@media (max-width: 768px) {
+  .step-card { max-width: 96vw; }
+  .progress-container { gap: 8px; }
+  .step .circle { width: 30px; height: 30px; font-size: 0.9rem; }
+  .card-custom { padding: 12px; }
+  .btn-custom { padding: 8px 14px; font-size: 0.95rem; }
+  .service-card { width: 46%; min-width: 150px; }
+}
+
+@media (max-width: 576px) {
+  .progress-container { flex-wrap: wrap; row-gap: 10px; }
+  .step::after { display: none; }
+  .calendar, .time-scroll { width: 100%; }
+  .calendar, .time-scroll { flex: 1 1 260px; }
+  .service-card { width: 100%; }
+  .btn-custom { width: auto; }
+}
+
+/* Linha de ações (Voltar à esquerda, Finalizar à direita) */
+.final-actions { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.final-actions .finalize-btn { margin-left: auto; white-space: nowrap; }
+/* Mesma proporção/altura entre Voltar e Finalizar */
+.final-actions .btn-back,
+.final-actions .finalize-btn {
+  padding: 6px 15px;
+  font-size: 0.9rem; /* igual ao .btn-back original */
+  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+}
+@media (max-width: 576px) {
+  .final-actions { gap: 12px; }
+  /* mantém paridade entre os dois botões também no mobile */
+  .final-actions .btn-back,
+  .final-actions .finalize-btn { font-size: 0.9rem; padding: 8px 14px; }
+  .final-actions .finalize-btn { margin-left: auto; }
 }

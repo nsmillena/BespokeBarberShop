@@ -56,8 +56,8 @@ body::before {
 
 /* Layout removido - usando Bootstrap padrão com g-4 justify-content-center */
 
-  .dashboard-card {
-    background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%);
+    .dashboard-card {
+        background: linear-gradient(145deg, #2a2a2a 0%, #1f1f1f 100%);
     border-radius: 18px;
     box-shadow: 
         0 8px 32px rgba(0,0,0,0.4),
@@ -66,7 +66,7 @@ body::before {
     color: #fff;
     border: 2px solid #daa520;
     margin-bottom: 0;
-    padding: 2.2rem 2rem;
+    padding: 2.9rem 2.4rem; /* maior para as duas listas */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     min-width: 320px;
     max-width: 100%;
@@ -78,6 +78,11 @@ body::before {
     overflow: hidden;
     backdrop-filter: blur(10px);
   }
+
+    /* Garantir que apenas o cabeçalho continue menor */
+    .dashboard-welcome-card {
+        padding: 1.1rem 1rem !important;
+    }
 
   .dashboard-card::before {
     content: '';
@@ -162,27 +167,20 @@ body::before {
 
     .table-responsive {
         margin-bottom: 0.5rem;
-        overflow-x: hidden !important;
+        overflow-x: auto !important; /* permitir ver colunas finais em telas pequenas */
         max-width: 100%;
+        padding-right: 0.3rem; /* evita corte do botão na borda direita */
     }
 
     .table-container-fix {
-        overflow: hidden !important;
+        overflow-x: auto !important; /* não esconder última coluna */
+        overflow-y: hidden;
         position: relative;
         width: 100%;
+        padding-right: 0.3rem; /* espaço para ações */
     }
 
-    .table-container-fix::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 20px;
-        height: 100%;
-        background: linear-gradient(to left, rgba(26,26,26,1), transparent);
-        pointer-events: none;
-        z-index: 1;
-    }
+    /* Removido o fade para evitar sobreposição ao scroll horizontal */
 
     table.table {
         background: transparent;
@@ -233,8 +231,8 @@ body::before {
 
     /* Card de boas-vindas */
 .dashboard-welcome-card {
-    padding: 2.5rem 2.2rem;
-    font-size: 2.2rem;
+    padding: 1.1rem 1rem; /* menor conforme solicitado */
+    font-size: 1.6rem;
     font-weight: 700;
     letter-spacing: 0.5px;
     background: linear-gradient(145deg, #2d1810 0%, #1f1f1f 100%);
@@ -250,7 +248,7 @@ body::before {
 }
 .dashboard-welcome-text {
     color: #daa520;
-    font-size: 2.2rem;
+    font-size: 1.6rem; /* menor no cabeçalho */
     font-weight: 700;
     letter-spacing: 0.5px;
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
@@ -272,7 +270,7 @@ body::before {
 
 /* Tabela de agendamentos */
 .dashboard-table {
-    font-size: 0.98rem;
+    font-size: 1.08rem; /* + leve aumento */
     width: 100% !important;
     table-layout: fixed;
 }
@@ -281,20 +279,25 @@ body::before {
 .dashboard-table td {
     word-wrap: break-word !important;
     white-space: nowrap;
-    padding: 0.5rem 0.25rem;
+    padding: 0.6rem 0.35rem; /* mais espaço vertical/horizontal */
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 /* Larguras específicas para cada coluna */
-.dashboard-table th:nth-child(1), .dashboard-table td:nth-child(1) { width: 10%; } /* Data */
-.dashboard-table th:nth-child(2), .dashboard-table td:nth-child(2) { width: 10%; } /* Hora */
+/* Distribuição para até 9 colunas (incluindo Ações quando existir) */
+.dashboard-table th:nth-child(1), .dashboard-table td:nth-child(1) { width: 9%; }  /* Data */
+.dashboard-table th:nth-child(2), .dashboard-table td:nth-child(2) { width: 9%; }  /* Hora */
 .dashboard-table th:nth-child(3), .dashboard-table td:nth-child(3) { width: 12%; } /* Unidade */
-.dashboard-table th:nth-child(4), .dashboard-table td:nth-child(4) { width: 15%; } /* Barbeiro */
-.dashboard-table th:nth-child(5), .dashboard-table td:nth-child(5) { width: 20%; } /* Serviço */
-.dashboard-table th:nth-child(6), .dashboard-table td:nth-child(6) { width: 10%; } /* Preço */
+.dashboard-table th:nth-child(4), .dashboard-table td:nth-child(4) { width: 13%; } /* Barbeiro */
+.dashboard-table th:nth-child(5), .dashboard-table td:nth-child(5) { width: 20%; } /* Serviços */
+.dashboard-table th:nth-child(6), .dashboard-table td:nth-child(6) { width: 10%; } /* Total */
 .dashboard-table th:nth-child(7), .dashboard-table td:nth-child(7) { width: 8%; }  /* Duração */
-.dashboard-table th:nth-child(8), .dashboard-table td:nth-child(8) { width: 15%; } /* Status */
+.dashboard-table th:nth-child(8), .dashboard-table td:nth-child(8) { width: 7%; }  /* Status */
+.dashboard-table th:nth-child(9), .dashboard-table td:nth-child(9) { width: 12%; }  /* Ações - mais larga */
+
+/* Evitar corte do botão na última coluna */
+.dashboard-table td:last-child { white-space: nowrap; }
 
 /* Tooltip melhorado */
 .dashboard-table td[title] {
@@ -381,9 +384,8 @@ body::before {
         padding: 0.3rem 0.15rem;
     }
     
-    .table-responsive {
-        overflow-x: hidden !important;
-    }
+    /* Garantir scroll horizontal também em tablets */
+    .table-responsive { overflow-x: auto !important; }
     
     .dashboard-info-list {
         font-size: 1rem;
@@ -421,9 +423,8 @@ body::before {
         white-space: normal;
     }
     
-    .table-responsive {
-        overflow-x: hidden !important;
-    }
+    /* Garantir scroll horizontal também em telas médias */
+    .table-responsive { overflow-x: auto !important; }
     
     .dashboard-info-list {
         font-size: 0.95rem;
@@ -474,12 +475,26 @@ body::before {
         padding: 0.25rem 0.1rem;
     }
     
-    .table-responsive {
-        overflow-x: hidden !important;
-    }
+    /* Em telas pequenas, mantenha o scroll horizontal para evitar colunas esmagadas */
+    .table-responsive { overflow-x: auto !important; }
+    /* Evitar quebra de cabeçalhos em múltiplas linhas e forçar scroll */
+    .dashboard-table { min-width: 720px; table-layout: auto; }
+    .dashboard-table th, .dashboard-table td { white-space: nowrap; }
     
     .dashboard-info-list {
         font-size: 0.85rem;
+    }
+
+    /* Ações menores (ex.: Cancelar) dentro da tabela no mobile */
+    .dashboard-table td .dashboard-action {
+        padding: 0.35rem 0.7rem !important;
+        font-size: 0.8rem !important;
+        gap: 0.25rem;
+        line-height: 1.1;
+        min-width: auto;
+    }
+    .dashboard-table td .dashboard-action i {
+        font-size: 1rem;
     }
 }
 

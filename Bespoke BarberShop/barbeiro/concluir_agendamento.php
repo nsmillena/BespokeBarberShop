@@ -17,8 +17,11 @@ $conn = $bd->getConexao();
 $idBarbeiro = (int)$_SESSION['usuario_id'];
 $idAgendamento = isset($_POST['idAgendamento']) ? (int)$_POST['idAgendamento'] : 0;
 
+// destino de retorno (index por padrão)
+$returnTo = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'index_barbeiro.php';
+
 if ($idAgendamento <= 0) {
-    header('Location: index_barbeiro.php?ok=0&msg=' . urlencode('Agendamento inválido.'));
+    header('Location: ' . $returnTo . '?ok=0&msg=' . urlencode('Atendimento inválido.'));
     exit;
 }
 
@@ -29,13 +32,13 @@ $stmt->execute();
 $stmt->bind_result($statusAtual);
 if (!$stmt->fetch()) {
     $stmt->close();
-    header('Location: index_barbeiro.php?ok=0&msg=' . urlencode('Agendamento não encontrado.'));
+    header('Location: ' . $returnTo . '?ok=0&msg=' . urlencode('Atendimento não encontrado.'));
     exit;
 }
 $stmt->close();
 
 if ($statusAtual !== 'Agendado') {
-    header('Location: index_barbeiro.php?ok=0&msg=' . urlencode('Este agendamento não pode ser concluído.'));
+    header('Location: ' . $returnTo . '?ok=0&msg=' . urlencode('Este atendimento não pode ser concluído.'));
     exit;
 }
 
@@ -44,11 +47,11 @@ $upd = $conn->prepare("UPDATE Agendamento SET statusAgendamento = 'Finalizado' W
 $upd->bind_param("ii", $idAgendamento, $idBarbeiro);
 if ($upd->execute()) {
     $upd->close();
-    header('Location: index_barbeiro.php?ok=1&msg=' . urlencode('Agendamento concluído com sucesso.'));
+    header('Location: ' . $returnTo . '?ok=1&msg=' . urlencode('Atendimento finalizado com sucesso.'));
     exit;
 } else {
     $erro = $conn->error;
     $upd->close();
-    header('Location: index_barbeiro.php?ok=0&msg=' . urlencode('Falha ao concluir: ' . $erro));
+    header('Location: ' . $returnTo . '?ok=0&msg=' . urlencode('Falha ao concluir atendimento: ' . $erro));
     exit;
 }

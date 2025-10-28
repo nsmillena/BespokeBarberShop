@@ -56,7 +56,8 @@ body, .dashboard-barbeiro-novo {
     backdrop-filter: blur(10px);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    overflow: hidden;
+    /* permitir que tabelas exibam a barra de rolagem quando houver muitas colunas */
+    overflow: visible;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -152,7 +153,7 @@ body, .dashboard-barbeiro-novo {
     font-size: 1.1rem;
     color: #fff !important;
     background: transparent !important;
-    table-layout: fixed;
+    table-layout: auto; /* permite ajustar melhor colunas 7 e 8 */
     width: 100%;
 }
 
@@ -178,12 +179,14 @@ body, .dashboard-barbeiro-novo {
 /* Container da tabela sem scroll */
 .dashboard-barbeiro-novo .table-responsive {
     margin-bottom: 0.5rem;
-    overflow-x: hidden !important;
+    overflow-x: auto !important; /* permitir ver a coluna de ações quando houver muitas colunas */
     max-width: 100%;
+    padding-right: 0.3rem; /* evita corte do botão na borda direita */
 }
 
 .dashboard-barbeiro-novo .table-container-fix {
-    overflow: hidden !important;
+    overflow-x: auto !important; /* não esconder a última coluna */
+    overflow-y: hidden;
     position: relative;
     width: 100%;
 }
@@ -204,19 +207,23 @@ body, .dashboard-barbeiro-novo {
     text-overflow: ellipsis;
 }
 
-/* Larguras específicas para cada coluna */
+/* Larguras atualizadas para 8 colunas (Data, Hora, Cliente, Serviços, Total, Duração, Status, Ações) */
 .dashboard-barbeiro-novo .dashboard-table th:nth-child(1), 
-.dashboard-barbeiro-novo .dashboard-table td:nth-child(1) { width: 15%; } /* Hora */
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(1) { width: 10%; }
 .dashboard-barbeiro-novo .dashboard-table th:nth-child(2), 
-.dashboard-barbeiro-novo .dashboard-table td:nth-child(2) { width: 25%; } /* Cliente */
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(2) { width: 10%; }
 .dashboard-barbeiro-novo .dashboard-table th:nth-child(3), 
-.dashboard-barbeiro-novo .dashboard-table td:nth-child(3) { width: 25%; } /* Serviço */
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(3) { width: 16%; }
 .dashboard-barbeiro-novo .dashboard-table th:nth-child(4), 
-.dashboard-barbeiro-novo .dashboard-table td:nth-child(4) { width: 12%; } /* Preço */
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(4) { width: 22%; }
 .dashboard-barbeiro-novo .dashboard-table th:nth-child(5), 
-.dashboard-barbeiro-novo .dashboard-table td:nth-child(5) { width: 10%; } /* Duração */
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(5) { width: 10%; }
 .dashboard-barbeiro-novo .dashboard-table th:nth-child(6), 
-.dashboard-barbeiro-novo .dashboard-table td:nth-child(6) { width: 13%; } /* Status */
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(6) { width: 10%; }
+.dashboard-barbeiro-novo .dashboard-table th:nth-child(7), 
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(7) { width: 10%; }
+.dashboard-barbeiro-novo .dashboard-table th:nth-child(8), 
+.dashboard-barbeiro-novo .dashboard-table td:nth-child(8) { width: 12%; }
 
 /* Tooltip melhorado */
 .dashboard-barbeiro-novo .dashboard-table td[title] {
@@ -237,8 +244,8 @@ body, .dashboard-barbeiro-novo {
 
 .dashboard-barbeiro-novo .dashboard-action {
     border-radius: 8px;
-    padding: 0.6rem 1.2rem;
-    font-size: 0.95rem;
+    padding: 0.5rem 1.05rem; /* ligeiramente menor para caber melhor */
+    font-size: 0.9rem;
     font-weight: 600;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
@@ -545,6 +552,7 @@ body, .dashboard-barbeiro-novo {
     .dashboard-barbeiro-novo .dashboard-table td {
         padding: 0.3rem 0.15rem !important;
         font-size: 0.75rem;
+        white-space: nowrap; /* evitar quebra vertical dos títulos */
     }
     
     /* Ajustar larguras em mobile */
@@ -560,6 +568,20 @@ body, .dashboard-barbeiro-novo {
     .dashboard-barbeiro-novo .dashboard-table td:nth-child(5) { width: 10%; } /* Duração */
     .dashboard-barbeiro-novo .dashboard-table th:nth-child(6), 
     .dashboard-barbeiro-novo .dashboard-table td:nth-child(6) { width: 21%; } /* Status */
+
+    /* Forçar largura mínima para aparecer barra de rolagem e evitar esmagamento */
+    .dashboard-barbeiro-novo .dashboard-table { min-width: 720px; table-layout: auto; }
+
+    /* Botão Concluir menor em telas pequenas */
+    .dashboard-barbeiro-novo .btn-concluir {
+        padding: 0.35rem 0.6rem !important;
+        font-size: 0.78rem !important;
+        gap: 0.25rem !important;
+        line-height: 1.1;
+    }
+    .dashboard-barbeiro-novo .btn-concluir i {
+        font-size: 1rem;
+    }
 }
 
 /* Responsividade para tablets */
@@ -572,4 +594,17 @@ body, .dashboard-barbeiro-novo {
     .dashboard-barbeiro-novo .dashboard-table td {
         padding: 0.4rem 0.2rem;
     }
+}
+
+/* Evitar quebra e corte na coluna de ações */
+.dashboard-barbeiro-novo .dashboard-table td:last-child {
+    white-space: nowrap;
+}
+
+/* Ajustes responsivos leves adicionais */
+@media (max-width: 480px) {
+    .dashboard-barbeiro-novo .dashboard-action { font-size: 0.8rem; padding: 0.45rem 0.8rem; }
+    .dashboard-barbeiro-novo .dashboard-table { font-size: 0.72rem !important; }
+    .dashboard-barbeiro-novo .dashboard-card { padding: 0.9rem; }
+    .dashboard-barbeiro-novo .dashboard-section-title { font-size: 0.95rem; }
 }

@@ -1,4 +1,5 @@
 /* Dashboard do Admin */
+@import url("../css/dashboard_base.css");
 .dashboard-admin {
   background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #0f0f0f 100%);
   min-height: 100vh;
@@ -377,3 +378,8 @@
 .dashboard-admin .dashboard-card:nth-child(2) { animation-delay: 0.2s; }
 .dashboard-admin .dashboard-card:nth-child(3) { animation-delay: 0.3s; }
 .dashboard-admin .dashboard-card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Tabelas responsivas padrão do Admin */
+.dashboard-admin .table-responsive { overflow-x: auto !important; }
+.dashboard-admin table.table { min-width: 800px; table-layout: auto; }
+.dashboard-admin table.table td:last-child { white-space: nowrap; }

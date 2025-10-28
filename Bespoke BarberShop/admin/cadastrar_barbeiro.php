@@ -9,6 +9,7 @@ include_once "../includes/db.php";
 $bd = new Banco();
 $conn = $bd->getConexao();
 $admin_id = $_SESSION['usuario_id'];
+if (empty($_SESSION['csrf_token'])) { $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); }
 
 // Buscar ID da unidade do admin
 $sql = $conn->prepare("SELECT Unidade_idUnidade FROM Administrador WHERE idAdministrador = ?");
@@ -22,13 +23,19 @@ $sucesso = false;
 $erro = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $token = $_POST['csrf_token'] ?? '';
+    if (!hash_equals($_SESSION['csrf_token'], $token)) {
+        header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode('Falha de segurança. Atualize a página e tente novamente.'));
+        exit;
+    }
     $nome = trim($_POST['nome']);
     $email = trim($_POST['email']);
     $telefone = trim($_POST['telefone']);
     $senha = $_POST['senha'];
     
     if (empty($nome) || empty($email) || empty($telefone) || empty($senha)) {
-        $erro = 'Todos os campos são obrigatórios.';
+        header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode('Todos os campos são obrigatórios.'));
+        exit;
     } else {
         // Verificar se o email já existe
         $check = $conn->prepare("SELECT idBarbeiro FROM Barbeiro WHERE emailBarbeiro = ?");
@@ -37,7 +44,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $check->store_result();
         
         if ($check->num_rows > 0) {
-            $erro = 'Este email já está cadastrado.';
+            $check->close();
+            header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode('Este email já está cadastrado.'));
+            exit;
         } else {
             // Inserir novo barbeiro
             $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
@@ -45,11 +54,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $insert->bind_param("ssssi", $nome, $email, $telefone, $senha_hash, $unidade_id);
             
             if ($insert->execute()) {
-                $sucesso = true;
+                $insert->close();
+                header('Location: cadastrar_barbeiro.php?ok=1&msg=' . urlencode('Barbeiro cadastrado com sucesso!'));
+                exit;
             } else {
-                $erro = 'Erro ao cadastrar barbeiro. Tente novamente.';
+                $insert->close();
+                header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode('Erro ao cadastrar barbeiro. Tente novamente.'));
+                exit;
             }
-            $insert->close();
         }
         $check->close();
     }
@@ -67,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="dashboard-admin">
     <div class="container py-5">
+        <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3 bb-toast-container" id="toast-msg-container"></div>
         <div class="row justify-content-center">
             <div class="col-lg-6">
                 <div class="dashboard-card">
@@ -74,20 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h2 class="dashboard-title mb-0"><i class="bi bi-person-plus"></i> Cadastrar Barbeiro</h2>
                         <a href="index_admin.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> Voltar</a>
                     </div>
-                    
-                    <?php if ($sucesso): ?>
-                        <div class="alert alert-success" role="alert">
-                            <i class="bi bi-check-circle"></i> Barbeiro cadastrado com sucesso!
-                        </div>
-                    <?php endif; ?>
-                    
-                    <?php if ($erro): ?>
-                        <div class="alert alert-danger" role="alert">
-                            <i class="bi bi-exclamation-triangle"></i> <?= htmlspecialchars($erro) ?>
-                        </div>
-                    <?php endif; ?>
-                    
                     <form method="POST">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                         <div class="mb-3">
                             <label for="nome" class="form-label">Nome Completo</label>
                             <input type="text" class="form-control" id="nome" name="nome" required>
@@ -116,7 +117,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
     </div>
-    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function getParam(name){ const url = new URL(window.location.href); return url.searchParams.get(name); }
+        function showToast(message, ok){
+            const container = document.getElementById('toast-msg-container'); if(!container || !message) return;
+            const el = document.createElement('div');
+            el.className = `toast align-items-center ${ok==='1' ? 'text-bg-success' : 'text-bg-danger'} border-0`;
+            el.setAttribute('role','alert'); el.setAttribute('aria-live','assertive'); el.setAttribute('aria-atomic','true');
+            el.innerHTML = `<div class=\"d-flex\"><div class=\"toast-body\">${message}</div><button type=\"button\" class=\"btn-close btn-close-white me-2 m-auto\" data-bs-dismiss=\"toast\" aria-label=\"Close\"></button></div>`;
+            container.appendChild(el); new bootstrap.Toast(el, { delay: 3500 }).show();
+        }
+        const msg = getParam('msg'); const ok = getParam('ok'); if (msg) { try { showToast(decodeURIComponent(msg), ok); } catch(_) { showToast(msg, ok); } }
+    </script>
     <style>
         .form-control {
             background: rgba(255,255,255,0.1);
@@ -143,22 +156,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 0.5rem;
         }
         
-        .alert {
-            border: none;
-            border-radius: 8px;
-        }
-        
-        .alert-success {
-            background: rgba(40,167,69,0.2);
-            color: #28a745;
-            border-left: 4px solid #28a745;
-        }
-        
-        .alert-danger {
-            background: rgba(220,53,69,0.2);
-            color: #dc3545;
-            border-left: 4px solid #dc3545;
-        }
+        /* Feedback via toasts; alerts removidos */
     </style>
+    <?php @include_once("../Footer/footer.html"); ?>
 </body>
 </html>

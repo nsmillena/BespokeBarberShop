@@ -8,29 +8,54 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['papel'] !== 'admin') {
 include_once "../includes/db.php";
 $bd = new Banco();
 $conn = $bd->getConexao();
+// CSRF token setup
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+$admin_id = $_SESSION['usuario_id'];
+// Buscar ID da unidade do admin (para vínculo de serviços)
+$sqlUni = $conn->prepare("SELECT Unidade_idUnidade FROM Administrador WHERE idAdministrador = ?");
+$sqlUni->bind_param("i", $admin_id);
+$sqlUni->execute();
+$sqlUni->bind_result($unidade_id);
+$sqlUni->fetch();
+$sqlUni->close();
 
 $sucesso = '';
 $erro = '';
 
 // Processar ações
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF check
+    $token = $_POST['csrf_token'] ?? '';
+    if (!hash_equals($_SESSION['csrf_token'], $token)) {
+        header('Location: gerenciar_servicos.php?ok=0&msg=' . urlencode('Falha de segurança. Atualize a página e tente novamente.'));
+        exit;
+    }
     $acao = $_POST['acao'] ?? '';
     
     if ($acao === 'adicionar') {
         $nome = trim($_POST['nome']);
         $preco = floatval($_POST['preco']);
         $duracao = intval($_POST['duracao']);
+        $descricao = trim($_POST['descricao'] ?? '');
         
         if (empty($nome) || $preco <= 0 || $duracao <= 0) {
-            $erro = 'Todos os campos são obrigatórios e devem ter valores válidos.';
+            header('Location: gerenciar_servicos.php?ok=0&msg=' . urlencode('Todos os campos são obrigatórios e devem ter valores válidos.'));
+            exit;
         } else {
-            $insert = $conn->prepare("INSERT INTO Servico (nomeServico, precoServico, duracaoServico) VALUES (?, ?, ?)");
-            $insert->bind_param("sdi", $nome, $preco, $duracao);
+            // descricaoServico é NOT NULL no schema; garantir string vazia ao menos
+            $insert = $conn->prepare("INSERT INTO Servico (nomeServico, descricaoServico, duracaoPadrao, precoServico) VALUES (?, ?, ?, ?)");
+            // preco is DECIMAL, bind as double 'd'
+            $insert->bind_param("ssid", $nome, $descricao, $duracao, $preco);
             
             if ($insert->execute()) {
-                $sucesso = 'Serviço adicionado com sucesso!';
+                header('Location: gerenciar_servicos.php?ok=1&msg=' . urlencode('Serviço adicionado com sucesso!'));
+                exit;
             } else {
-                $erro = 'Erro ao adicionar serviço.';
+                header('Location: gerenciar_servicos.php?ok=0&msg=' . urlencode('Erro ao adicionar serviço.'));
+                exit;
             }
             $insert->close();
         }
@@ -39,25 +64,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nome = trim($_POST['nome']);
         $preco = floatval($_POST['preco']);
         $duracao = intval($_POST['duracao']);
+        $descricao = trim($_POST['descricao'] ?? '');
         
         if (empty($nome) || $preco <= 0 || $duracao <= 0) {
-            $erro = 'Todos os campos são obrigatórios e devem ter valores válidos.';
+            header('Location: gerenciar_servicos.php?ok=0&msg=' . urlencode('Todos os campos são obrigatórios e devem ter valores válidos.'));
+            exit;
         } else {
-            $update = $conn->prepare("UPDATE Servico SET nomeServico = ?, precoServico = ?, duracaoServico = ? WHERE idServico = ?");
-            $update->bind_param("sdii", $nome, $preco, $duracao, $id);
+            $update = $conn->prepare("UPDATE Servico SET nomeServico = ?, descricaoServico = ?, duracaoPadrao = ?, precoServico = ? WHERE idServico = ?");
+            $update->bind_param("ssidi", $nome, $descricao, $duracao, $preco, $id);
             
             if ($update->execute()) {
-                $sucesso = 'Serviço atualizado com sucesso!';
+                header('Location: gerenciar_servicos.php?ok=1&msg=' . urlencode('Serviço atualizado com sucesso!'));
+                exit;
             } else {
-                $erro = 'Erro ao atualizar serviço.';
+                header('Location: gerenciar_servicos.php?ok=0&msg=' . urlencode('Erro ao atualizar serviço.'));
+                exit;
             }
             $update->close();
         }
     } elseif ($acao === 'deletar') {
         $id = intval($_POST['id']);
         
-        // Verificar se há agendamentos usando este serviço
-        $check = $conn->prepare("SELECT COUNT(*) FROM Agendamento WHERE Servico_idServico = ?");
+        // Verificar se há agendamentos usando este serviço (via tabela de associação)
+        $check = $conn->prepare("SELECT COUNT(*) FROM Agendamento_has_Servico WHERE Servico_idServico = ?");
         $check->bind_param("i", $id);
         $check->execute();
         $check->bind_result($count);
@@ -65,26 +94,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $check->close();
         
         if ($count > 0) {
-            $erro = 'Não é possível deletar este serviço pois há agendamentos vinculados a ele.';
+            header('Location: gerenciar_servicos.php?ok=0&msg=' . urlencode('Não é possível deletar este serviço pois há agendamentos vinculados a ele.'));
+            exit;
         } else {
             $delete = $conn->prepare("DELETE FROM Servico WHERE idServico = ?");
             $delete->bind_param("i", $id);
             
             if ($delete->execute()) {
-                $sucesso = 'Serviço deletado com sucesso!';
+                header('Location: gerenciar_servicos.php?ok=1&msg=' . urlencode('Serviço deletado com sucesso!'));
+                exit;
             } else {
-                $erro = 'Erro ao deletar serviço.';
+                header('Location: gerenciar_servicos.php?ok=0&msg=' . urlencode('Erro ao deletar serviço.'));
+                exit;
             }
             $delete->close();
         }
+    } elseif ($acao === 'vincular_unidade' && !empty($unidade_id)) {
+        // Atualizar vinculação de serviços à unidade do admin
+        $selecionados = isset($_POST['servicos_unidade']) && is_array($_POST['servicos_unidade'])
+            ? array_map('intval', $_POST['servicos_unidade']) : [];
+
+        // Buscar atuais
+        $atuais = [];
+        $resV = $conn->prepare("SELECT Servico_idServico FROM Unidade_has_Servico WHERE Unidade_idUnidade = ?");
+        $resV->bind_param("i", $unidade_id);
+        $resV->execute();
+        $r = $resV->get_result();
+        while ($row = $r->fetch_assoc()) { $atuais[] = (int)$row['Servico_idServico']; }
+        $resV->close();
+
+        $add = array_values(array_diff($selecionados, $atuais));
+        $rem = array_values(array_diff($atuais, $selecionados));
+
+        // Inserir novos
+        if (!empty($add)) {
+            $ins = $conn->prepare("INSERT INTO Unidade_has_Servico (Unidade_idUnidade, Servico_idServico) VALUES (?, ?)");
+            foreach ($add as $sid) { $ins->bind_param("ii", $unidade_id, $sid); $ins->execute(); }
+            $ins->close();
+        }
+        // Remover desmarcados
+        if (!empty($rem)) {
+            $del = $conn->prepare("DELETE FROM Unidade_has_Servico WHERE Unidade_idUnidade = ? AND Servico_idServico = ?");
+            foreach ($rem as $sid) { $del->bind_param("ii", $unidade_id, $sid); $del->execute(); }
+            $del->close();
+        }
+        header('Location: gerenciar_servicos.php?ok=1&msg=' . urlencode('Vinculações de serviços atualizadas.'));
+        exit;
     }
 }
 
 // Buscar todos os serviços
 $servicos = [];
-$result = $conn->query("SELECT idServico, nomeServico, precoServico, duracaoServico FROM Servico ORDER BY nomeServico");
+$result = $conn->query("SELECT idServico, nomeServico, descricaoServico, precoServico, duracaoPadrao FROM Servico ORDER BY nomeServico");
 while ($row = $result->fetch_assoc()) {
     $servicos[] = $row;
+}
+// Buscar serviços vinculados à unidade (se houver)
+$servicosUnidade = [];
+if (!empty($unidade_id)) {
+    $resSu = $conn->prepare("SELECT Servico_idServico FROM Unidade_has_Servico WHERE Unidade_idUnidade = ?");
+    $resSu->bind_param("i", $unidade_id);
+    $resSu->execute();
+    $rsu = $resSu->get_result();
+    while ($row = $rsu->fetch_assoc()) { $servicosUnidade[] = (int)$row['Servico_idServico']; }
+    $resSu->close();
 }
 ?>
 <!DOCTYPE html>
@@ -99,6 +172,8 @@ while ($row = $result->fetch_assoc()) {
 </head>
 <body class="dashboard-admin">
     <div class="container py-5">
+        <!-- Toast container -->
+        <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3 bb-toast-container" id="toast-msg-container"></div>
         <div class="row">
             <div class="col-12">
                 <div class="dashboard-card">
@@ -111,27 +186,21 @@ while ($row = $result->fetch_assoc()) {
                             <a href="index_admin.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> Voltar</a>
                         </div>
                     </div>
-                    
-                    <?php if ($sucesso): ?>
-                        <div class="alert alert-success" role="alert">
-                            <i class="bi bi-check-circle"></i> <?= htmlspecialchars($sucesso) ?>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <?php if ($erro): ?>
-                        <div class="alert alert-danger" role="alert">
-                            <i class="bi bi-exclamation-triangle"></i> <?= htmlspecialchars($erro) ?>
-                        </div>
-                    <?php endif; ?>
-                    
+                    <!-- Barra de busca -->
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-dark text-warning border-secondary"><i class="bi bi-search"></i></span>
+                        <input type="text" id="filtro-servicos" class="form-control bg-dark text-light border-secondary" placeholder="Filtrar serviços por nome ou descrição...">
+                    </div>
+
                     <div class="table-responsive">
-                        <table class="table table-dark table-striped">
+                        <table class="table table-dark table-striped align-middle">
                             <thead>
                                 <tr>
                                     <th>ID</th>
                                     <th>Nome do Serviço</th>
                                     <th>Preço</th>
                                     <th>Duração (min)</th>
+                                    <th>Descrição</th>
                                     <th>Ações</th>
                                 </tr>
                             </thead>
@@ -141,9 +210,10 @@ while ($row = $result->fetch_assoc()) {
                                         <td><?= $servico['idServico'] ?></td>
                                         <td><?= htmlspecialchars($servico['nomeServico']) ?></td>
                                         <td>R$ <?= number_format($servico['precoServico'], 2, ',', '.') ?></td>
-                                        <td><?= $servico['duracaoServico'] ?> min</td>
+                                        <td><?= (int)$servico['duracaoPadrao'] ?> min</td>
+                                        <td class="text-truncate" style="max-width:280px;" title="<?= htmlspecialchars($servico['descricaoServico']) ?>"><?= htmlspecialchars($servico['descricaoServico']) ?></td>
                                         <td>
-                                            <button type="button" class="btn btn-warning btn-sm me-1" onclick="editarServico(<?= $servico['idServico'] ?>, '<?= htmlspecialchars($servico['nomeServico']) ?>', <?= $servico['precoServico'] ?>, <?= $servico['duracaoServico'] ?>)">
+                                            <button type="button" class="btn btn-warning btn-sm me-1" onclick="editarServico(<?= $servico['idServico'] ?>, '<?= htmlspecialchars($servico['nomeServico']) ?>', <?= $servico['precoServico'] ?>, <?= (int)$servico['duracaoPadrao'] ?>, '<?= htmlspecialchars($servico['descricaoServico']) ?>')">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                             <button type="button" class="btn btn-danger btn-sm" onclick="deletarServico(<?= $servico['idServico'] ?>, '<?= htmlspecialchars($servico['nomeServico']) ?>')">
@@ -154,12 +224,34 @@ while ($row = $result->fetch_assoc()) {
                                 <?php endforeach; ?>
                                 <?php if (empty($servicos)): ?>
                                     <tr>
-                                        <td colspan="5" class="text-center">Nenhum serviço cadastrado.</td>
+                                        <td colspan="6" class="text-center">Nenhum serviço cadastrado.</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
+
+                    <?php if (!empty($unidade_id)): ?>
+                    <hr class="my-4" style="border-color: rgba(218,165,32,0.3);">
+                    <h5 class="dashboard-section-title"><i class="bi bi-building"></i> Serviços desta unidade</h5>
+                    <form method="POST" class="mb-2">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                        <input type="hidden" name="acao" value="vincular_unidade">
+                        <div class="row g-2">
+                            <?php foreach ($servicos as $servico): $sid=(int)$servico['idServico']; $chk=in_array($sid, $servicosUnidade); ?>
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="form-check text-light">
+                                        <input class="form-check-input" type="checkbox" id="su_<?= $sid ?>" name="servicos_unidade[]" value="<?= $sid ?>" <?= $chk? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="su_<?= $sid ?>"><?= htmlspecialchars($servico['nomeServico']) ?></label>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="dashboard-action"><i class="bi bi-save"></i> Salvar vinculações</button>
+                        </div>
+                    </form>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -175,6 +267,7 @@ while ($row = $result->fetch_assoc()) {
                 </div>
                 <form method="POST">
                     <div class="modal-body">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                         <input type="hidden" name="acao" value="adicionar">
                         <div class="mb-3">
                             <label for="nome" class="form-label">Nome do Serviço</label>
@@ -187,6 +280,10 @@ while ($row = $result->fetch_assoc()) {
                         <div class="mb-3">
                             <label for="duracao" class="form-label">Duração (minutos)</label>
                             <input type="number" min="1" class="form-control" id="duracao" name="duracao" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição do Serviço</label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="2" placeholder="Ex.: Corte com acabamento e lavagem"></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -208,6 +305,7 @@ while ($row = $result->fetch_assoc()) {
                 </div>
                 <form method="POST">
                     <div class="modal-body">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                         <input type="hidden" name="acao" value="editar">
                         <input type="hidden" name="id" id="editId">
                         <div class="mb-3">
@@ -221,6 +319,10 @@ while ($row = $result->fetch_assoc()) {
                         <div class="mb-3">
                             <label for="editDuracao" class="form-label">Duração (minutos)</label>
                             <input type="number" min="1" class="form-control" id="editDuracao" name="duracao" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDescricao" class="form-label">Descrição do Serviço</label>
+                            <textarea class="form-control" id="editDescricao" name="descricao" rows="2"></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -242,6 +344,7 @@ while ($row = $result->fetch_assoc()) {
                 </div>
                 <form method="POST">
                     <div class="modal-body">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                         <input type="hidden" name="acao" value="deletar">
                         <input type="hidden" name="id" id="deleteId">
                         <p>Tem certeza que deseja deletar o serviço <strong id="deleteNome"></strong>?</p>
@@ -257,13 +360,40 @@ while ($row = $result->fetch_assoc()) {
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
-        function editarServico(id, nome, preco, duracao) {
+        // Toasts
+        function getParam(name){ const url = new URL(window.location.href); return url.searchParams.get(name); }
+        function showToast(message, ok){
+            const container = document.getElementById('toast-msg-container'); if(!container || !message) return;
+            const el = document.createElement('div');
+            el.className = `toast align-items-center ${ok==='1' ? 'text-bg-success' : 'text-bg-danger'} border-0`;
+            el.setAttribute('role','alert'); el.setAttribute('aria-live','assertive'); el.setAttribute('aria-atomic','true');
+            el.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>`;
+            container.appendChild(el); new bootstrap.Toast(el, { delay: 3500 }).show();
+        }
+        const msg = getParam('msg'); const ok = getParam('ok'); if (msg) { try { showToast(decodeURIComponent(msg), ok); } catch(_) { showToast(msg, ok); } }
+
+        // Filtro da tabela
+        const filtro = document.getElementById('filtro-servicos');
+        const tabela = document.getElementById('tabela-servicos');
+        if (filtro && tabela) {
+            filtro.addEventListener('input', () => {
+                const q = filtro.value.toLowerCase();
+                tabela.querySelectorAll('tbody tr').forEach(tr => {
+                    const nome = (tr.children[1]?.textContent || '').toLowerCase();
+                    const desc = (tr.children[4]?.textContent || '').toLowerCase();
+                    tr.style.display = (nome.includes(q) || desc.includes(q)) ? '' : 'none';
+                });
+            });
+        }
+    </script>
+    <script>
+        function editarServico(id, nome, preco, duracao, descricao) {
             document.getElementById('editId').value = id;
             document.getElementById('editNome').value = nome;
             document.getElementById('editPreco').value = preco;
             document.getElementById('editDuracao').value = duracao;
+            document.getElementById('editDescricao').value = descricao || '';
             new bootstrap.Modal(document.getElementById('modalEditar')).show();
         }
         
@@ -293,26 +423,13 @@ while ($row = $result->fetch_assoc()) {
             font-weight: 500;
         }
         
-        .table-dark {
-            --bs-table-bg: rgba(255,255,255,0.05);
-        }
+        .table-dark { --bs-table-bg: rgba(255,255,255,0.05); }
+        .table-responsive{ overflow-x:auto !important; }
+        .table{ min-width: 800px; table-layout: auto; }
+        .table td:last-child{ white-space: nowrap; }
         
-        .alert {
-            border: none;
-            border-radius: 8px;
-        }
-        
-        .alert-success {
-            background: rgba(40,167,69,0.2);
-            color: #28a745;
-            border-left: 4px solid #28a745;
-        }
-        
-        .alert-danger {
-            background: rgba(220,53,69,0.2);
-            color: #dc3545;
-            border-left: 4px solid #dc3545;
-        }
+        /* Alerts kept minimal; toasts are primary feedback */
     </style>
+    <?php @include_once("../Footer/footer.html"); ?>
 </body>
 </html>
