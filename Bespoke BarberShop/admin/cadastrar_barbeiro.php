@@ -32,11 +32,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email']);
     $telefone = trim($_POST['telefone']);
     $senha = $_POST['senha'];
+    $confirma = $_POST['confirma'] ?? '';
     
     if (empty($nome) || empty($email) || empty($telefone) || empty($senha)) {
         header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode('Todos os campos são obrigatórios.'));
         exit;
     } else {
+        if ($senha !== $confirma) {
+            header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode('As senhas não conferem.'));
+            exit;
+        }
+        // Validação de força da senha: mínimo 8, maiúscula, minúscula, dígito e símbolo
+        $temMaiuscula = preg_match('/[A-Z]/', $senha);
+        $temMinuscula = preg_match('/[a-z]/', $senha);
+        $temDigito    = preg_match('/\d/', $senha);
+        $temEspecial  = preg_match('/[^A-Za-z0-9]/', $senha);
+        if (strlen($senha) < 8 || !$temMaiuscula || !$temMinuscula || !$temDigito || !$temEspecial) {
+            header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode('A senha deve ter no mínimo 8 caracteres e incluir maiúscula, minúscula, número e símbolo.'));
+            exit;
+        }
         // Verificar se o email já existe
         $check = $conn->prepare("SELECT idBarbeiro FROM Barbeiro WHERE emailBarbeiro = ?");
         $check->bind_param("s", $email);
@@ -55,6 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($insert->execute()) {
                 $insert->close();
+                // Armazena a senha em sessão para exibir uma única vez após o redirect
+                $_SESSION['new_barber_password_show_once'] = $senha;
                 header('Location: cadastrar_barbeiro.php?ok=1&msg=' . urlencode('Barbeiro cadastrado com sucesso!'));
                 exit;
             } else {
@@ -83,6 +99,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="row justify-content-center">
             <div class="col-lg-6">
                 <div class="dashboard-card">
+                    <?php if (!empty($_SESSION['new_barber_password_show_once'])): $onePw = $_SESSION['new_barber_password_show_once']; unset($_SESSION['new_barber_password_show_once']); ?>
+                        <div class="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
+                            <div>
+                                <strong>Senha inicial do barbeiro:</strong>
+                                <span id="newBarberPw" style="font-family:monospace;"><?= htmlspecialchars($onePw) ?></span>
+                                <small class="d-block text-muted">Copie e compartilhe com segurança. Esta senha não será exibida novamente.</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-dark" onclick="copyNewPw()"><i class="bi bi-clipboard"></i> Copiar</button>
+                        </div>
+                    <?php endif; ?>
                     <div class="d-flex justify-content-between align-items-center mb-4">
                         <h2 class="dashboard-title mb-0"><i class="bi bi-person-plus"></i> Cadastrar Barbeiro</h2>
                         <a href="index_admin.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> Voltar</a>
@@ -101,12 +127,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         <div class="mb-3">
                             <label for="telefone" class="form-label">Telefone</label>
-                            <input type="tel" class="form-control" id="telefone" name="telefone" required>
+                            <input type="tel" class="form-control bb-phone" id="telefone" name="telefone" required>
                         </div>
                         
-                        <div class="mb-4">
+                        <div class="mb-2">
                             <label for="senha" class="form-label">Senha</label>
-                            <input type="password" class="form-control" id="senha" name="senha" required>
+                            <input type="password" class="form-control bb-password" id="senha" name="senha" required pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}" title="Mínimo 8, com maiúscula, minúscula, número e símbolo.">
+                        </div>
+                        <div class="mb-4">
+                            <label for="confirma" class="form-label">Confirmar Senha</label>
+                            <input type="password" class="form-control bb-password-confirm" id="confirma" name="confirma" required data-match="#senha">
+                            <small class="text-muted">Mínimo 8, com maiúscula, minúscula, número e símbolo.</small>
                         </div>
                         
                         <button type="submit" class="dashboard-action w-100">
@@ -118,7 +149,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/phone-mask.js"></script>
+    <script src="../js/password-strength.js"></script>
     <script>
+        function copyNewPw(){
+            const el = document.getElementById('newBarberPw');
+            if (!el) return;
+            const range = document.createRange();
+            range.selectNode(el);
+            const sel = window.getSelection();
+            sel.removeAllRanges(); sel.addRange(range);
+            try { document.execCommand('copy'); } catch(_){ navigator.clipboard && navigator.clipboard.writeText(el.textContent); }
+            sel.removeAllRanges();
+        }
         function getParam(name){ const url = new URL(window.location.href); return url.searchParams.get(name); }
         function showToast(message, ok){
             const container = document.getElementById('toast-msg-container'); if(!container || !message) return;

@@ -1,6 +1,7 @@
 <?php
 session_start();
 include "../includes/db.php";
+include_once "../includes/helpers.php";
 
 if (!isset($_SESSION['usuario_id']) || $_SESSION['papel'] !== 'barbeiro') {
     header("Location: ../login.php");
@@ -10,6 +11,18 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['papel'] !== 'barbeiro') {
 $bd = new Banco();
 $conn = $bd->getConexao();
 $idBarbeiro = $_SESSION['usuario_id'];
+
+// Se for obrigatório trocar a senha, bloquear acesso e redirecionar para editar perfil
+$chkMust = $conn->prepare("SELECT deveTrocarSenha FROM Barbeiro WHERE idBarbeiro=?");
+$chkMust->bind_param("i", $idBarbeiro);
+$chkMust->execute();
+$chkMust->bind_result($must);
+$chkMust->fetch();
+$chkMust->close();
+if ((int)$must === 1) {
+    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Troca de senha obrigatória no primeiro acesso.'));
+    exit;
+}
 
 // Filtro por status via GET (padrão: Agendado)
 $status = isset($_GET['status']) ? $_GET['status'] : 'Agendado';
@@ -30,6 +43,24 @@ switch ($status) {
     case 'Agendado':
     default:
         $whereStatus = "AND a.statusAgendamento = 'Agendado'";
+}
+
+// Período via GET (inicio/fim em YYYY-MM-DD) para chips Hoje/Amanhã/Semana
+$inicio = isset($_GET['inicio']) ? trim($_GET['inicio']) : '';
+$fim    = isset($_GET['fim'])    ? trim($_GET['fim'])    : '';
+// Validação simples de data
+$isValidDate = function($d){
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) return false;
+    [$y,$m,$day] = explode('-', $d); return checkdate((int)$m,(int)$day,(int)$y);
+};
+$periodoTxt = '';
+if ($inicio && $fim && $isValidDate($inicio) && $isValidDate($fim)) {
+    // Segurança: datas validadas, inclusão direta é aceitável neste contexto
+    $whereStatus .= " AND a.data BETWEEN '".$conn->real_escape_string($inicio)."' AND '".$conn->real_escape_string($fim)."'";
+    $periodoTxt = date('d/m', strtotime($inicio)).' - '.date('d/m', strtotime($fim));
+} elseif ($inicio && $isValidDate($inicio)) {
+    $whereStatus .= " AND a.data = '".$conn->real_escape_string($inicio)."'";
+    $periodoTxt = date('d/m', strtotime($inicio));
 }
 
 $sqlLista = "
@@ -108,7 +139,8 @@ if ($stmt) {
                         <?php endforeach; ?>
                     </div>
                 </div>
-                <div class="mt-2 text-warning" style="font-size:0.95rem;">Filtro atual de atendimentos: <b><?= htmlspecialchars($status) ?></b></div>
+                <div class="mt-2 text-warning" style="font-size:0.95rem;">Filtro atual de atendimentos: <b><?= htmlspecialchars($status) ?></b>
+                <?php if(!empty($periodoTxt)): ?> • Período: <b><?= htmlspecialchars($periodoTxt) ?></b><?php endif; ?></div>
             </div>
         </div>
         <div class="col-12">
@@ -138,7 +170,7 @@ if ($stmt) {
                                 <td><?= htmlspecialchars($row['nomeCliente']) ?></td>
                                 <td><?= htmlspecialchars($row['servicos']) ?></td>
                                 <td>R$ <?= number_format($row['precoTotal'],2,',','.') ?></td>
-                                <td><?= (int)$row['tempoTotal'] ?> min</td>
+                                <td><?= bb_format_minutes((int)$row['tempoTotal']) ?></td>
                                 <td><?= htmlspecialchars($status) ?></td>
                                 <td>
                                     <?php if ($status === 'Agendado' && $idAg > 0): ?>

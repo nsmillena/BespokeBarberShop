@@ -1,5 +1,6 @@
 <?php
 include "includes/db.php";
+include_once "includes/helpers.php";
 $bd = new Banco();
 $conn = $bd->getConexao();
 
@@ -23,6 +24,13 @@ $resServ = $conn->query("SELECT idServico, nomeServico, precoServico, duracaoPad
 while($row = $resServ->fetch_assoc()) {
   $servicos[] = $row;
 }
+
+// Prefill opcional (repetir último serviço): unidade, barbeiro e servico via GET
+$prefill = [
+  'unidade' => isset($_GET['unidade']) ? (int)$_GET['unidade'] : null,
+  'barbeiro' => isset($_GET['barbeiro']) ? (int)$_GET['barbeiro'] : null,
+  'servico' => isset($_GET['servico']) ? (int)$_GET['servico'] : null,
+];
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -37,10 +45,12 @@ while($row = $resServ->fetch_assoc()) {
 </head>
 <body class="container py-5">
 
+<!-- Botão Voltar ao Painel agora fica fixo no canto inferior esquerdo (definido ao final da página) -->
+
 <div class="progress-container mb-4">
   <div class="step active" id="step1"><div class="circle">1</div><small>Unidade</small></div>
-  <div class="step" id="step2"><div class="circle">2</div><small>Data & Hora</small></div>
-  <div class="step" id="step3"><div class="circle">3</div><small>Barbeiro</small></div>
+  <div class="step" id="step2"><div class="circle">2</div><small>Barbeiro</small></div>
+  <div class="step" id="step3"><div class="circle">3</div><small>Data & Hora</small></div>
   <div class="step" id="step4"><div class="circle">4</div><small>Serviço</small></div>
 </div>
 
@@ -59,7 +69,18 @@ while($row = $resServ->fetch_assoc()) {
     </div>
   </div>
 
+  <!-- PASSO 2: Escolha o Barbeiro (cards filtrados) -->
   <div class="card-custom step-card d-none" data-step="2">
+    <h5>Escolha o Barbeiro</h5>
+    <div class="d-flex gap-3 justify-content-center flex-wrap mt-3" id="barber-container"></div>
+    <div class="d-flex justify-content-between mt-3 w-100">
+      <button class="btn-custom btn-back" onclick="prevStep(2)">← Voltar</button>
+      <button class="btn-custom" onclick="nextStep(2)">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- PASSO 3: Data & Hora -->
+  <div class="card-custom step-card d-none" data-step="3">
     <h5>Escolha a Data e o Horário</h5>
     <div class="d-flex gap-4 justify-content-center flex-wrap">
       <div class="calendar">
@@ -81,30 +102,22 @@ while($row = $resServ->fetch_assoc()) {
         <div id="time-buttons-container"></div>
       </div>
     </div>
-    <div class="d-flex justify-content-between mt-3 w-100">
-      <button class="btn-custom btn-back" onclick="prevStep(2)">← Voltar</button>
-      <button class="btn-custom" onclick="nextStep(2)">Continuar →</button>
-    </div>
-  </div>
-
-  <!-- PASSO 3: Escolha o Barbeiro (cards filtrados) -->
-  <div class="card-custom step-card d-none" data-step="3">
-    <h5>Escolha o Barbeiro</h5>
-    <div class="d-flex gap-3 justify-content-center flex-wrap mt-3" id="barber-container"></div>
+    <div id="day-unavailable" class="text-warning mt-2 d-none">Barbeiro indisponível nesta data.</div>
     <div class="d-flex justify-content-between mt-3 w-100">
       <button class="btn-custom btn-back" onclick="prevStep(3)">← Voltar</button>
       <button class="btn-custom" onclick="nextStep(3)">Continuar →</button>
     </div>
   </div>
 
+  <!-- PASSO 4: Serviço -->
   <div class="card-custom step-card d-none" data-step="4">
     <h5>Escolha o Serviço</h5>
     <div class="service-container">
       <?php foreach($servicos as $serv): ?>
-        <div class="service-card" data-id="<?= $serv['idServico'] ?>" onclick="selectService(this)">
-          <h6><?= htmlspecialchars($serv['nomeServico']) ?></h6>
-          <small>R$ <?= number_format($serv['precoServico'],2,',','.') ?> | <?= $serv['duracaoPadrao'] ?>min</small>
-        </div>
+              <div class="service-card" data-id="<?= $serv['idServico'] ?>" data-durmins="<?= (int)$serv['duracaoPadrao'] ?>" data-preco="<?= number_format($serv['precoServico'],2,',','.') ?>" onclick="selectService(this)">
+                <h6><?= htmlspecialchars($serv['nomeServico']) ?></h6>
+                <small>R$ <?= number_format($serv['precoServico'],2,',','.') ?> | <?= bb_format_minutes($serv['duracaoPadrao']) ?></small>
+              </div>
       <?php endforeach; ?>
     </div>
     <div class="final-actions d-flex justify-content-between mt-3 align-items-center w-100" style="gap: 16px;">
@@ -115,8 +128,8 @@ while($row = $resServ->fetch_assoc()) {
         <input type="hidden" name="hora" id="form-hora">
         <input type="hidden" name="barbeiro" id="form-barbeiro">
         <input type="hidden" name="barbeiro_id" id="form-barbeiro-id">
-  <input type="hidden" name="servico" id="form-servico">
-  <input type="hidden" name="servico_id" id="form-servico-id">
+        <input type="hidden" name="servico" id="form-servico">
+        <input type="hidden" name="servico_id" id="form-servico-id">
         <input type="hidden" name="preco" id="form-preco">
         <input type="hidden" name="duracao" id="form-duracao">
         <button id="finalize-btn" class="btn-custom finalize-btn" disabled type="button" onclick="finalizeAgendamento()">Finalizar Agendamento →</button>
@@ -132,9 +145,12 @@ let selectedBarber = null;
 let selectedService = null;
 let selectedDay = null;
 let selectedTime = null;
+// cache de dias indisponíveis por mês para o barbeiro selecionado: key `${year}-${month}` => Set(dias)
+const monthDisabledCache = new Map();
 
 // Barbeiros reais por unidade (do PHP)
 const barbersData = <?php echo json_encode($barbeiros); ?>;
+const prefill = <?php echo json_encode($prefill); ?>;
 
 function updateProgress(step){
   for(let i=1;i<=4;i++){
@@ -168,12 +184,14 @@ function selectBarber(el){
   el.classList.add('selected');
   selectedBarber = el;
   updateFinalizeButtonState();
+  markUnavailableTimes();
 }
 function selectService(el){
   if(selectedService) selectedService.classList.remove('selected');
   el.classList.add('selected');
   selectedService = el;
   updateFinalizeButtonState();
+  markUnavailableTimes();
 }
 function populateBarbers(){
   const container = document.getElementById('barber-container');
@@ -187,7 +205,13 @@ function populateBarbers(){
     div.className = 'card-custom p-3';
     div.textContent = '👤 ' + barb.nomeBarbeiro;
     div.setAttribute('data-id', barb.idBarbeiro);
-    div.onclick = ()=>selectBarber(div);
+    div.onclick = ()=>{
+      selectBarber(div);
+      // limpa cache quando troca de barbeiro
+      monthDisabledCache.clear();
+      // recarrega indisponibilidades do mês atual
+      fetchMonthDisabledDays().then(()=>renderCalendar(currentMonth,currentYear));
+    };
     container.appendChild(div);
   });
 }
@@ -219,8 +243,23 @@ function renderCalendar(month, year){
     const dayEl = document.createElement("div");
     dayEl.textContent = day;
     const isPast = (year < today.getFullYear()) || (year === today.getFullYear() && month < today.getMonth()) || (year === today.getFullYear() && month === today.getMonth() && day < today.getDate());
+    const mKey = `${year}-${String(month+1).padStart(2,'0')}`;
+    const disabledSet = monthDisabledCache.get(mKey);
+    const isDisabled = disabledSet ? disabledSet.has(day) : false;
     if(isPast){ dayEl.style.opacity="0.4"; dayEl.style.cursor="not-allowed"; } 
-    else { dayEl.addEventListener("click", ()=>{ selectedDay={day,month,year}; renderCalendar(month,year); updateFinalizeButtonState(); }); }
+  else if (isDisabled) { dayEl.classList.add('disabled-day'); }
+  else { dayEl.addEventListener("click", ()=>{ 
+      // Ao mudar a data: limpar horário selecionado
+      document.querySelectorAll(".time-btn").forEach(b=>b.classList.remove("selected"));
+      selectedTime = null;
+      // Seleciona a nova data
+      selectedDay={day,month,year}; 
+      // Recria horários com janela adequada para o dia
+      renderTimesForDate(new Date(year, month, day));
+      renderCalendar(month,year); 
+      updateFinalizeButtonState(); 
+      markUnavailableTimes(); 
+    }); }
     if(selectedDay && day===selectedDay.day && month===selectedDay.month && year===selectedDay.year) dayEl.classList.add("selected-date");
     if(day===today.getDate() && month===today.getMonth() && year===today.getFullYear()) dayEl.classList.add("current-date");
     daysContainer.appendChild(dayEl);
@@ -230,7 +269,7 @@ prevMonth.addEventListener("click", ()=>{
   // Bloqueia voltar antes do mês atual
   if (currentYear < today.getFullYear() || (currentYear === today.getFullYear() && currentMonth <= today.getMonth())) return;
   currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;}
-  renderCalendar(currentMonth,currentYear);
+  fetchMonthDisabledDays().then(()=>renderCalendar(currentMonth,currentYear));
 });
 nextMonth.addEventListener("click", ()=>{
   // Bloqueia avançar além do próximo mês
@@ -240,30 +279,71 @@ nextMonth.addEventListener("click", ()=>{
   // Se passarmos do limite por virada de ano, corrige
   const beyond = (currentYear > maxDate.getFullYear()) || (currentYear === maxDate.getFullYear() && currentMonth > maxDate.getMonth());
   if (beyond) { currentYear = maxDate.getFullYear(); currentMonth = maxDate.getMonth(); }
-  renderCalendar(currentMonth,currentYear);
+  fetchMonthDisabledDays().then(()=>renderCalendar(currentMonth,currentYear));
 });
-renderCalendar(currentMonth,currentYear);
+// Busca inicial dos dias indisponíveis, então renderiza
+fetchMonthDisabledDays().then(()=>renderCalendar(currentMonth,currentYear));
 
-// Horários até 21:00
+// Horários por data: abertura mantida e fechamento reduzido em domingos/feriados
 const timeContainer = document.getElementById("time-buttons-container");
-function generateTimes(){
-  timeContainer.innerHTML="";
-  for(let hour=9; hour<=21; hour++){
-    ["00","30"].forEach(min=>{
-      const btn = document.createElement("button");
-      btn.className = "time-btn";
-      btn.textContent = `${hour}:${min}`;
-      btn.onclick = ()=>{
-        document.querySelectorAll(".time-btn").forEach(b=>b.classList.remove("selected"));
-        btn.classList.add("selected");
-        selectedTime = btn.textContent;
-        updateFinalizeButtonState();
-      };
-      timeContainer.appendChild(btn);
-    });
+
+// Algoritmo de Páscoa (Greg.) e feriados móveis comuns (Carnaval, Sexta Santa, Corpus Christi)
+function easterDate(year){
+  const a = year % 19; const b = Math.floor(year/100); const c = year % 100; const d = Math.floor(b/4); const e = b % 4;
+  const f = Math.floor((b + 8) / 25); const g = Math.floor((b - f + 1) / 3); const h = (19*a + b - d - g + 15) % 30;
+  const i = Math.floor(c/4); const k = c % 4; const l = (32 + 2*e + 2*i - h - k) % 7; const m = Math.floor((a + 11*h + 22*l) / 451);
+  const month = Math.floor((h + l - 7*m + 114) / 31); const day = ((h + l - 7*m + 114) % 31) + 1;
+  return new Date(year, month-1, day);
+}
+function addDays(date, days){ const d=new Date(date); d.setDate(d.getDate()+days); return d; }
+function fixedHolidays(year){
+  const list = ["01-01","04-21","05-01","09-07","10-12","11-02","11-15","12-25"]; 
+  return new Set(list.map(md=>`${year}-${md}`));
+}
+function movableHolidays(year){
+  const easter = easterDate(year);
+  const carnival = addDays(easter, -47);
+  const goodFriday = addDays(easter, -2);
+  const corpusChristi = addDays(easter, 60);
+  const set = new Set();
+  [carnival, goodFriday, easter, corpusChristi].forEach(d=>{
+    const iso = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    set.add(iso);
+  });
+  return set;
+}
+function isHoliday(date){
+  const y = date.getFullYear();
+  const iso = `${y}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+  const fixed = fixedHolidays(y); const movable = movableHolidays(y);
+  return fixed.has(iso) || movable.has(iso);
+}
+function businessWindowFor(date){
+  const openMin = 9*60; // 09:00
+  const isSunday = date.getDay() === 0;
+  const reduced = isSunday || isHoliday(date);
+  const closeMin = reduced ? 16*60 : 21*60; // fecha mais cedo em domingos/feriados
+  return { openMin, closeMin };
+}
+function renderTimesForDate(date){
+  const { openMin, closeMin } = businessWindowFor(date);
+  timeContainer.innerHTML = "";
+  for(let mins=openMin; mins<=closeMin; mins+=30){
+    const h = Math.floor(mins/60), m = mins%60;
+    const btn = document.createElement("button");
+    btn.className = "time-btn";
+    btn.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    btn.onclick = ()=>{
+      document.querySelectorAll(".time-btn").forEach(b=>b.classList.remove("selected"));
+      btn.classList.add("selected");
+      selectedTime = btn.textContent;
+      updateFinalizeButtonState();
+    };
+    timeContainer.appendChild(btn);
   }
 }
-generateTimes();
+// Render inicial (hoje)
+renderTimesForDate(new Date());
 
 // Finalizar
 function updateFinalizeButtonState(){
@@ -283,9 +363,8 @@ function finalizeAgendamento(){
   const barbeiroId=selectedBarber.getAttribute('data-id');
   const servNome=selectedService.querySelector('h6')?selectedService.querySelector('h6').textContent.trim():selectedService.textContent.trim();
   const servId=selectedService.getAttribute('data-id');
-  const servInfo=selectedService.querySelector('small')?selectedService.querySelector('small').textContent.trim():'';
-  let preco='', duracao='';
-  if(servInfo){ const parts=servInfo.split('|'); preco=parts[0]?parts[0].trim():'', duracao=parts[1]?parts[1].trim():''; }
+  const preco = selectedService.dataset.preco || '';
+  const duracao = (selectedService.dataset.durmins || '').toString();
   // Preencher os campos do formulário
   document.getElementById('form-unidade').value = currentUnit;
   document.getElementById('form-data').value = dataFormatada;
@@ -300,42 +379,140 @@ function finalizeAgendamento(){
   document.getElementById('form-agendamento').submit();
 }
 updateFinalizeButtonState();
-</script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const unidadeSelect = document.getElementById('select-unidade');
-  const barbeiroSelect = document.getElementById('select-barbeiro');
-  unidadeSelect.addEventListener('change', function() {
-    const unidadeId = this.value;
-    barbeiroSelect.innerHTML = '<option value="">Carregando barbeiros...</option>';
-    barbeiroSelect.disabled = true;
-    if (!unidadeId) {
-      barbeiroSelect.innerHTML = '<option value="">Selecione a unidade primeiro</option>';
-      barbeiroSelect.disabled = true;
+// Aplicar prefill (se existir): agora após preencher unidade/barbeiro/serviço, vai direto para Data & Hora (passo 3)
+window.addEventListener('DOMContentLoaded', () => {
+  try {
+    if (prefill && (prefill.unidade || prefill.barbeiro || prefill.servico)) {
+      if (prefill.unidade && barbersData[prefill.unidade]) {
+        currentUnit = prefill.unidade;
+        populateBarbers();
+        let hasBarber = false;
+        if (prefill.barbeiro) {
+          const el = Array.from(document.querySelectorAll('#barber-container .card-custom'))
+            .find(d => d.getAttribute('data-id') === String(prefill.barbeiro));
+          if (el) { selectBarber(el); hasBarber = true; }
+        }
+        if (prefill.servico) {
+          const svcEl = Array.from(document.querySelectorAll('.service-card'))
+            .find(s => s.getAttribute('data-id') === String(prefill.servico));
+          if (svcEl) { selectService(svcEl); }
+        }
+        // Avança: esconde passo 1 e, se já tiver barbeiro predefinido, mostra passo 3 (Data & Hora); senão, passo 2
+        document.querySelector('[data-step="1"]').classList.add('d-none');
+        if (hasBarber) {
+          document.querySelector('[data-step="3"]').classList.remove('d-none');
+          updateProgress(3);
+          // renderiza calendário/horários com base no barbeiro selecionado
+          markUnavailableTimes();
+        } else {
+          document.querySelector('[data-step="2"]').classList.remove('d-none');
+          updateProgress(2);
+        }
+      }
+    }
+  } catch(e) {}
+});
+
+// Desabilita visualmente horários indisponíveis com base em bloqueios do barbeiro e duração do serviço
+// util: converte HH:MM:SS => segundos a partir de 00:00
+function toSec(hms){
+  const [h,m,s] = (hms||'00:00:00').split(':').map(v=>parseInt(v,10));
+  return (h*3600)+(m*60)+(isNaN(s)?0:s);
+}
+// retorna string HH:MM:SS a partir de segundos
+function fromSec(total){ const h=Math.floor(total/3600)%24; const m=Math.floor((total%3600)/60); return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`; }
+
+async function markUnavailableTimes(){
+  try {
+    // reset initial state
+    document.querySelectorAll('.time-btn').forEach(btn=>{ btn.disabled=false; btn.classList.remove('disabled'); btn.title=''; });
+    // precisa ter pelo menos barbeiro e dia; serviço é opcional (assume 30min por padrão)
+    if (!selectedBarber || !selectedDay) return;
+    const barberId = selectedBarber.getAttribute('data-id');
+    let durMins = 30;
+    if (selectedService && selectedService.dataset && selectedService.dataset.durmins) {
+      durMins = parseInt(selectedService.dataset.durmins, 10) || 30;
+    }
+    // janela de funcionamento para o dia selecionado
+    const biz = businessWindowFor(new Date(selectedDay.year, selectedDay.month, selectedDay.day));
+    const closeSec = (biz.closeMin || (21*60)) * 60; // fallback 21:00
+    const y = selectedDay.year; const m = String(selectedDay.month+1).padStart(2,'0'); const d = String(selectedDay.day).padStart(2,'0');
+    const isoDate = `${y}-${m}-${d}`;
+    const resp = await fetch(`includes/disponibilidade_barbeiro.php?barbeiro=${encodeURIComponent(barberId)}&data=${encodeURIComponent(isoDate)}`);
+    const data = await resp.json();
+    const dayUnavailableBanner = document.getElementById('day-unavailable');
+    if (data.dayOff || data.ferias) {
+      // Limpa horário antes de desabilitar todos
+      document.querySelectorAll('.time-btn').forEach(btn=>{ btn.classList.remove('selected'); btn.disabled=true; btn.classList.add('disabled'); btn.title = data.ferias ? 'Férias: indisponível' : 'Folga semanal: indisponível'; });
+      selectedTime = null;
+      // Remove seleção da data indisponível para não permitir avanço
+      selectedDay = null;
+      renderCalendar(currentMonth,currentYear);
+      updateFinalizeButtonState();
+      if (dayUnavailableBanner) dayUnavailableBanner.classList.remove('d-none');
       return;
     }
-    fetch('includes/barbeiros_por_unidade.php?unidade_id=' + unidadeId)
-      .then(resp => resp.json())
-      .then(data => {
-        barbeiroSelect.innerHTML = '';
-        if (data.length === 0) {
-          barbeiroSelect.innerHTML = '<option value="">Nenhum barbeiro disponível</option>';
-        } else {
-          barbeiroSelect.innerHTML = '<option value="">Selecione o barbeiro</option>';
-          data.forEach(barbeiro => {
-            barbeiroSelect.innerHTML += `<option value="${barbeiro.idBarbeiro}">${barbeiro.nomeBarbeiro}</option>`;
-          });
-        }
-        barbeiroSelect.disabled = false;
-      })
-      .catch(() => {
-        barbeiroSelect.innerHTML = '<option value="">Erro ao carregar barbeiros</option>';
-        barbeiroSelect.disabled = true;
-      });
-  });
-});
+    if (dayUnavailableBanner) dayUnavailableBanner.classList.add('d-none');
+    const blocks = Array.isArray(data.blocks) ? data.blocks : [];
+    const booked = Array.isArray(data.booked) ? data.booked : [];
+    if (blocks.length===0 && booked.length===0) return;
+    // Intervalo [start,end) sobrepõe [bStart,bEnd)?
+    const overlaps = (start, end, b) => {
+      const s = toSec(start), e = toSec(end), bs = toSec(b.horaInicio), be = toSec(b.horaFim);
+      return !(e <= bs || s >= be);
+    };
+    let selectedStillValid = true;
+    document.querySelectorAll('.time-btn').forEach(btn=>{
+      const t = btn.textContent.trim();
+      // HH:MM to seconds
+      const [hh,mm] = t.split(':').map(x=>parseInt(x,10));
+      const start = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:00`;
+      // soma duração em minutos de forma precisa
+      const end = fromSec((hh*3600) + (mm*60) + durMins*60);
+      // fora do horário de funcionamento (fim ultrapassa fechamento)
+      const startSec = (hh*3600) + (mm*60);
+      const endSec = startSec + durMins*60;
+      const afterClose = endSec > closeSec;
+      const blockedOverlap = blocks.some(b=>overlaps(start,end,b));
+      const bookedOverlap = booked.some(b=>overlaps(start,end,b));
+      if (afterClose || blockedOverlap || bookedOverlap) {
+        btn.disabled = true; btn.classList.add('disabled');
+        if (afterClose) btn.title = 'Fora do horário de funcionamento';
+        else btn.title = bookedOverlap ? 'Horário já ocupado' : 'Horário indisponível';
+        if (selectedTime === t) { selectedStillValid = false; }
+      }
+    });
+    if (!selectedStillValid) {
+      document.querySelectorAll('.time-btn').forEach(b=>b.classList.remove('selected'));
+      selectedTime = null;
+      updateFinalizeButtonState();
+    }
+  } catch(e) { /* no-op */ }
+}
+
+// Busca e cacheia os dias indisponíveis para o mês atual e barbeiro selecionado
+async function fetchMonthDisabledDays(){
+  try {
+    if (!selectedBarber) return;
+    const bId = selectedBarber.getAttribute('data-id');
+    const m = currentMonth + 1; const y = currentYear;
+    const mKey = `${y}-${String(m).padStart(2,'0')}`;
+    // usa cache se já existe
+    if (monthDisabledCache.has(mKey)) return;
+    const url = `includes/disponibilidade_barbeiro.php?scope=month&barbeiro=${encodeURIComponent(bId)}&year=${y}&month=${m}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    const set = new Set(Array.isArray(data.disabledDays) ? data.disabledDays : []);
+    monthDisabledCache.set(mKey, set);
+  } catch(e) { /* no-op */ }
+}
 </script>
 
+
 </body>
+<!-- Botão fixo no canto inferior esquerdo -->
+<a href="usuario/index_usuario.php" class="btn btn-outline-warning" style="position: fixed; left: 16px; bottom: 16px; z-index: 1050;">
+  <i class="bi bi-box-arrow-left"></i> Voltar ao Painel
+</a>
 </html>

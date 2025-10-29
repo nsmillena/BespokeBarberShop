@@ -1,6 +1,7 @@
 <?php
 session_start();
 include "includes/db.php";
+include_once "includes/helpers.php";
 
 // Verifica se o usuário está logado
 if (!isset($_SESSION['usuario_id'])) {
@@ -17,6 +18,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   $servicoId = $_POST['servico_id'] ?? null;
   $preco = $_POST['preco'] ?? '';
   $duracao = $_POST['duracao'] ?? '';
+  $duracaoFmt = bb_format_minutes($duracao);
 
   $bd = new Banco();
   $conn = $bd->getConexao();
@@ -29,10 +31,48 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   $rowCount = $resCount->fetch_assoc();
   $ativosQtd = (int)($rowCount['qtd'] ?? 0);
   $stmtCount->close();
-
+}
   if ($ativosQtd >= 5) {
     $msg = "<div class='alert alert-warning text-center'>Você atingiu o limite de 5 agendamentos ativos. Cancele um agendamento existente antes de criar um novo.</div>";
   } else if ($barbeiroId && $unidadeId && $servicoId) {
+    // 1) Verifica folga semanal e férias (dia indisponível)
+    // Folga semanal ativa neste dia
+    $qf = $conn->prepare("SELECT 1 FROM FolgaSemanal WHERE Barbeiro_idBarbeiro=? AND weekday = DAYOFWEEK(?) AND inicio <= ? AND (fim IS NULL OR fim >= ?) LIMIT 1");
+    $qf->bind_param("isss", $barbeiroId, $data, $data, $data);
+    $qf->execute(); $qf->store_result(); $isDayOff = $qf->num_rows > 0; $qf->close();
+    if ($isDayOff) {
+      $msg = "<div class='alert alert-danger text-center'>Este dia é folga semanal do barbeiro selecionado. Escolha outro dia.</div>";
+    }
+    // Férias
+    if (empty($msg)) {
+      $qv = $conn->prepare("SELECT 1 FROM FeriasBarbeiro WHERE Barbeiro_idBarbeiro=? AND inicio <= ? AND fim >= ? LIMIT 1");
+      $qv->bind_param("iss", $barbeiroId, $data, $data);
+      $qv->execute(); $qv->store_result(); $inVacation = $qv->num_rows > 0; $qv->close();
+      if ($inVacation) {
+        $msg = "<div class='alert alert-danger text-center'>O barbeiro está de férias neste período. Escolha outra data.</div>";
+      }
+    }
+    
+    if (empty($msg)) {
+    // Bloqueio de horário: verifica indisponibilidade do barbeiro
+    // Determina janela do atendimento considerando a duração
+    $duracaoF = intval($duracao);
+    if ($duracaoF <= 0) { $duracaoF = 30; }
+    $ini = DateTime::createFromFormat('H:i', substr($hora,0,5));
+    if (!$ini) { $ini = DateTime::createFromFormat('H:i:s', $hora); }
+    $fim = clone $ini; $fim->modify('+' . $duracaoF . ' minutes');
+    $horaInicioStr = $ini->format('H:i:s');
+    $horaFimStr = $fim->format('H:i:s');
+
+    // Checa overlap com BloqueioHorario (qualquer interseção)
+    $qBloq = $conn->prepare("SELECT 1 FROM BloqueioHorario WHERE Barbeiro_idBarbeiro=? AND data=? AND NOT (horaFim <= ? OR horaInicio >= ?) LIMIT 1");
+    $qBloq->bind_param("isss", $barbeiroId, $data, $horaInicioStr, $horaFimStr);
+    $qBloq->execute();
+    $qBloq->store_result();
+    $temBloqueio = $qBloq->num_rows > 0; $qBloq->close();
+    if ($temBloqueio) {
+      $msg = "<div class='alert alert-danger text-center'>Este horário está indisponível para o barbeiro escolhido. Escolha outro horário.</div>";
+    } else {
     $status = 'Agendado';
     $stmt = $conn->prepare("INSERT INTO Agendamento (Cliente_idCliente, data, hora, Barbeiro_idBarbeiro, Unidade_idUnidade, statusAgendamento) VALUES (?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("isssis", $idCliente, $data, $hora, $barbeiroId, $unidadeId, $status);
@@ -42,7 +82,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         // Associar serviço ao agendamento
         $stmtServ = $conn->prepare("INSERT INTO Agendamento_has_Servico (Agendamento_idAgendamento, Servico_idServico, precoFinal, tempoEstimado) VALUES (?, ?, ?, ?)");
         $precoF = floatval(str_replace(["R$", " ", ".", ","], ["", "", "", "."], $preco));
-        $duracaoF = intval($duracao);
         $stmtServ->bind_param("iidd", $idAgendamento, $servicoId, $precoF, $duracaoF);
         $stmtServ->execute();
         $stmtServ->close();
@@ -56,6 +95,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       }
     }
     if (isset($stmt)) { $stmt->close(); }
+    }
   } else {
     $msg = "<div class='alert alert-danger text-center'>Dados incompletos. Tente novamente.</div>";
   }
@@ -97,10 +137,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     color: #fff;
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(218,165,32,0.1), inset 0 1px 0 rgba(255,255,255,0.1);
+    position: relative;
   }
   .card-title { color: #daa520; font-weight: 600; }
+  .top-right-action { position: absolute; top: 16px; right: 16px; }
 
-  /* Alerts suavizadas e com leve destaque dourado */
+  /* Alerts */
   .alert { border-radius: 12px; border: 1px solid transparent; box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
   .alert-success { 
     background: linear-gradient(145deg, #17321d 0%, #1e3a24 100%);
@@ -119,9 +161,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   }
   .alert a { color: #f0d58a; text-decoration: underline; }
 
-  /* Botões com espaçamento de ícone e ajuste de tamanhos (padronizados) */
   .btn i { margin-right: 0.45rem; }
-  .btn-danger, .btn-secondary { padding: 0.7rem 1.1rem; font-weight: 600; font-size: 1rem; }
+  .btn-secondary, .btn-outline-warning { padding: 0.7rem 1.1rem; font-weight: 600; font-size: 1rem; }
+  .btn-danger { padding: 0.7rem 1.1rem; font-weight: 600; font-size: 1rem; }
+  .btn-wide { min-width: 220px; }
 
   @media(max-width: 576px){
     .card-body p { font-size: 0.95rem; }
@@ -129,13 +172,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     .btn-secondary { font-size: 0.9rem; padding: 8px 18px; }
     header h1 { font-size: 1.6rem; }
     .btn i { margin-right: 0.35rem; }
-  }
-
-  .btn-confirmed { animation: pulseConfirm 0.6s ease forwards; }
-  @keyframes pulseConfirm {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
   }
 </style>
 </head>
@@ -150,6 +186,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <main class="container py-5">
       <?php if (isset($msg)) echo $msg; ?>
       <div class="card p-4 mt-4">
+        <a href="usuario/index_usuario.php" class="btn btn-outline-warning top-right-action d-flex align-items-center"><i class="bi bi-box-arrow-left"></i> Voltar ao Painel</a>
         <h2 class="card-title mb-4">Detalhes do Agendamento</h2>
         <div class="card-body">
           <p><i class="bi bi-shop"></i> <strong>Unidade:</strong> <span>
@@ -206,16 +243,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ?>
           </span></p>
           <p><i class="bi bi-cash-coin"></i> <strong>Valor:</strong> <span><?php echo htmlspecialchars($preco); ?></span></p>
-          <p><i class="bi bi-hourglass-split"></i> <strong>Duração:</strong> <span><?php echo htmlspecialchars($duracao); ?></span></p>
+          <p><i class="bi bi-hourglass-split"></i> <strong>Duração:</strong> <span><?php echo htmlspecialchars($duracaoFmt); ?></span></p>
         </div>
         <div class="d-flex flex-column flex-md-row justify-content-between mt-4 gap-2">
-          <a href="agendamento.php" class="btn btn-secondary d-flex align-items-center justify-content-center">
+          <a href="agendamento.php" class="btn btn-secondary btn-wide d-flex align-items-center justify-content-center">
             <i class="bi bi-arrow-left-circle"></i> Reagendar
           </a>
           <?php if (isset($idAgendamento)): ?>
-          <form method="POST" action="cancelar.php" onsubmit="return confirm('Tem certeza que deseja cancelar este agendamento?');" class="d-inline-block">
+          <form method="POST" action="cancelar.php" onsubmit="return confirm('Tem certeza que deseja cancelar este agendamento?');" class="d-inline-block ms-md-auto">
             <input type="hidden" name="idAgendamento" value="<?= $idAgendamento ?>">
-            <button type="submit" class="btn btn-danger d-flex align-items-center justify-content-center">
+            <button type="submit" class="btn btn-danger btn-wide d-flex align-items-center justify-content-center">
               <i class="bi bi-x-circle"></i> Cancelar Agendamento
             </button>
           </form>
@@ -223,7 +260,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </div>
   </div>
   <?php $conn->close(); ?>
-  <!-- Removido o card JS duplicado e mensagem de nenhum agendamento -->
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

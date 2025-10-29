@@ -6,6 +6,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['papel'] !== 'admin') {
 }
 
 include_once "../includes/db.php";
+include_once "../includes/helpers.php";
 $bd = new Banco();
 $conn = $bd->getConexao();
 // CSRF token setup
@@ -193,13 +194,13 @@ if (!empty($unidade_id)) {
                     </div>
 
                     <div class="table-responsive">
-                        <table class="table table-dark table-striped align-middle">
+                        <table id="tabela-servicos" class="table table-dark table-striped align-middle">
                             <thead>
                                 <tr>
                                     <th>ID</th>
                                     <th>Nome do Serviço</th>
                                     <th>Preço</th>
-                                    <th>Duração (min)</th>
+                                    <th>Duração</th>
                                     <th>Descrição</th>
                                     <th>Ações</th>
                                 </tr>
@@ -210,7 +211,7 @@ if (!empty($unidade_id)) {
                                         <td><?= $servico['idServico'] ?></td>
                                         <td><?= htmlspecialchars($servico['nomeServico']) ?></td>
                                         <td>R$ <?= number_format($servico['precoServico'], 2, ',', '.') ?></td>
-                                        <td><?= (int)$servico['duracaoPadrao'] ?> min</td>
+                                        <td><?= bb_format_minutes((int)$servico['duracaoPadrao']) ?></td>
                                         <td class="text-truncate" style="max-width:280px;" title="<?= htmlspecialchars($servico['descricaoServico']) ?>"><?= htmlspecialchars($servico['descricaoServico']) ?></td>
                                         <td>
                                             <button type="button" class="btn btn-warning btn-sm me-1" onclick="editarServico(<?= $servico['idServico'] ?>, '<?= htmlspecialchars($servico['nomeServico']) ?>', <?= $servico['precoServico'] ?>, <?= (int)$servico['duracaoPadrao'] ?>, '<?= htmlspecialchars($servico['descricaoServico']) ?>')">

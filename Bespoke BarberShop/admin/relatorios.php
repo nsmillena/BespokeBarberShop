@@ -5,6 +5,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['papel'] !== 'admin') {
     exit;
 }
 include_once "../includes/db.php";
+include_once "../includes/helpers.php";
 $bd = new Banco();
 $conn = $bd->getConexao();
 $admin_id = $_SESSION['usuario_id'];
@@ -27,7 +28,7 @@ $defaultStart = date('Y-m-01');
 $defaultEnd = date('Y-m-t');
 $inicio = isset($_GET['inicio']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['inicio']) ? $_GET['inicio'] : $defaultStart;
 $fim = isset($_GET['fim']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_GET['fim']) ? $_GET['fim'] : $defaultEnd;
-$status = isset($_GET['status']) ? $_GET['status'] : 'Todos';
+$status = isset($_GET['status']) ? $_GET['status'] : 'Finalizado';
 $permitidos = ['Agendado','Cancelado','Finalizado','Todos'];
 if (!in_array($status, $permitidos)) { $status = 'Todos'; }
 $barbeiro = isset($_GET['barbeiro']) ? (int)$_GET['barbeiro'] : 0;
@@ -79,6 +80,105 @@ while ($r = $res->fetch_assoc()) {
 }
 $stmt->close();
 
+// KPIs profissionais: considerar apenas FINALIZADOS (independente do filtro de status),
+// mas respeitar intervalo de datas e barbeiro selecionado
+$sumWhere = "a.Unidade_idUnidade = ? AND a.data BETWEEN ? AND ? AND a.statusAgendamento = 'Finalizado'";
+$sumTypes = "iss";
+$sumParams = [$unidade_id, $inicio, $fim];
+if ($barbeiro > 0) { $sumWhere .= " AND a.Barbeiro_idBarbeiro = ?"; $sumTypes .= "i"; $sumParams[] = $barbeiro; }
+
+$sqlSum = "
+SELECT COUNT(DISTINCT a.idAgendamento) AS qtd,
+       COALESCE(SUM(ahs.precoFinal),0) AS receita,
+       COALESCE(SUM(ahs.tempoEstimado),0) AS tempo
+FROM Agendamento a
+JOIN Agendamento_has_Servico ahs ON ahs.Agendamento_idAgendamento = a.idAgendamento
+WHERE $sumWhere
+";
+$stSum = $conn->prepare($sqlSum);
+$stSum->bind_param($sumTypes, ...$sumParams);
+$stSum->execute();
+$stSum->bind_result($kpiQtd, $kpiReceita, $kpiTempo);
+$stSum->fetch();
+$stSum->close();
+
+// Use shared bb_format_minutes from includes/helpers.php
+
+// Dados para gráficos (sempre Finalizados)
+// Receita por dia
+$wDaily = "a.Unidade_idUnidade = ? AND a.data BETWEEN ? AND ? AND a.statusAgendamento = 'Finalizado'";
+$tDaily = "iss"; $pDaily = [$unidade_id, $inicio, $fim];
+if ($barbeiro > 0) { $wDaily .= " AND a.Barbeiro_idBarbeiro = ?"; $tDaily .= "i"; $pDaily[] = $barbeiro; }
+$sqlDaily = "
+SELECT a.data, COALESCE(SUM(ahs.precoFinal),0) AS receita, COUNT(DISTINCT a.idAgendamento) AS qtd
+FROM Agendamento a
+JOIN Agendamento_has_Servico ahs ON ahs.Agendamento_idAgendamento = a.idAgendamento
+WHERE $wDaily
+GROUP BY a.data
+ORDER BY a.data ASC
+";
+$stDaily = $conn->prepare($sqlDaily);
+$stDaily->bind_param($tDaily, ...$pDaily);
+$stDaily->execute();
+$rDaily = $stDaily->get_result();
+$labelsDaily = []; $dataDaily = []; $countDaily = [];
+while ($row = $rDaily->fetch_assoc()){
+    $labelsDaily[] = date('d/m', strtotime($row['data']));
+    $dataDaily[] = (float)$row['receita'];
+    $countDaily[] = (int)$row['qtd'];
+}
+$stDaily->close();
+
+// Receita por barbeiro
+$wBarber = "a.Unidade_idUnidade = ? AND a.data BETWEEN ? AND ? AND a.statusAgendamento = 'Finalizado'";
+$tBarber = "iss"; $pBarber = [$unidade_id, $inicio, $fim];
+if ($barbeiro > 0) { $wBarber .= " AND a.Barbeiro_idBarbeiro = ?"; $tBarber .= "i"; $pBarber[] = $barbeiro; }
+$sqlBarbers = "
+SELECT b.nomeBarbeiro, b.idBarbeiro, COALESCE(SUM(ahs.precoFinal),0) AS receita, COUNT(DISTINCT a.idAgendamento) AS qtd
+FROM Agendamento a
+JOIN Barbeiro b ON b.idBarbeiro = a.Barbeiro_idBarbeiro
+JOIN Agendamento_has_Servico ahs ON ahs.Agendamento_idAgendamento = a.idAgendamento
+WHERE $wBarber
+GROUP BY b.idBarbeiro, b.nomeBarbeiro
+ORDER BY receita DESC
+";
+$stBar = $conn->prepare($sqlBarbers);
+$stBar->bind_param($tBarber, ...$pBarber);
+$stBar->execute();
+$rBar = $stBar->get_result();
+$labelsBar = []; $dataBar = []; $countBar = [];
+while ($row = $rBar->fetch_assoc()){
+    $labelsBar[] = $row['nomeBarbeiro'];
+    $dataBar[] = (float)$row['receita'];
+    $countBar[] = (int)$row['qtd'];
+}
+$stBar->close();
+
+// Top serviços por receita (Finalizados)
+$wSrv = "a.Unidade_idUnidade = ? AND a.data BETWEEN ? AND ? AND a.statusAgendamento = 'Finalizado'";
+$tSrv = "iss"; $pSrv = [$unidade_id, $inicio, $fim];
+if ($barbeiro > 0) { $wSrv .= " AND a.Barbeiro_idBarbeiro = ?"; $tSrv .= "i"; $pSrv[] = $barbeiro; }
+$sqlSrv = "
+SELECT s.nomeServico, s.idServico, COALESCE(SUM(ahs.precoFinal),0) AS receita
+FROM Agendamento a
+JOIN Agendamento_has_Servico ahs ON ahs.Agendamento_idAgendamento = a.idAgendamento
+JOIN Servico s ON s.idServico = ahs.Servico_idServico
+WHERE $wSrv
+GROUP BY s.idServico, s.nomeServico
+ORDER BY receita DESC
+LIMIT 8
+";
+$stSrv = $conn->prepare($sqlSrv);
+$stSrv->bind_param($tSrv, ...$pSrv);
+$stSrv->execute();
+$rSrv = $stSrv->get_result();
+$labelsSrv = []; $dataSrv = [];
+while ($row = $rSrv->fetch_assoc()){
+    $labelsSrv[] = $row['nomeServico'];
+    $dataSrv[] = (float)$row['receita'];
+}
+$stSrv->close();
+
 if ($export) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename=relatorio_agendamentos.csv');
@@ -92,7 +192,7 @@ if ($export) {
             $r['nomeBarbeiro'],
             $r['servicos'],
             number_format($r['precoTotal'], 2, ',', '.'),
-            (int)$r['tempoTotal'] . ' min',
+            bb_format_minutes((int)$r['tempoTotal']),
             $r['statusAgendamento']
         ]);
     }
@@ -109,6 +209,7 @@ if ($export) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body class="dashboard-admin">
 <div class="container py-5">
@@ -153,23 +254,69 @@ if ($export) {
     </div>
 
     <div class="dashboard-card">
-        <div class="row g-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="dashboard-section-title mb-0"><i class="bi bi-wallet2"></i> Resumo (Finalizados)</div>
+        </div>
+        <div class="row g-3 kpi-wrap">
             <div class="col-12 col-md-4">
-                <div class="p-3 bg-dark rounded">
-                    <div class="text-muted">Quantidade</div>
-                    <div class="fs-3" style="color:#daa520; font-weight:700;"><?= (int)$totQtd ?></div>
+                <div class="kpi-card">
+                    <div class="kpi-top"><i class="bi bi-people kpi-icon"></i><span class="kpi-label">Atendimentos</span></div>
+                    <div class="kpi-value"><?= (int)$kpiQtd ?></div>
+                    <div class="kpi-sub">Período: <?= date('d/m/Y', strtotime($inicio)) ?> - <?= date('d/m/Y', strtotime($fim)) ?></div>
                 </div>
             </div>
             <div class="col-12 col-md-4">
-                <div class="p-3 bg-dark rounded">
-                    <div class="text-muted">Receita</div>
-                    <div class="fs-3" style="color:#daa520; font-weight:700;">R$ <?= number_format($totValor, 2, ',', '.') ?></div>
+                <div class="kpi-card">
+                    <div class="kpi-top"><i class="bi bi-cash-coin kpi-icon"></i><span class="kpi-label">Receita</span></div>
+                    <div class="kpi-value">R$ <?= number_format((float)$kpiReceita, 2, ',', '.') ?></div>
+                    <div class="kpi-sub">Ticket médio: <?= ((int)$kpiQtd>0? 'R$ ' . number_format($kpiReceita/$kpiQtd, 2, ',', '.') : '—') ?></div>
                 </div>
             </div>
             <div class="col-12 col-md-4">
-                <div class="p-3 bg-dark rounded">
-                    <div class="text-muted">Duração Total</div>
-                    <div class="fs-3" style="color:#daa520; font-weight:700;"><?= (int)$totTempo ?> min</div>
+                <div class="kpi-card">
+                    <div class="kpi-top"><i class="bi bi-clock-history kpi-icon"></i><span class="kpi-label">Duração Total</span></div>
+                    <div class="kpi-value"><?= bb_format_minutes($kpiTempo) ?></div>
+                    <div class="kpi-sub">Tempo médio: <?= ((int)$kpiQtd>0? bb_format_minutes(round($kpiTempo/$kpiQtd)) : '—') ?></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="dashboard-section-title mb-0"><i class="bi bi-activity"></i> Gráficos (Finalizados)</div>
+        </div>
+        <div class="row g-4">
+            <div class="col-12 col-lg-7">
+                <div class="chart-card">
+                    <div class="mb-1" style="color:#f0d58a; font-weight:600;">Receita por dia</div>
+                    <?php if (!empty($labelsDaily)): ?>
+                        <canvas id="chartDailyRevenue" class="chart-canvas"></canvas>
+                    <?php else: ?>
+                        <div class="chart-empty">Sem dados finalizados para o período selecionado.</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="col-12 col-lg-5">
+                <div class="chart-card">
+                    <div class="mb-1" style="color:#f0d58a; font-weight:600;">Receita por barbeiro</div>
+                    <?php if (!empty($labelsBar)): ?>
+                        <canvas id="chartBarberRevenue" class="chart-canvas"></canvas>
+                    <?php else: ?>
+                        <div class="chart-empty">Sem dados finalizados para o período selecionado.</div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <div class="row g-4 mt-1">
+            <div class="col-12">
+                <div class="chart-card">
+                    <div class="mb-1" style="color:#f0d58a; font-weight:600;">Top serviços por receita</div>
+                    <?php if (!empty($labelsSrv)): ?>
+                        <canvas id="chartServiceTop" class="chart-canvas"></canvas>
+                    <?php else: ?>
+                        <div class="chart-empty">Sem dados finalizados para o período selecionado.</div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -199,7 +346,7 @@ if ($export) {
                             <td><?= htmlspecialchars($row['nomeBarbeiro']) ?></td>
                             <td title="<?= htmlspecialchars($row['servicos']) ?>"><?= htmlspecialchars(strlen($row['servicos'])>32 ? substr($row['servicos'],0,32).'…' : $row['servicos']) ?></td>
                             <td>R$ <?= number_format($row['precoTotal'], 2, ',', '.') ?></td>
-                            <td><?= (int)$row['tempoTotal'] ?> min</td>
+                            <td><?= bb_format_minutes((int)$row['tempoTotal']) ?></td>
                             <td><?= htmlspecialchars($row['statusAgendamento']) ?></td>
                         </tr>
                     <?php endforeach; else: ?>
@@ -211,5 +358,139 @@ if ($export) {
     </div>
 </div>
 <?php @include_once("../Footer/footer.html"); ?>
+<script>
+// Dados dos gráficos vindos do PHP
+const labelsDaily = <?= json_encode($labelsDaily ?? []) ?>;
+const dataDaily = <?= json_encode($dataDaily ?? []) ?>;
+const labelsBar = <?= json_encode($labelsBar ?? []) ?>;
+const dataBar = <?= json_encode($dataBar ?? []) ?>;
+const countDaily = <?= json_encode($countDaily ?? []) ?>;
+const labelsSrv = <?= json_encode($labelsSrv ?? []) ?>;
+const dataSrv = <?= json_encode($dataSrv ?? []) ?>;
+
+const moneyBR = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const commonScales = {
+    x: { ticks: { color: 'rgba(255,255,255,.8)' }, grid: { color: 'rgba(255,255,255,.08)' } },
+    y: { ticks: { color: 'rgba(255,255,255,.8)', callback: (v)=> moneyBR.format(v) }, grid: { color: 'rgba(255,255,255,.08)' } }
+};
+
+// Receita por dia (linha/area)
+if (document.getElementById('chartDailyRevenue') && labelsDaily.length){
+    const ctx = document.getElementById('chartDailyRevenue');
+    const gradient = ctx.getContext('2d').createLinearGradient(0,0,0,320);
+    gradient.addColorStop(0, 'rgba(218,165,32,0.45)');
+    gradient.addColorStop(1, 'rgba(218,165,32,0.05)');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labelsDaily,
+            datasets: [{
+                label: 'Receita',
+                data: dataDaily,
+                borderColor: '#daa520',
+                backgroundColor: gradient,
+                borderWidth: 2,
+                fill: true,
+                tension: 0.35,
+                pointRadius: 2,
+                pointHoverRadius: 4,
+                yAxisID: 'y'
+            },{
+                label: 'Atendimentos',
+                data: countDaily,
+                borderColor: '#6cc5a1',
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.35,
+                pointRadius: 2,
+                pointHoverRadius: 4,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true, labels: { color: 'rgba(255,255,255,.85)' } },
+                tooltip: { callbacks: { label: (ctx)=> ctx.dataset.label === 'Receita' ? moneyBR.format(ctx.parsed.y) : `${ctx.parsed.y} atend.` } }
+            },
+            scales: {
+                x: commonScales.x,
+                y: commonScales.y,
+                y1: {
+                    position: 'right',
+                    grid: { display: false },
+                    ticks: {
+                        color: 'rgba(255,255,255,.8)',
+                        stepSize: 1,
+                        callback: (v)=> Number.isInteger(v) ? v : ''
+                    },
+                    beginAtZero: true
+                }
+            },
+            layout: { padding: { top: 10, right: 10, bottom: 0, left: 0 } },
+            elements: { line: { capBezierPoints: true } }
+        }
+    });
+}
+
+// Receita por barbeiro (barras)
+if (document.getElementById('chartBarberRevenue') && labelsBar.length){
+    const ctx2 = document.getElementById('chartBarberRevenue');
+    new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: labelsBar,
+            datasets: [{
+                label: 'Receita',
+                data: dataBar,
+                backgroundColor: 'rgba(218,165,32,0.35)',
+                borderColor: '#daa520',
+                borderWidth: 1.5,
+                borderRadius: 6,
+                maxBarThickness: 28,
+            }]
+        },
+        options: {
+            indexAxis: labelsBar.length > 6 ? 'y' : 'x',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (ctx)=> moneyBR.format(ctx.parsed.y ?? ctx.parsed.x) } }
+            },
+            scales: commonScales,
+            layout: { padding: { top: 10, right: 10, bottom: 0, left: 0 } }
+        }
+    });
+}
+
+// Top serviços por receita (barras horizontais)
+if (document.getElementById('chartServiceTop') && labelsSrv.length){
+    const ctx3 = document.getElementById('chartServiceTop');
+    new Chart(ctx3, {
+        type: 'bar',
+        data: { labels: labelsSrv, datasets: [{
+            label: 'Receita', data: dataSrv,
+            backgroundColor: 'rgba(218,165,32,0.35)', borderColor: '#daa520', borderWidth: 1.5,
+            borderRadius: 6, maxBarThickness: 26,
+        }]},
+        options: {
+            indexAxis: 'y',
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (ctx)=> moneyBR.format(ctx.parsed.x ?? ctx.parsed.y) } }
+            },
+            scales: {
+                x: { ticks: { color: 'rgba(255,255,255,.8)', callback: (v)=> moneyBR.format(v) }, grid: { color: 'rgba(255,255,255,.08)' } },
+                y: { ticks: { color: 'rgba(255,255,255,.8)' }, grid: { color: 'rgba(255,255,255,.08)' } }
+            },
+            layout: { padding: { top: 10, right: 10, bottom: 0, left: 0 } }
+        }
+    });
+}
+</script>
 </body>
 </html>

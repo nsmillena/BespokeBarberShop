@@ -17,11 +17,40 @@ $conn = $bd->getConexao();
 $idBarbeiro = (int)$_SESSION['usuario_id'];
 $idAgendamento = isset($_POST['idAgendamento']) ? (int)$_POST['idAgendamento'] : 0;
 
+// Bloqueia conclusão se for obrigatório trocar a senha
+$mustQ = $conn->prepare("SELECT deveTrocarSenha FROM Barbeiro WHERE idBarbeiro=?");
+$mustQ->bind_param("i", $idBarbeiro);
+$mustQ->execute();
+$mustQ->bind_result($must);
+$mustQ->fetch();
+$mustQ->close();
+if ((int)$must === 1) {
+    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Antes de concluir atendimentos, altere sua senha temporária.'));
+    exit;
+}
+
 // destino de retorno (index por padrão)
 $returnTo = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'index_barbeiro.php';
 
+// Helper to safely append/override query params on return URL
+function bb_build_redirect($baseUrl, $params){
+    $parts = parse_url($baseUrl);
+    $query = [];
+    if (isset($parts['query']) && $parts['query'] !== '') {
+        parse_str($parts['query'], $query);
+    }
+    // override/append new params
+    foreach ($params as $k=>$v){ $query[$k] = $v; }
+    $scheme   = isset($parts['scheme']) ? $parts['scheme'] . '://' : '';
+    $host     = $parts['host'] ?? '';
+    $port     = isset($parts['port']) ? ':' . $parts['port'] : '';
+    $path     = $parts['path'] ?? '';
+    $qs       = http_build_query($query);
+    return $scheme . $host . $port . $path . ($qs ? '?' . $qs : '');
+}
+
 if ($idAgendamento <= 0) {
-    header('Location: ' . $returnTo . '?ok=0&msg=' . urlencode('Atendimento inválido.'));
+    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'0','msg'=>'Atendimento inválido.']));
     exit;
 }
 
@@ -32,13 +61,13 @@ $stmt->execute();
 $stmt->bind_result($statusAtual);
 if (!$stmt->fetch()) {
     $stmt->close();
-    header('Location: ' . $returnTo . '?ok=0&msg=' . urlencode('Atendimento não encontrado.'));
+    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'0','msg'=>'Atendimento não encontrado.']));
     exit;
 }
 $stmt->close();
 
 if ($statusAtual !== 'Agendado') {
-    header('Location: ' . $returnTo . '?ok=0&msg=' . urlencode('Este atendimento não pode ser concluído.'));
+    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'0','msg'=>'Este atendimento não pode ser concluído.']));
     exit;
 }
 
@@ -47,11 +76,11 @@ $upd = $conn->prepare("UPDATE Agendamento SET statusAgendamento = 'Finalizado' W
 $upd->bind_param("ii", $idAgendamento, $idBarbeiro);
 if ($upd->execute()) {
     $upd->close();
-    header('Location: ' . $returnTo . '?ok=1&msg=' . urlencode('Atendimento finalizado com sucesso.'));
+    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'1','msg'=>'Atendimento finalizado com sucesso.']));
     exit;
 } else {
     $erro = $conn->error;
     $upd->close();
-    header('Location: ' . $returnTo . '?ok=0&msg=' . urlencode('Falha ao concluir atendimento: ' . $erro));
+    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'0','msg'=>'Falha ao concluir atendimento: ' . $erro]));
     exit;
 }

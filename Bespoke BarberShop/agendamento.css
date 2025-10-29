@@ -64,11 +64,14 @@ body {
 .calendar-day div:hover { background: #ffcc00; color: black; font-weight: 600; transform: scale(1.05); }
 .current-date { background: #ffcc00 !important; color: black !important; font-weight: 600; }
 .selected-date { background: #ff9900 !important; color: black !important; font-weight: 600; }
+/* Dia indisponível (folga/férias) */
+.calendar-day div.disabled-day { opacity: 0.35; cursor: not-allowed; background: #151515; }
 
 /* Horários */
 .time-btn { border: 1px solid #ffcc00; border-radius: 8px; padding: 8px 12px; background: transparent; color: white; margin: 4px 0; font-size: 1rem; transition: all 0.3s; cursor: pointer; width: 100px; text-align: center; display: block; }
 .time-btn:hover { background: #ffcc00; color: black; transform: scale(1.05); }
 .time-btn.selected { background: #ff9900; color: black; font-weight: 600; }
+.time-btn.disabled, .time-btn:disabled { opacity: 0.35; cursor: not-allowed; background: #1a1a1a; color: #888; border-color: #555; transform: none; }
 .time-scroll { max-height: 320px; overflow-y: auto; overflow-x: hidden; padding-right: 6px; min-width: 120px; }
 
 /* Serviços */

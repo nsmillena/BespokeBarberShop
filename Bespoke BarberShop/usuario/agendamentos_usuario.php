@@ -1,6 +1,7 @@
 <?php
 session_start();
 include "../includes/db.php";
+include_once "../includes/helpers.php";
 
 if (!isset($_SESSION['usuario_id'])) {
     header("Location: ../login.php");
@@ -63,6 +64,13 @@ $stmtHist->bind_param("ii", $idCliente, $idCliente);
 $stmtHist->execute();
 $historico = $stmtHist->get_result();
 
+// Buscar último finalizado para rebook
+$stmtUlt = $conn->prepare("SELECT a.Unidade_idUnidade AS unidadeId, a.Barbeiro_idBarbeiro AS barbeiroId, (SELECT ahs.Servico_idServico FROM Agendamento_has_Servico ahs WHERE ahs.Agendamento_idAgendamento=a.idAgendamento LIMIT 1) AS servicoId FROM Agendamento a WHERE a.Cliente_idCliente = ? AND a.statusAgendamento='Finalizado' ORDER BY a.data DESC, a.hora DESC LIMIT 1");
+$stmtUlt->bind_param("i", $idCliente);
+$stmtUlt->execute();
+$prefill = $stmtUlt->get_result()->fetch_assoc();
+$stmtUlt->close();
+
 $ok = isset($_GET['ok']) ? $_GET['ok'] : null;
 $msg = isset($_GET['msg']) ? $_GET['msg'] : null;
 ?>
@@ -105,6 +113,11 @@ $msg = isset($_GET['msg']) ? $_GET['msg'] : null;
                         <div class="col-auto">
                             <a href="../agendamento.php" class="dashboard-action dashboard-btn-small btn-novo-agendamento"><i class="bi bi-plus-circle"></i> Novo</a>
                         </div>
+                        <?php if (!empty($prefill['unidadeId']) && !empty($prefill['barbeiroId']) && !empty($prefill['servicoId'])): ?>
+                        <div class="col-auto">
+                            <a href="../agendamento.php?unidade=<?= (int)$prefill['unidadeId'] ?>&barbeiro=<?= (int)$prefill['barbeiroId'] ?>&servico=<?= (int)$prefill['servicoId'] ?>" class="dashboard-action dashboard-btn-small"><i class="bi bi-arrow-repeat"></i> Repetir último serviço</a>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="table-responsive flex-fill table-container-fix">
@@ -132,7 +145,7 @@ $msg = isset($_GET['msg']) ? $_GET['msg'] : null;
                                     <td title="<?= htmlspecialchars($row['nomeBarbeiro']) ?>"><?= substr(htmlspecialchars($row['nomeBarbeiro']), 0, 12) ?></td>
                                     <td title="<?= htmlspecialchars($row['servicos']) ?>"><?= substr(htmlspecialchars($row['servicos']), 0, 24) ?></td>
                                     <td title="R$ <?= number_format($row['precoTotal'],2,',','.') ?>">R$ <?= number_format($row['precoTotal'],0,',','.') ?></td>
-                                    <td title="<?= (int)$row['tempoTotal'] ?> minutos"><?= (int)$row['tempoTotal'] ?>m</td>
+                                    <td title="<?= (int)$row['tempoTotal'] ?> minutos"><?= bb_format_minutes((int)$row['tempoTotal']) ?></td>
                                     <td title="<?= htmlspecialchars($row['statusAgendamento']) ?>"><?= substr(htmlspecialchars($row['statusAgendamento']), 0, 10) ?></td>
                                     <td>
                                         <?php if($row['statusAgendamento'] === 'Agendado'): ?>
@@ -192,7 +205,7 @@ $msg = isset($_GET['msg']) ? $_GET['msg'] : null;
                                     <td title="<?= htmlspecialchars($row['nomeBarbeiro']) ?>"><?= substr(htmlspecialchars($row['nomeBarbeiro']), 0, 12) ?></td>
                                     <td title="<?= htmlspecialchars($row['servicos']) ?>"><?= substr(htmlspecialchars($row['servicos']), 0, 24) ?></td>
                                     <td title="R$ <?= number_format($row['precoTotal'],2,',','.') ?>">R$ <?= number_format($row['precoTotal'],0,',','.') ?></td>
-                                    <td title="<?= (int)$row['tempoTotal'] ?> minutos"><?= (int)$row['tempoTotal'] ?>m</td>
+                                    <td title="<?= (int)$row['tempoTotal'] ?> minutos"><?= bb_format_minutes((int)$row['tempoTotal']) ?></td>
                                 </tr>
                             <?php endwhile; ?>
                         <?php else: ?>

@@ -5,19 +5,38 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['papel'] !== 'barbeiro') {
     exit;
 }
 include "../includes/db.php";
+include_once "../includes/helpers.php";
 $bd = new Banco();
 $conn = $bd->getConexao();
 $idBarbeiro = $_SESSION['usuario_id'];
-$stmt = $conn->prepare("SELECT nomeBarbeiro, emailBarbeiro, telefoneBarbeiro FROM Barbeiro WHERE idBarbeiro = ?");
+$stmt = $conn->prepare("SELECT nomeBarbeiro, emailBarbeiro, telefoneBarbeiro, deveTrocarSenha FROM Barbeiro WHERE idBarbeiro = ?");
 $stmt->bind_param("i", $idBarbeiro);
 $stmt->execute();
-$stmt->bind_result($nomeCompleto, $email, $telefone);
+$stmt->bind_result($nomeCompleto, $email, $telefone, $deveTrocarSenha);
 $stmt->fetch();
 $stmt->close();
 $primeiroNome = explode(' ', trim($nomeCompleto))[0];
 
+// Se for obrigatório trocar a senha, redireciona para a página de edição
+if ((int)$deveTrocarSenha === 1) {
+    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Troca de senha obrigatória no primeiro acesso.'));
+    exit;
+}
+
 // Buscar próximos agendamentos (>= hoje), agregados
 $dataHoje = date('Y-m-d');
+// KPIs: Hoje (Agendados / Finalizados / Duração total do dia)
+$kpiAgHoje = 0; $kpiFinHoje = 0; $durHoje = 0;
+// Agendados hoje
+if ($stK1 = $conn->prepare("SELECT COUNT(DISTINCT a.idAgendamento) AS qtd, COALESCE(SUM(ahs.tempoEstimado),0) AS dur FROM Agendamento a JOIN Agendamento_has_Servico ahs ON ahs.Agendamento_idAgendamento=a.idAgendamento WHERE a.Barbeiro_idBarbeiro=? AND a.data=? AND a.statusAgendamento='Agendado'")){
+    $stK1->bind_param('is', $idBarbeiro, $dataHoje);
+    $stK1->execute(); $stK1->bind_result($kpiAgHoje, $durHoje); $stK1->fetch(); $stK1->close();
+}
+// Finalizados hoje
+if ($stK2 = $conn->prepare("SELECT COUNT(DISTINCT a.idAgendamento) AS qtd FROM Agendamento a WHERE a.Barbeiro_idBarbeiro=? AND a.data=? AND a.statusAgendamento='Finalizado'")){
+    $stK2->bind_param('is', $idBarbeiro, $dataHoje);
+    $stK2->execute(); $stK2->bind_result($kpiFinHoje); $stK2->fetch(); $stK2->close();
+}
 $stmt2 = $conn->prepare("
 SELECT
     a.idAgendamento, a.data, a.hora, c.nomeCliente,
@@ -40,6 +59,13 @@ $stmt2->bind_param("is", $idBarbeiro, $dataHoje);
 $stmt2->execute();
 $resultHoje = $stmt2->get_result();
 $temAgendamentosHoje = $resultHoje->num_rows > 0;
+
+// Próximo atendimento (mais próximo a partir de agora)
+$prox = null;
+if ($stNext = $conn->prepare("SELECT a.idAgendamento, a.data, a.hora, c.nomeCliente, GROUP_CONCAT(s.nomeServico SEPARATOR ', ') AS servicos, SUM(ahs.precoFinal) AS precoTotal, SUM(ahs.tempoEstimado) AS tempoTotal FROM Agendamento a JOIN Cliente c ON c.idCliente=a.Cliente_idCliente JOIN Agendamento_has_Servico ahs ON ahs.Agendamento_idAgendamento=a.idAgendamento JOIN Servico s ON s.idServico=ahs.Servico_idServico WHERE a.Barbeiro_idBarbeiro=? AND a.statusAgendamento='Agendado' AND (a.data > CURDATE() OR (a.data = CURDATE() AND a.hora >= CURTIME())) GROUP BY a.idAgendamento, a.data, a.hora, c.nomeCliente ORDER BY a.data ASC, a.hora ASC LIMIT 1")){
+    $stNext->bind_param('i', $idBarbeiro);
+    $stNext->execute(); $rNext = $stNext->get_result(); $prox = $rNext->fetch_assoc(); $stNext->close();
+}
 
 // Histórico recente (Finalizados) - últimos 5
 $stmtHist = $conn->prepare("
@@ -77,6 +103,71 @@ $resultHist = $stmtHist->get_result();
 </head>
 <body class="dashboard-barbeiro-novo">
 <div class="container py-4">
+    <!-- Resumo do dia e Próximo atendimento -->
+    <div class="row g-4 mb-3">
+        <div class="col-12">
+            <div class="dashboard-card p-3 kpi-accent summary-today">
+                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                    <div class="dashboard-section-title mb-0"><i class="bi bi-speedometer2"></i> Resumo de hoje</div>
+                    <div class="date-chip"><?= date('d/m') ?></div>
+                </div>
+                <div class="row g-3 kpi-row">
+                    <div class="col-12 col-md-4">
+                        <div class="kpi-card">
+                            <div class="kpi-top"><i class="bi bi-calendar-day kpi-icon"></i><span class="kpi-label">Agendados</span></div>
+                            <div class="kpi-value"><?= (int)$kpiAgHoje ?></div>
+                            <div class="kpi-sub">Hoje • <?= date('d/m') ?></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="kpi-card">
+                            <div class="kpi-top"><i class="bi bi-check2-circle kpi-icon"></i><span class="kpi-label">Finalizados</span></div>
+                            <div class="kpi-value"><?= (int)$kpiFinHoje ?></div>
+                            <div class="kpi-sub">Hoje • <?= date('d/m') ?></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <div class="kpi-card">
+                            <div class="kpi-top"><i class="bi bi-clock-history kpi-icon"></i><span class="kpi-label">Duração</span></div>
+                            <div class="kpi-value"><?= ((int)$durHoje > 0 ? bb_format_minutes((int)$durHoje) : '—') ?></div>
+                            <div class="kpi-sub">Total de hoje • <?= date('d/m') ?></div>
+                        </div>
+                    </div>
+                </div>
+                <hr class="kpi-divider my-3" />
+                <div class="row g-3 mt-2">
+                    <div class="col-12">
+                        <div class="next-card p-3">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                <div class="d-flex align-items-center gap-3 flex-wrap meta-wrap">
+                                    <div class="badge bg-warning text-dark fw-bold"><i class="bi bi-lightning-charge"></i> Próximo</div>
+                                    <?php if($prox): ?>
+                                        <span class="meta-chip"><i class="bi bi-clock"></i> <?= substr($prox['hora'],0,5) ?> • <?= date('d/m', strtotime($prox['data'])) ?></span>
+                                        <span class="meta-chip"><i class="bi bi-person"></i> <?= htmlspecialchars($prox['nomeCliente']) ?></span>
+                                        <span class="meta-chip text-truncate" style="max-width:320px;"><i class="bi bi-scissors"></i> <?= htmlspecialchars($prox['servicos']) ?></span>
+                                    <?php else: ?>
+                                        <div class="text-muted">Sem próximo atendimento agendado.</div>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="sticky-mobile">
+                                    <?php if($prox): ?>
+                                    <form method="post" action="concluir_agendamento.php" class="d-inline">
+                                        <input type="hidden" name="idAgendamento" value="<?= (int)$prox['idAgendamento'] ?>">
+                                        <button type="submit" class="dashboard-action dashboard-btn-small"><i class="bi bi-check2-circle"></i> Concluir</button>
+                                    </form>
+                                    <?php else: ?>
+                                    <a href="agendamentos_barbeiro.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-eye"></i> Ver agenda</a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Toast container for feedback messages (always present) -->
+    <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="toast-msg-container" style="z-index:1080;"></div>
     <div class="row mb-4">
         <div class="col-12">
             <div class="dashboard-card dashboard-welcome-card">
@@ -90,15 +181,17 @@ $resultHist = $stmtHist->get_result();
             <div class="dashboard-card p-3 flex-fill d-flex flex-column">
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <div class="dashboard-section-title mb-0 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-calendar-week"></i> Próximos Atendimentos</div>
-                    <div class="row gx-2">
-                        <div class="col-auto">
+                    <div class="row gx-2 align-items-center">
+                        <?php $hoje = date('Y-m-d'); $amanha = date('Y-m-d', strtotime('+1 day')); $semIni = $hoje; $semFim = date('Y-m-d', strtotime('+6 days')); ?>
+                        <div class="col-auto d-flex gap-2 flex-wrap">
                             <a href="agendamentos_barbeiro.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-eye"></i> Ver Todos</a>
+                            <a href="agendamentos_barbeiro.php?inicio=<?= $hoje ?>&fim=<?= $hoje ?>" class="dashboard-action dashboard-btn-small" title="Hoje">Hoje</a>
+                            <a href="agendamentos_barbeiro.php?inicio=<?= $amanha ?>&fim=<?= $amanha ?>" class="dashboard-action dashboard-btn-small" title="Amanhã">Amanhã</a>
+                            <a href="agendamentos_barbeiro.php?inicio=<?= $semIni ?>&fim=<?= $semFim ?>" class="dashboard-action dashboard-btn-small" title="Semana">Semana</a>
                         </div>
                     </div>
                 </div>
                 <?php if($temAgendamentosHoje): ?>
-                <!-- Toast container for feedback messages -->
-                <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="toast-msg-container" style="z-index:1080;"></div>
                 <div class="table-responsive flex-fill mb-2 table-container-fix">
                     <table class="table table-dark table-striped table-sm align-middle mb-0 dashboard-table">
                         <thead>
@@ -121,8 +214,18 @@ $resultHist = $stmtHist->get_result();
                                     <td title="<?= htmlspecialchars($row['nomeCliente']) ?>"><?= substr(htmlspecialchars($row['nomeCliente']), 0, 12) ?></td>
                                     <td title="<?= htmlspecialchars($row['servicos']) ?>"><?= substr(htmlspecialchars($row['servicos']), 0, 22) ?></td>
                                     <td title="R$ <?= number_format($row['precoTotal'],2,',','.') ?>">R$ <?= number_format($row['precoTotal'],0,',','.') ?></td>
-                                    <td title="<?= (int)$row['tempoTotal'] ?> minutos"><?= (int)$row['tempoTotal'] ?>m</td>
-                                    <td title="<?= htmlspecialchars($row['statusAgendamento']) ?>"><?= substr(htmlspecialchars($row['statusAgendamento']), 0, 8) ?></td>
+                                    <td title="<?= (int)$row['tempoTotal'] ?> minutos"><?= bb_format_minutes((int)$row['tempoTotal']) ?></td>
+                                    <td>
+                                        <?php 
+                                            $isHoje = (date('Y-m-d', strtotime($row['data'])) === date('Y-m-d'));
+                                            $isAtrasado = $isHoje && (substr($row['hora'],0,5) < date('H:i')) && $row['statusAgendamento']==='Agendado';
+                                        ?>
+                                        <?php if($isAtrasado): ?>
+                                            <span class="badge badge-atrasado"><i class="bi bi-exclamation-triangle-fill"></i> Atrasado</span>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary">Agendado</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <?php if ($row['statusAgendamento'] === 'Agendado'): ?>
                                             <form method="post" action="concluir_agendamento.php" class="d-inline form-concluir">
@@ -179,7 +282,7 @@ $resultHist = $stmtHist->get_result();
                                         <td title="<?= htmlspecialchars($row['nomeCliente']) ?>"><?= substr(htmlspecialchars($row['nomeCliente']), 0, 12) ?></td>
                                         <td title="<?= htmlspecialchars($row['servicos']) ?>"><?= substr(htmlspecialchars($row['servicos']), 0, 22) ?></td>
                                         <td title="R$ <?= number_format($row['precoTotal'],2,',','.') ?>">R$ <?= number_format($row['precoTotal'],0,',','.') ?></td>
-                                        <td title="<?= (int)$row['tempoTotal'] ?> minutos"><?= (int)$row['tempoTotal'] ?>m</td>
+                                        <td title="<?= (int)$row['tempoTotal'] ?> minutos"><?= bb_format_minutes((int)$row['tempoTotal']) ?></td>
                                         <td><span class="badge bg-success">Finalizado</span></td>
                                     </tr>
                                 <?php } ?>
@@ -199,6 +302,7 @@ $resultHist = $stmtHist->get_result();
                 <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Email:</b> <?= htmlspecialchars($email) ?></div>
                 <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Telefone:</b> <?= htmlspecialchars($telefone) ?></div>
                 <a href="editar_perfil.php" class="dashboard-action mt-2 w-100"><i class="bi bi-pencil-square"></i> Editar Perfil</a>
+                <a href="bloqueios.php" class="dashboard-action mt-2 w-100"><i class="bi bi-calendar-x"></i> Bloquear horários</a>
                 <a href="../logout.php" class="dashboard-action mt-2 w-100 dashboard-btn-logout"><i class="bi bi-box-arrow-right"></i> Sair</a>
             </div>
             <div class="dashboard-card p-3 flex-fill mb-0">

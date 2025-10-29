@@ -65,7 +65,7 @@ body::before {
         inset 0 1px 0 rgba(255,255,255,0.1);
     color: #fff;
     border: 2px solid #daa520;
-    margin-bottom: 0;
+    margin-bottom: 1.4rem; /* mais espaço entre cards */
     padding: 2.9rem 2.4rem; /* maior para as duas listas */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     min-width: 320px;
@@ -81,7 +81,7 @@ body::before {
 
     /* Garantir que apenas o cabeçalho continue menor */
     .dashboard-welcome-card {
-        padding: 1.1rem 1rem !important;
+        padding: 0.8rem 0.9rem !important; /* cabeçalho mais compacto */
     }
 
   .dashboard-card::before {
@@ -120,13 +120,17 @@ body::before {
         background: linear-gradient(135deg, #daa520 0%, #b8941c 100%);
         color: #181818 !important;
         border-radius: 10px;
-        padding: 0.45rem 1.2rem;
+        padding: 0.45rem 1.1rem;
         font-weight: 600;
-        font-size: 1.08rem;
+        font-size: 1.05rem;
         text-decoration: none;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border: none;
-        display: inline-block;
+        display: inline-flex; /* padroniza ícone e texto alinhados */
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem; /* mesmo espaçamento entre ícone e texto */
+        line-height: 1.1;
         box-shadow: 
             0 4px 12px rgba(218,165,32,0.3),
             inset 0 1px 0 rgba(255,255,255,0.2);
@@ -246,21 +250,49 @@ body::before {
     text-align: left;
     border: 2px solid #daa520;
 }
-.dashboard-welcome-text {
-    color: #daa520;
-    font-size: 1.6rem; /* menor no cabeçalho */
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-}
+        .dashboard-welcome-text {
+            color: #ffd24d;
+            font-size: 1.2rem; /* menor e discreto */
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
 
 /* Botões pequenos de agendamento */
 .dashboard-btn-small {
-    padding: 0.25rem 0.9rem !important;
+    padding: 0.4rem 1rem !important; /* padroniza com Cancelar */
     font-size: 0.97rem !important;
-    min-width: 90px;
-    border-radius: 7px;
+    border-radius: 10px !important;
     margin-bottom: 0 !important;
+}
+
+/* Botões do próximo horário: mesma largura e altura visual */
+.next-card .dashboard-btn-small{
+    min-width: 150px;
+    min-height: 44px; /* altura padronizada */
+    border-radius: 10px;
+    display: inline-flex; /* garantir centralização */
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem; /* mesmo espaço entre ícone e texto */
+    line-height: 1.1;
+    text-align: center;
+}
+
+/* Ícone e texto sempre centralizados e alinhados verticalmente */
+.next-card .dashboard-btn-small i{
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+.dashboard-action i{ font-size: 1.05rem; line-height: 1; }
+
+/* Texto ao lado do aviso de cancelamento (melhor contraste) */
+.next-meta{
+    color: #ffd24d;
+    font-weight: 700;
+    letter-spacing: .2px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
 
 .dashboard-btn-logout {
@@ -283,6 +315,16 @@ body::before {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* Card de próximo horário (cliente) */
+.next-card{
+    background: linear-gradient(145deg, #232323 0%, #1a1a1a 100%);
+    border: 2px solid rgba(255,210,77,0.45);
+    border-radius: 14px;
+}
+
+/* Acessibilidade: foco visível nos botões principais */
+.dashboard-action:focus-visible{ outline:2px solid #ffd24d; outline-offset:2px; box-shadow:none; }
 
 /* Larguras específicas para cada coluna */
 /* Distribuição para até 9 colunas (incluindo Ações quando existir) */

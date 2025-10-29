@@ -49,6 +49,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode('Falha ao atualizar status.'));
             exit;
         }
+    } elseif ($acao === 'excluir') {
+        $id = (int)$_POST['id'];
+        // Garantir que o barbeiro pertence à unidade
+        $chk = $conn->prepare("SELECT 1 FROM Barbeiro WHERE idBarbeiro=? AND Unidade_idUnidade=?");
+        $chk->bind_param("ii", $id, $unidade_id);
+        $chk->execute();
+        $ok = $chk->get_result()->num_rows > 0; $chk->close();
+        if (!$ok) { header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode('Barbeiro inválido.')); exit; }
+        $del = $conn->prepare("DELETE FROM Barbeiro WHERE idBarbeiro=?");
+        $del->bind_param("i", $id);
+        if ($del->execute()) {
+            header('Location: gerenciar_barbeiros.php?ok=1&msg=' . urlencode('Barbeiro excluído com sucesso.'));
+            exit;
+        } else {
+            header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode('Falha ao excluir barbeiro.'));
+            exit;
+        }
+    } elseif ($acao === 'reset_pw') {
+        $id = (int)$_POST['id'];
+        // Garantir que o barbeiro pertence à unidade
+        $chk = $conn->prepare("SELECT 1 FROM Barbeiro WHERE idBarbeiro=? AND Unidade_idUnidade=?");
+        $chk->bind_param("ii", $id, $unidade_id);
+        $chk->execute();
+        $ok = $chk->get_result()->num_rows > 0; $chk->close();
+        if (!$ok) { header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode('Barbeiro inválido.')); exit; }
+        // Gerar senha temporária forte
+        function bb_gen_temp_pw($len=12){
+            $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@$%!#?&*';
+            $max = strlen($alphabet)-1; $pw='';
+            for($i=0;$i<$len;$i++){ $pw .= $alphabet[random_int(0,$max)]; }
+            return $pw;
+        }
+        $temp = bb_gen_temp_pw(12);
+    $hash = password_hash($temp, PASSWORD_DEFAULT);
+    // Define senha temporária, força troca no próximo login e expira em 7 dias
+    $up = $conn->prepare("UPDATE Barbeiro SET senhaBarbeiro=?, deveTrocarSenha=1, senhaTempExpiraEm=DATE_ADD(NOW(), INTERVAL 7 DAY) WHERE idBarbeiro=?");
+    $up->bind_param("si", $hash, $id);
+        if ($up->execute()){
+            $_SESSION['reset_barber_password_show_once'] = $temp;
+            header('Location: gerenciar_barbeiros.php?ok=1&msg=' . urlencode('Senha temporária gerada. Compartilhe com segurança.'));
+            exit;
+        } else {
+            header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode('Falha ao resetar a senha.'));
+            exit;
+        }
     }
 }
 
@@ -75,6 +120,16 @@ $qr->close();
 <div class="container py-5">
     <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3 bb-toast-container" id="toast-msg-container"></div>
     <div class="dashboard-card">
+        <?php if (!empty($_SESSION['reset_barber_password_show_once'])): $onePw = $_SESSION['reset_barber_password_show_once']; unset($_SESSION['reset_barber_password_show_once']); ?>
+            <div class="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
+                <div>
+                    <strong>Senha temporária gerada:</strong>
+                    <span id="resetBarberPw" style="font-family:monospace;"><?= htmlspecialchars($onePw) ?></span>
+                    <small class="d-block text-muted">Copie e entregue ao barbeiro. Recomende trocar no primeiro login.</small>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-dark" onclick="copyResetPw()"><i class="bi bi-clipboard"></i> Copiar</button>
+            </div>
+        <?php endif; ?>
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="dashboard-title mb-0"><i class="bi bi-people"></i> Gerenciar Barbeiros</h2>
             <a href="index_admin.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> Voltar</a>
@@ -111,6 +166,8 @@ $qr->close();
                                     <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check2-circle"></i> Ativar</button>
                                 </form>
                             <?php endif; ?>
+                            <button class="btn btn-warning btn-sm ms-1" data-bs-toggle="modal" data-bs-target="#modalReset" data-id="<?= (int)$b['idBarbeiro'] ?>" data-nome="<?= htmlspecialchars($b['nomeBarbeiro']) ?>"><i class="bi bi-shield-lock"></i> Resetar Senha</button>
+                            <button class="btn btn-outline-danger btn-sm ms-1" data-bs-toggle="modal" data-bs-target="#modalExcluir" data-id="<?= (int)$b['idBarbeiro'] ?>" data-nome="<?= htmlspecialchars($b['nomeBarbeiro']) ?>"><i class="bi bi-trash"></i> Excluir</button>
                         </td>
                     </tr>
                 <?php endforeach; else: ?>
@@ -150,6 +207,54 @@ $qr->close();
   </div>
 </div>
 
+<!-- Modal Excluir -->
+<div class="modal fade" id="modalExcluir" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-octagon"></i> Excluir Barbeiro</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                    <input type="hidden" name="acao" value="excluir">
+                    <input type="hidden" name="id" id="excId">
+                    <p>Tem certeza que deseja excluir este barbeiro? Esta ação removerá também os agendamentos dele.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+
+<!-- Modal Resetar Senha -->
+<div class="modal fade" id="modalReset" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title text-warning"><i class="bi bi-shield-lock"></i> Resetar Senha do Barbeiro</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+                    <input type="hidden" name="acao" value="reset_pw">
+                    <input type="hidden" name="id" id="resetId">
+                    <p>Gerar uma senha temporária forte e substituir a senha atual do barbeiro. A nova senha será exibida apenas uma vez.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning"><i class="bi bi-shield-lock"></i> Resetar Senha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // Toasts
@@ -172,6 +277,28 @@ modal?.addEventListener('show.bs.modal', function (event) {
   document.getElementById('inaId').value = id;
   document.getElementById('inaData').value = '';
 });
+
+const modalExc = document.getElementById('modalExcluir');
+modalExc?.addEventListener('show.bs.modal', function(event){
+    const button = event.relatedTarget;
+    const id = button.getAttribute('data-id');
+    document.getElementById('excId').value = id;
+});
+
+const modalReset = document.getElementById('modalReset');
+modalReset?.addEventListener('show.bs.modal', function(event){
+    const button = event.relatedTarget;
+    const id = button.getAttribute('data-id');
+    document.getElementById('resetId').value = id;
+});
+
+function copyResetPw(){
+    const el = document.getElementById('resetBarberPw'); if(!el) return;
+    const range = document.createRange(); range.selectNode(el);
+    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    try { document.execCommand('copy'); } catch(_){ navigator.clipboard && navigator.clipboard.writeText(el.textContent); }
+    sel.removeAllRanges();
+}
 </script>
 <?php @include_once("../Footer/footer.html"); ?>
 </body>

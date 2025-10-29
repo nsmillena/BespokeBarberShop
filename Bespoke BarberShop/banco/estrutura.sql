@@ -209,3 +209,124 @@ ENGINE = InnoDB;
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+
+-- ======= ADIÇÕES BESPOKE 2025-10: METAS/COMISSÕES, FLAGS DE SENHA, ÍNDICES =======
+
+-- Alterar Barbeiro: obrigar troca de senha após reset e validade da temporária
+ALTER TABLE `mydb`.`Barbeiro`
+  ADD COLUMN `deveTrocarSenha` TINYINT(1) NOT NULL DEFAULT 0 AFTER `dataRetorno`,
+  ADD COLUMN `senhaTempExpiraEm` DATE NULL AFTER `deveTrocarSenha`;
+
+-- Índices para acelerar relatórios
+CREATE INDEX `idx_agendamento_unidade_data` ON `mydb`.`Agendamento` (`Unidade_idUnidade`, `data`);
+CREATE INDEX `idx_agendamento_barbeiro_data` ON `mydb`.`Agendamento` (`Barbeiro_idBarbeiro`, `data`);
+CREATE INDEX `idx_agendamento_status` ON `mydb`.`Agendamento` (`statusAgendamento`);
+
+-- Tabela de metas por unidade
+DROP TABLE IF EXISTS `mydb`.`Meta`;
+CREATE TABLE `mydb`.`Meta` (
+  `idMeta` INT NOT NULL AUTO_INCREMENT,
+  `Unidade_idUnidade` INT NOT NULL,
+  `periodicidade` ENUM('Semanal','Mensal') NOT NULL,
+  `inicio` DATE NOT NULL,
+  `fim` DATE NOT NULL,
+  `base` ENUM('Receita','Atendimentos') NOT NULL,
+  `objetivoValor` DECIMAL(10,2) NOT NULL,
+  `percentualFlat` DECIMAL(5,2) NOT NULL,
+  `ativo` TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`idMeta`),
+  CONSTRAINT `fk_Meta_Unidade` FOREIGN KEY (`Unidade_idUnidade`) REFERENCES `mydb`.`Unidade` (`idUnidade`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- Overrides de objetivo por barbeiro (opcional)
+DROP TABLE IF EXISTS `mydb`.`MetaBarbeiro`;
+CREATE TABLE `mydb`.`MetaBarbeiro` (
+  `idMetaBarbeiro` INT NOT NULL AUTO_INCREMENT,
+  `Meta_idMeta` INT NOT NULL,
+  `Barbeiro_idBarbeiro` INT NOT NULL,
+  `objetivoOverride` DECIMAL(10,2) NULL,
+  PRIMARY KEY (`idMetaBarbeiro`),
+  UNIQUE KEY `uk_meta_barbeiro` (`Meta_idMeta`,`Barbeiro_idBarbeiro`),
+  CONSTRAINT `fk_MetaBarbeiro_Meta` FOREIGN KEY (`Meta_idMeta`) REFERENCES `mydb`.`Meta` (`idMeta`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_MetaBarbeiro_Barbeiro` FOREIGN KEY (`Barbeiro_idBarbeiro`) REFERENCES `mydb`.`Barbeiro` (`idBarbeiro`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- Lançamentos de comissão (snapshot ao fechar período)
+DROP TABLE IF EXISTS `mydb`.`ComissaoLancamento`;
+CREATE TABLE `mydb`.`ComissaoLancamento` (
+  `idLancamento` INT NOT NULL AUTO_INCREMENT,
+  `Meta_idMeta` INT NOT NULL,
+  `Barbeiro_idBarbeiro` INT NOT NULL,
+  `periodoInicio` DATE NOT NULL,
+  `periodoFim` DATE NOT NULL,
+  `baseRealizado` DECIMAL(10,2) NOT NULL,
+  `objetivoUsado` DECIMAL(10,2) NOT NULL,
+  `atingiu` TINYINT(1) NOT NULL,
+  `percentualAplicado` DECIMAL(5,2) NOT NULL,
+  `receitaRealizada` DECIMAL(10,2) NOT NULL,
+  `valorComissao` DECIMAL(10,2) NOT NULL,
+  `status` ENUM('Pendente','Pago') NOT NULL DEFAULT 'Pendente',
+  `criadoEm` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idLancamento`),
+  KEY `idx_lanc_meta_barb` (`Meta_idMeta`,`Barbeiro_idBarbeiro`),
+  CONSTRAINT `fk_Lanc_Meta` FOREIGN KEY (`Meta_idMeta`) REFERENCES `mydb`.`Meta` (`idMeta`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_Lanc_Barbeiro` FOREIGN KEY (`Barbeiro_idBarbeiro`) REFERENCES `mydb`.`Barbeiro` (`idBarbeiro`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- (Opcional) Audit Log simples
+DROP TABLE IF EXISTS `mydb`.`AuditLog`;
+CREATE TABLE `mydb`.`AuditLog` (
+  `idLog` INT NOT NULL AUTO_INCREMENT,
+  `quando` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `atorId` INT NULL,
+  `papel` ENUM('admin','barbeiro','cliente') NULL,
+  `evento` VARCHAR(64) NOT NULL,
+  `alvoTipo` VARCHAR(32) NULL,
+  `alvoId` INT NULL,
+  `ip` VARCHAR(45) NULL,
+  `detalhes` VARCHAR(255) NULL,
+  PRIMARY KEY (`idLog`)
+) ENGINE=InnoDB;
+
+-- Bloqueios de horários de barbeiros (indisponibilidade)
+DROP TABLE IF EXISTS `mydb`.`BloqueioHorario`;
+CREATE TABLE `mydb`.`BloqueioHorario` (
+  `idBloqueio` INT NOT NULL AUTO_INCREMENT,
+  `Barbeiro_idBarbeiro` INT NOT NULL,
+  `data` DATE NOT NULL,
+  `horaInicio` TIME NOT NULL,
+  `horaFim` TIME NOT NULL,
+  `motivo` VARCHAR(255) NULL,
+  `criadoEm` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idBloqueio`),
+  KEY `idx_bloqueio_barbeiro_data` (`Barbeiro_idBarbeiro`,`data`,`horaInicio`,`horaFim`),
+  CONSTRAINT `fk_Bloqueio_Barbeiro` FOREIGN KEY (`Barbeiro_idBarbeiro`) REFERENCES `mydb`.`Barbeiro` (`idBarbeiro`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- Folga semanal recorrente (6x1) por período
+DROP TABLE IF EXISTS `mydb`.`FolgaSemanal`;
+CREATE TABLE `mydb`.`FolgaSemanal` (
+  `idFolga` INT NOT NULL AUTO_INCREMENT,
+  `Barbeiro_idBarbeiro` INT NOT NULL,
+  `weekday` TINYINT NOT NULL, -- 1=Domingo ... 7=Sábado (compatível com DAYOFWEEK)
+  `inicio` DATE NOT NULL,
+  `fim` DATE NULL,
+  `criadoEm` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idFolga`),
+  KEY `idx_folga_barbeiro_periodo` (`Barbeiro_idBarbeiro`,`inicio`,`fim`,`weekday`),
+  CONSTRAINT `fk_Folga_Barbeiro` FOREIGN KEY (`Barbeiro_idBarbeiro`) REFERENCES `mydb`.`Barbeiro` (`idBarbeiro`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- Férias/ausência prolongada do barbeiro
+DROP TABLE IF EXISTS `mydb`.`FeriasBarbeiro`;
+CREATE TABLE `mydb`.`FeriasBarbeiro` (
+  `idFerias` INT NOT NULL AUTO_INCREMENT,
+  `Barbeiro_idBarbeiro` INT NOT NULL,
+  `inicio` DATE NOT NULL,
+  `fim` DATE NOT NULL,
+  `motivo` VARCHAR(255) NULL,
+  `criadoEm` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idFerias`),
+  KEY `idx_ferias_barbeiro_periodo` (`Barbeiro_idBarbeiro`,`inicio`,`fim`),
+  CONSTRAINT `fk_Ferias_Barbeiro` FOREIGN KEY (`Barbeiro_idBarbeiro`) REFERENCES `mydb`.`Barbeiro` (`idBarbeiro`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;

@@ -167,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         <div class="mb-3">
                             <label for="telefone" class="form-label">Telefone</label>
-                            <input type="tel" class="form-control" id="telefone" name="telefone" value="<?= htmlspecialchars($telefone_atual) ?>" required>
+                            <input type="tel" class="form-control bb-phone" id="telefone" name="telefone" value="<?= htmlspecialchars($telefone_atual) ?>" required>
                         </div>
                         
                         <hr class="my-4" style="border-color: rgba(218,165,32,0.3);">
@@ -176,19 +176,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         <div class="mb-3">
                             <label for="senha_atual" class="form-label">Senha Atual</label>
-                            <input type="password" class="form-control" id="senha_atual" name="senha_atual">
+                            <input type="password" class="form-control" id="senha_atual" name="senha_atual" data-bb-toggle="1">
                             <small class="text-muted">Deixe em branco se não quiser alterar a senha</small>
                         </div>
                         
                         <div class="mb-4">
                             <label for="nova_senha" class="form-label">Nova Senha</label>
-                            <input type="password" class="form-control" id="nova_senha" name="nova_senha">
+                            <input type="password" class="form-control bb-password" id="nova_senha" name="nova_senha" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}" title="Mínimo 8, com maiúscula, minúscula, número e símbolo.">
                             <small class="text-muted">Mínimo 8, com maiúscula, minúscula, número e símbolo.</small>
                         </div>
 
                         <div class="mb-4">
                             <label for="confirma_senha" class="form-label">Confirmar Nova Senha</label>
-                            <input type="password" class="form-control" id="confirma_senha" name="confirma_senha">
+                            <input type="password" class="form-control bb-password-confirm" id="confirma_senha" name="confirma_senha" data-match="#nova_senha">
                         </div>
                         
                         <button type="submit" class="dashboard-action w-100">
@@ -200,6 +200,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/phone-mask.js"></script>
+    <script src="../js/password-strength.js"></script>
     <script>
         function getParam(name){ const url = new URL(window.location.href); return url.searchParams.get(name); }
         function showToast(message, ok){
