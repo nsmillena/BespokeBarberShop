@@ -1,4 +1,6 @@
 <?php
+// App config (OAuth, email)
+@include_once __DIR__ . '/config.php';
 
 // Define timezone
 date_default_timezone_set('America/Sao_Paulo');
@@ -37,6 +39,25 @@ class Banco {
         // Executa a criação de forma segura; se falhar, não interrompe o site, apenas registra no log
         if (!$this->mysqli->query($sqlCreateAOC)) {
             error_log('Falha ao garantir tabela AgendamentoOcultoCliente: ' . $this->mysqli->error);
+        }
+
+        // Garantir tabela de reset de senha
+        $sqlCreateReset = "
+            CREATE TABLE IF NOT EXISTS `PasswordReset` (
+                `id` INT NOT NULL AUTO_INCREMENT,
+                `email` VARCHAR(150) NOT NULL,
+                `papel` ENUM('admin','barbeiro','cliente') NOT NULL,
+                `token` CHAR(64) NOT NULL,
+                `expires_at` DATETIME NOT NULL,
+                `used` TINYINT(1) NOT NULL DEFAULT 0,
+                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `uk_token` (`token`),
+                KEY `idx_email_papel` (`email`,`papel`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ";
+        if (!$this->mysqli->query($sqlCreateReset)) {
+            error_log('Falha ao garantir tabela PasswordReset: ' . $this->mysqli->error);
         }
     }
 

@@ -108,6 +108,20 @@ CREATE TABLE IF NOT EXISTS `AuditLog` (
   PRIMARY KEY (`idLog`)
 ) ENGINE=InnoDB;
 
+-- 4) Tabela de reset de senha (utilizada pelos fluxos de "Esqueci a senha")
+CREATE TABLE IF NOT EXISTS `PasswordReset` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `email` VARCHAR(150) NOT NULL,
+  `papel` ENUM('admin','barbeiro','cliente') NOT NULL,
+  `token` CHAR(64) NOT NULL,
+  `expires_at` DATETIME NOT NULL,
+  `used` TINYINT(1) NOT NULL DEFAULT 0,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_token` (`token`),
+  KEY `idx_email_papel` (`email`,`papel`)
+) ENGINE=InnoDB;
+
 -- Observações:
 -- - Se algum comando de índice/coluna acusar duplicidade, pode ignorar.
 -- - Após a migração, recarregue as telas de Admin (Bloqueios/Escolas/Metas) e o login do Barbeiro.

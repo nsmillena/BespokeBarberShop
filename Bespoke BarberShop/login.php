@@ -1,6 +1,8 @@
 <?php
 session_start();
 include "includes/db.php";
+@include_once "includes/config.php";
+@include_once "includes/helpers.php";
 
 $bd = new Banco();
 $conn = $bd->getConexao();
@@ -17,6 +19,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email = $_POST['email'];
     $senha = $_POST['senha'];
 
+    // Verificação de Captcha (hCaptcha preferencial; fallback reCAPTCHA)
+    $captchaErr = null;
+    if (!bb_verify_captcha($_POST, $_SERVER['REMOTE_ADDR'] ?? null, $captchaErr)) {
+      $erro = $captchaErr ?: 'Falha na verificação do captcha. Tente novamente.';
+    }
+
     // Verifica nas três tabelas
   $sqls = [
     "Administrador" => "SELECT idAdministrador AS id, senhaAdmin AS senha, 'admin' AS papel FROM Administrador WHERE emailAdmin = ?",
@@ -27,6 +35,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     "Cliente"       => "SELECT idCliente AS id, senhaCliente AS senha, 'cliente' AS papel FROM Cliente WHERE emailCliente = ?"
   ];
 
+  if (!isset($erro)) {
   foreach ($sqls as $tipo => $sql) {
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $email);
@@ -80,6 +89,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 
   $erro = "E-mail ou senha inválidos!";
+  } // end if !isset($erro)
 }
 ?>
 <!doctype html>
@@ -91,6 +101,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="login.css"> 
+    <?php if (defined('RECAPTCHA_SITE_KEY') && RECAPTCHA_SITE_KEY !== ''): ?>
+      <script src="https://www.google.com/recaptcha/api.js?hl=pt-BR" async defer></script>
+    <?php endif; ?>
   </head>
   <body class="login-body">
 
@@ -112,10 +125,64 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               <label for="senha" class="form-label">Senha</label>
               <input type="password" class="form-control" id="senha" name="senha" placeholder="Digite sua senha" required data-bb-toggle="1">
             </div>
+            <?php if (defined('RECAPTCHA_SITE_KEY') && RECAPTCHA_SITE_KEY !== ''): ?>
+              <div class="captcha-wrap mt-1 mb-2 d-flex justify-content-center">
+                <div class="g-recaptcha" data-sitekey="<?= htmlspecialchars(RECAPTCHA_SITE_KEY) ?>" data-theme="light"></div>
+              </div>
+            <?php endif; ?>
+            <div class="d-block text-center mt-1 mb-2">
+              <a href="recuperar.php" class="link-site small">Esqueceu a senha?</a>
+            </div>
             <button type="submit" class="btn btn-login w-100 fw-bold">Entrar</button>
           </form>
 
-          <p class="text-center link-container">
+          <?php if (defined('GOOGLE_CLIENT_ID') && GOOGLE_CLIENT_ID !== ''): ?>
+            <?php
+              // Constrói URL absoluta para o handler do Google
+              $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+              $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+              $dir  = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
+              $base = (defined('APP_BASE_URL') && APP_BASE_URL !== '') ? APP_BASE_URL : ($scheme.'://'.$host.$dir);
+              $gLoginUri = $base.'/oauth_google.php';
+            ?>
+            <div class="auth-divider d-flex align-items-center mt-3">
+              <hr class="flex-grow-1">
+              <span class="px-2">ou</span>
+              <hr class="flex-grow-1">
+            </div>
+            <div class="mt-2 d-flex justify-content-center">
+              <div id="g_id_onload"
+                   data-client_id="<?= htmlspecialchars(GOOGLE_CLIENT_ID) ?>"
+                   data-context="signin"
+                   data-ux_mode="popup"
+                   data-callback="onGoogleSignIn"
+                   data-auto_select="false"
+                   data-itp_support="true">
+              </div>
+              <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline" data-text="continue_with" data-size="medium" data-logo_alignment="left"></div>
+            </div>
+            <script src="https://accounts.google.com/gsi/client" async defer></script>
+            <script>
+              function onGoogleSignIn(response){
+                try {
+                  var form = document.createElement('form');
+                  form.method = 'POST';
+                  form.action = '<?= htmlspecialchars($gLoginUri) ?>';
+                  var input = document.createElement('input');
+                  input.type = 'hidden';
+                  input.name = 'credential';
+                  input.value = response.credential;
+                  form.appendChild(input);
+                  document.body.appendChild(form);
+                  form.submit();
+                } catch(e) {
+                  console.error('Google sign-in error', e);
+                }
+              }
+            </script>
+          <?php endif; ?>
+
+          <p class="text-center link-container" style="margin-top: 1rem;">
             Ainda não tem conta? <a href="cadastro.php" class="link-cadastro">Cadastre-se</a>
           </p>
           <p class="text-center link-container">

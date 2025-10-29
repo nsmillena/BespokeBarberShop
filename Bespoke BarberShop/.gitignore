@@ -1,0 +1,10 @@
+# Local secrets (do not commit)
+includes/config.local.php
+
+# Mail outbox log
+banco/mail_outbox.log
+
+# OS / Editor noise
+.DS_Store
+Thumbs.db
+.vscode/

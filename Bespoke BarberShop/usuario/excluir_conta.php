@@ -20,6 +20,7 @@ $stmt->fetch();
 $stmt->close();
 
 $alert = null; $alertType = 'danger';
+$noPassword = ($hashAtual === null || $hashAtual === '');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $token = $_POST['csrf_token'] ?? '';
     if (!hash_equals($_SESSION['csrf_token'], $token)) {
@@ -27,10 +28,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $senha = $_POST['senha'] ?? '';
         $ok = false;
-        if (!empty($hashAtual) && strlen($hashAtual) > 20 && password_get_info($hashAtual)['algo'] !== 0) {
-            $ok = password_verify($senha, $hashAtual);
+        if ($noPassword) {
+            // Conta criada via Google sem senha definida: permitir exclusão sem senha
+            $ok = ($senha === '');
+        } else {
+            if (!empty($hashAtual) && strlen($hashAtual) > 20 && password_get_info($hashAtual)['algo'] !== 0) {
+                $ok = password_verify($senha, $hashAtual);
+            }
+            if (!$ok) { $ok = hash_equals((string)$hashAtual, (string)$senha); }
         }
-        if (!$ok) { $ok = hash_equals((string)$hashAtual, (string)$senha); }
         if ($ok) {
             // Excluir cliente (cascateia agendamentos e vínculos)
             $del = $conn->prepare("DELETE FROM Cliente WHERE idCliente = ?");
@@ -67,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h2 class="dashboard-section-title mb-0 text-danger"><i class="bi bi-trash"></i> Excluir Conta</h2>
             <a href="editar_perfil.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> Voltar</a>
         </div>
-        <p class="text-warning">Esta ação é permanente e removerá seus agendamentos associados. Confirme sua senha para prosseguir.</p>
+    <p class="text-warning">Esta ação é permanente e removerá seus agendamentos associados. <?php if($noPassword){ echo 'Sua conta foi criada com Google e não possui senha: deixe o campo abaixo em branco para confirmar.'; } else { echo 'Confirme sua senha para prosseguir.'; } ?></p>
         <?php if ($alert): ?>
             <div class="alert alert-<?= $alertType ?> py-2"><?= htmlspecialchars($alert) ?></div>
         <?php endif; ?>
@@ -79,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="mb-3">
                 <label class="form-label">Senha</label>
-                <input type="password" name="senha" class="form-control" placeholder="Digite sua senha" required data-bb-toggle="1">
+                <input type="password" name="senha" class="form-control" placeholder="<?= $noPassword ? 'Deixe em branco para confirmar' : 'Digite sua senha' ?>" <?= $noPassword ? '' : 'required' ?> data-bb-toggle="1">
             </div>
             <button type="submit" class="btn btn-outline-danger w-100"><i class="bi bi-trash"></i> Confirmar exclusão</button>
         </form>

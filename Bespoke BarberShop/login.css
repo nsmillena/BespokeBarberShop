@@ -7,7 +7,8 @@
 }
 
 .card-container {
-  max-width: 400px;
+  /* Largura compacta mas suficiente para o reCAPTCHA normal */
+  max-width: 330px;
   width: 100%;
   border-radius: 10px;
   box-shadow: 0 10px 25px rgba(218, 165, 32, 0.8); 
@@ -17,7 +18,7 @@
 
 
 .card-container:hover {
-  transform: translateY(-5px) scale(1.05);
+  transform: translateY(-2px);
   box-shadow: 0 15px 35px rgba(218, 165, 32, 1);
 }
 
@@ -25,14 +26,14 @@
   background-color: #111111;
   border: 2px solid #daa520;
   border-radius: 10px;
-  padding: 1.5rem;
+  padding: 1.25rem 1rem 1.5rem 1rem; /* mais compacto e ainda alongado */
 }
 
 
 label{
     font-family: Teko, sans-serif;
     color: #daa520;
-    font-size: x-large;
+  font-size: 1rem;
 }
 
 p{
@@ -46,14 +47,14 @@ p{
   font-family: Teko, sans-serif;
   color: #daa520;
   text-align: center;
-  margin-bottom: 1.5rem;
-  font-size: xx-large;
+  margin-bottom: 0.75rem;
+  font-size: 1.6rem;
 }
 
 
 .btn-login {
   font-family: Teko, sans-serif;  
-  font-size: larger;
+  font-size: 1.05rem; /* proporcional ao card mais estreito */
   background-color: #000000;
   color: #daa520;
   font-weight: bold;
@@ -88,6 +89,8 @@ p{
   background-color: #2a2a2a;
   color: white;
   border: 1px solid #555;
+  padding: .5rem .75rem;
+  font-size: .95rem;
 }
 
 .login-card .form-control:focus {
@@ -95,4 +98,47 @@ p{
   box-shadow: 0 0 5px #daa520;
   background-color: #2a2a2a;
   color: white;
+}
+
+/* Divider "ou" para autenticação social */
+.auth-divider hr {
+  border-color: #daa520 !important;
+  opacity: 0.8;
+}
+.auth-divider span {
+  color: #daa520 !important;
+  font-family: Teko, sans-serif;
+  letter-spacing: 0.5px;
+}
+
+/* Captcha wrapper: centralizado e com respiro */
+/* Captcha menor e alinhado */
+.captcha-wrap { 
+  display:flex; 
+  justify-content:center; 
+  align-items:center; 
+  /* Widget no tamanho normal e nítido */
+  transform: none;
+  transform-origin: top center;
+  margin-top: .25rem;
+  margin-bottom: .5rem;
+}
+/* Removemos caixa e label para ficar igual ao reCAPTCHA clássico */
+@media (max-width: 330px) {
+  /* Em telas muito estreitas, reduzimos uniformemente para evitar overflow */
+  .captcha-wrap { transform: scale(0.9); transform-origin: top center; }
+}
+
+/* Telas com pouca altura: compactar ainda mais para caber sem rolagem grande */
+@media (max-height: 750px) {
+  .login-card { padding: 1rem .9rem 1.25rem .9rem; }
+  .login-title { font-size: 1.5rem; margin-bottom: .5rem; }
+  .login-card .form-control { padding: .45rem .7rem; font-size: .93rem; }
+  .btn-login { font-size: 1rem; }
+  .captcha-wrap { transform: scale(0.95); }
+}
+@media (max-height: 650px) {
+  .login-card { padding: .85rem .85rem 1rem .85rem; }
+  .login-title { font-size: 1.45rem; }
+  .captcha-wrap { transform: scale(0.9); }
 }

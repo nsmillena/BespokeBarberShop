@@ -3,7 +3,7 @@
   if (!document.getElementById('bb-strength-styles')){
     const css = `
       .bb-pass-wrap{ position: relative; }
-      .bb-pass-wrap input.bb-password, .bb-pass-wrap input.bb-password-confirm{ padding-right: 2.5rem; }
+  .bb-pass-wrap input.bb-password, .bb-pass-wrap input.bb-password-confirm, .bb-pass-wrap input[data-bb-toggle]{ padding-right: 2.5rem; }
       .bb-toggle-pass{ position: absolute; right: .5rem; top: 50%; transform: translateY(-50%); background: transparent; border: 0; color: rgba(255,255,255,.75); padding: .25rem; cursor:pointer; }
       .bb-toggle-pass:hover{ color:#daa520; }
       .bb-strength{ margin-top: .5rem; }
@@ -63,21 +63,33 @@
     toggle.className = 'bb-toggle-pass';
     toggle.setAttribute('aria-label','Mostrar/ocultar senha');
     toggle.innerHTML = '<i class="bi bi-eye"></i>';
+    // Keep the eye vertically centered relative to the INPUT (not the wrapper)
+    function positionToggle(){
+      // offsetTop is relative to wrap; centers using the input height only
+      const center = input.offsetTop + (input.offsetHeight / 2);
+      toggle.style.top = center + 'px';
+    }
     toggle.addEventListener('click', ()=>{
       const isPass = input.getAttribute('type') === 'password';
       input.setAttribute('type', isPass ? 'text' : 'password');
       toggle.innerHTML = isPass ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
     });
     wrap.appendChild(toggle);
+    // Initial align and on layout changes
+    positionToggle();
+    window.addEventListener('resize', positionToggle);
+    input.addEventListener('input', positionToggle);
+    input.addEventListener('focus', positionToggle);
+    input.addEventListener('blur', positionToggle);
     return wrap;
   }
 
   function ensureMeter(input){
     let meter = input._bbMeter;
     if (meter) return meter;
-    ensureWrap(input);
-    const wrap = document.createElement('div');
-    wrap.className = 'bb-strength';
+    const inputWrap = ensureWrap(input); // wrapper that positions the eye
+    const strength = document.createElement('div');
+    strength.className = 'bb-strength';
     const progress = document.createElement('div');
     progress.className = 'progress';
     const bar = document.createElement('div');
@@ -98,11 +110,12 @@
       <li data-rule="digit"><i class="bi bi-x-circle"></i><span>Número</span></li>
       <li data-rule="symbol"><i class="bi bi-x-circle"></i><span>Símbolo</span></li>
     `;
-    wrap.appendChild(progress);
-    wrap.appendChild(small);
-    wrap.appendChild(req);
-    input.insertAdjacentElement('afterend', wrap);
-    input._bbMeter = {wrap, progress, bar, small, req};
+    strength.appendChild(progress);
+    strength.appendChild(small);
+    strength.appendChild(req);
+    // Insert strength block AFTER the wrapper, so the eye stays centered inside the input
+    inputWrap.insertAdjacentElement('afterend', strength);
+    input._bbMeter = {wrap: strength, progress, bar, small, req};
     return input._bbMeter;
   }
 
