@@ -135,7 +135,8 @@ hr {
 
 .titleSobreNos {
     font-family: 'Yellowtail';
-    font-size: 80px;
+    font-size: 72px;
+    line-height: 1.1;
     color: #fff;
     margin: 0;
     text-align: center;
@@ -154,12 +155,18 @@ hr {
 .text p {
     color: #fff;
     text-align: center;
-    font-size: 25px;
-    margin: 20px auto;
-    max-width: 800px;
+    font-size: 22px;
+    line-height: 1.6;
+    margin: 16px auto;
+    max-width: 900px;
     width: 100%;
-    padding: 0 15px;
+    padding: 0 16px;
     box-sizing: border-box;
+}
+
+/* Sobre Nós: alinhar texto à esquerda em telas médias+ para melhor leitura */
+@media (min-width: 768px) {
+    #SobreNos .text p { text-align: left; }
 }
 
 
@@ -179,14 +186,20 @@ hr {
 
 
 #Espaco h1 {
-    margin-bottom: 1rem;
-    transform: translateY(-25px);
+    margin-bottom: 1.25rem;
+    transform: translateY(-20px);
     text-align: left;
+    line-height: 1.1;
+    letter-spacing: .5px;
 }
 
 #Espaco p {
-    max-width: 520px;
+    max-width: 560px;
     text-align: left;
+    font-family: 'Arapey', serif;
+    font-size: 1.15rem;
+    line-height: 1.65;
+    margin-bottom: .75rem;
 }
 
 
@@ -245,10 +258,14 @@ footer h5 {
     #Espaco h1 {
         font-size: 2.2rem;
         transform: none;
+        text-align: center;
     }
 
     #Espaco p {
-        font-size: 1.1rem;
+        font-size: 1.05rem;
+        line-height: 1.6;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .frame21 {
@@ -264,10 +281,12 @@ footer h5 {
 
     #Espaco h1 {
         font-size: 1.9rem;
+        text-align: center;
     }
 
     #Espaco p {
         font-size: 1rem;
+        line-height: 1.55;
     }
 }
 
@@ -275,21 +294,13 @@ footer h5 {
 
 
 @media (max-width: 767px) {
-    .titleSobreNos {
-        font-size: 40px;
-    }
+    .titleSobreNos { font-size: 44px; }
 
-    .title {
-        font-size: 40px;
-    }
+    .title { font-size: 44px; }
 
-    .subtitle {
-        font-size: 27px;
-    }
+    .subtitle { font-size: 24px; }
 
-    .text p {
-        font-size: 18px;
-    }
+    .text p { font-size: 18px; line-height: 1.55; }
 
     .divider {
         width: 70%;

@@ -130,13 +130,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <div class="g-recaptcha" data-sitekey="<?= htmlspecialchars(RECAPTCHA_SITE_KEY) ?>" data-theme="light"></div>
               </div>
             <?php endif; ?>
-            <div class="d-block text-center mt-1 mb-2">
-              <a href="recuperar.php" class="link-site small">Esqueceu a senha?</a>
-            </div>
+            <?php if (defined('SHOW_FORGOT_PASSWORD') && SHOW_FORGOT_PASSWORD): ?>
+              <div class="d-block text-center mt-1 mb-2">
+                <a href="recuperar.php" class="link-site small">Esqueceu a senha?</a>
+              </div>
+            <?php endif; ?>
             <button type="submit" class="btn btn-login w-100 fw-bold">Entrar</button>
           </form>
 
-          <?php if (defined('GOOGLE_CLIENT_ID') && GOOGLE_CLIENT_ID !== ''): ?>
+          <?php if ((defined('SHOW_GOOGLE_BUTTON') && SHOW_GOOGLE_BUTTON) && (defined('GOOGLE_CLIENT_ID') && GOOGLE_CLIENT_ID !== '')): ?>
             <?php
               // Constrói URL absoluta para o handler do Google
               $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';

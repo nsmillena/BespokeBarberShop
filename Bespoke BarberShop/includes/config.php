@@ -41,6 +41,9 @@ if (!defined('SMTP_PORT')) { define('SMTP_PORT', 587); }
 if (!defined('SMTP_SECURE')) { define('SMTP_SECURE', 'tls'); } // 'tls' ou 'ssl'
 if (!defined('SMTP_USERNAME')) { define('SMTP_USERNAME', ''); }
 if (!defined('SMTP_PASSWORD')) { define('SMTP_PASSWORD', ''); }
+// Controles de UI (apresentação): esconder botões Google e link "Esqueceu a senha?"
+if (!defined('SHOW_GOOGLE_BUTTON')) { define('SHOW_GOOGLE_BUTTON', false); }
+if (!defined('SHOW_FORGOT_PASSWORD')) { define('SHOW_FORGOT_PASSWORD', false); }
 // Overrides locais (não versionados): se existir includes/config.local.php, ele pode redefinir constantes acima.
 // Útil para configurar SMTP real e outras chaves sensíveis sem commitar.
 $__local = __DIR__ . '/config.local.php';

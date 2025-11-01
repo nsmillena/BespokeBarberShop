@@ -44,4 +44,9 @@ define('SMTP_ENABLE', true);
 
 // Google Login (se quiser alterar)
 // define('GOOGLE_CLIENT_ID', 'SUA_CLIENT_ID.apps.googleusercontent.com');
+
+// Exibir/ocultar botões Google e link "Esqueceu a senha?" na UI
+// Por padrão, estão ocultos para apresentação. Habilite assim:
+// define('SHOW_GOOGLE_BUTTON', true);
+// define('SHOW_FORGOT_PASSWORD', true);
 ?>
