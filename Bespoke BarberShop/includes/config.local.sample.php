@@ -49,4 +49,11 @@ define('SMTP_ENABLE', true);
 // Por padrão, estão ocultos para apresentação. Habilite assim:
 // define('SHOW_GOOGLE_BUTTON', true);
 // define('SHOW_FORGOT_PASSWORD', true);
+
+// Locale e moeda
+// Idioma padrão (pt_BR ou en_US)
+// define('BB_DEFAULT_LOCALE', 'pt_BR');
+// Taxa fixa para conversão BRL -> USD (apenas apresentação, sem API)
+// 1 USD = USD_BRL_RATE BRL (ex.: 1 USD = 5.20 BRL)
+// define('USD_BRL_RATE', 5.20);
 ?>

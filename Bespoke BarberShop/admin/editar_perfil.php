@@ -8,6 +8,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['papel'] !== 'admin') {
 include_once "../includes/db.php";
 $bd = new Banco();
 $conn = $bd->getConexao();
+require_once "../includes/i18n.php";
 $admin_id = $_SESSION['usuario_id'];
 if (empty($_SESSION['csrf_token'])) { $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); }
 
@@ -26,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF
     $token = $_POST['csrf_token'] ?? '';
     if (!hash_equals($_SESSION['csrf_token'], $token)) {
-        header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Falha de segurança. Atualize a página e tente novamente.'));
+        header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('user.security_fail')));
         exit;
     }
     $nome = trim($_POST['nome']);
@@ -37,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirma_senha = $_POST['confirma_senha'] ?? '';
     
     if (empty($nome) || empty($email) || empty($telefone)) {
-        header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Nome, email e telefone são obrigatórios.'));
+        header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('barber.required_fields')));
         exit;
     } else {
         // Verificar se o email já existe (exceto o próprio)
@@ -48,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($check->num_rows > 0) {
             $check->close();
-            header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Este email já está sendo usado por outro administrador.'));
+            header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('admin.err_email_in_use_admin')));
             exit;
         } else {
             $update_fields = "nomeAdmin = ?, emailAdmin = ?, telefoneAdmin = ?";
@@ -59,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!empty($senha_atual) && !empty($nova_senha)) {
                 if ($nova_senha !== $confirma_senha) {
                     $check->close();
-                    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Confirmação de senha não confere.'));
+                    header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('user.err_password_mismatch')));
                     exit;
                 }
                 // Critérios de força: min 8, 1 maiúscula, 1 minúscula, 1 dígito, 1 especial, diferente da atual
@@ -69,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $temEspecial  = preg_match('/[^A-Za-z0-9]/', $nova_senha);
                 if (strlen($nova_senha) < 8 || !$temMaiuscula || !$temMinuscula || !$temDigito || !$temEspecial) {
                     $check->close();
-                    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('A nova senha deve ter no mínimo 8 caracteres e incluir maiúscula, minúscula, dígito e símbolo.'));
+                    header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('admin.err_new_pw_requirements')));
                     exit;
                 }
                 // Verificar senha atual (compatível com hash e possível legado em texto plano)
@@ -96,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($senhaConfere) {
                     if (hash_equals((string)$nova_senha, (string)$senha_atual)) {
                         $check->close();
-                        header('Location: editar_perfil.php?ok=0&msg=' . urlencode('A nova senha deve ser diferente da senha atual.'));
+                        header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('admin.err_new_pw_same')));
                         exit;
                     }
                     $update_fields .= ", senhaAdmin = ?";
@@ -104,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $types .= "s";
                 } else {
                     $check->close();
-                    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Senha atual incorreta.'));
+                    header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('admin.err_wrong_current_password_admin')));
                     exit;
                 }
             }
@@ -120,12 +121,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $update->close();
                     $check->close();
                     // Redirecionar com toast
-                    header('Location: editar_perfil.php?ok=1&msg=' . urlencode('Perfil atualizado com sucesso!'));
+                    header('Location: editar_perfil.php?ok=1&msg=' . urlencode(t('admin.ok_profile_updated')));
                     exit;
                 } else {
                     $update->close();
                     $check->close();
-                    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Erro ao atualizar perfil. Tente novamente.'));
+                    header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('admin.err_profile_update')));
                     exit;
                 }
             }
@@ -134,10 +135,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-BR' ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Editar Perfil - Admin</title>
+    <title><?= t('admin.edit_profile_title') ?> - Admin</title>
     <link rel="stylesheet" href="dashboard_admin.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
@@ -150,49 +151,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="col-lg-6">
                 <div class="dashboard-card">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="dashboard-title mb-0"><i class="bi bi-person-circle"></i> Editar Perfil</h2>
-                        <a href="index_admin.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> Voltar</a>
+                        <h2 class="dashboard-title mb-0"><i class="bi bi-person-circle"></i> <?= t('admin.edit_profile_title') ?></h2>
+                        <a href="index_admin.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> <?= t('common.back') ?></a>
+                    </div>
+                    <?php
+                        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                        $uri = $_SERVER['REQUEST_URI'] ?? '';
+                        $currentUrl = $scheme.'://'.$host.$uri;
+                    ?>
+                    <div class="d-flex justify-content-end mb-3">
+                        <div class="btn-group btn-group-sm" role="group" aria-label="<?= t('nav.language') ?>">
+                            <a class="btn btn-outline-warning <?= bb_is_en() ? '' : 'active' ?>" href="../includes/locale.php?set=pt_BR&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.pt') ?></a>
+                            <a class="btn btn-outline-warning <?= bb_is_en() ? 'active' : '' ?>" href="../includes/locale.php?set=en_US&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.en') ?></a>
+                        </div>
                     </div>
                     <form method="POST">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                         <div class="mb-3">
-                            <label for="nome" class="form-label">Nome Completo</label>
+                            <label for="nome" class="form-label"><?= t('admin.full_name') ?></label>
                             <input type="text" class="form-control" id="nome" name="nome" value="<?= htmlspecialchars($nome_atual) ?>" required>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
+                            <label for="email" class="form-label"><?= t('admin.email') ?? 'Email' ?></label>
                             <input type="email" class="form-control" id="email" name="email" value="<?= htmlspecialchars($email_atual) ?>" required>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="telefone" class="form-label">Telefone</label>
+                            <label for="telefone" class="form-label"><?= t('admin.phone') ?></label>
                             <input type="tel" class="form-control bb-phone" id="telefone" name="telefone" value="<?= htmlspecialchars($telefone_atual) ?>" required>
                         </div>
                         
                         <hr class="my-4" style="border-color: rgba(218,165,32,0.3);">
                         
-                        <h5 class="text-light mb-3">Alterar Senha (opcional)</h5>
+                        <h5 class="text-light mb-3"><?= t('admin.change_password_optional') ?></h5>
                         
                         <div class="mb-3">
-                            <label for="senha_atual" class="form-label">Senha Atual</label>
+                            <label for="senha_atual" class="form-label"><?= t('admin.current_password') ?></label>
                             <input type="password" class="form-control" id="senha_atual" name="senha_atual" data-bb-toggle="1">
-                            <small class="text-muted">Deixe em branco se não quiser alterar a senha</small>
+                            <small class="text-muted"><?= t('admin.leave_blank_to_keep') ?></small>
                         </div>
                         
                         <div class="mb-4">
-                            <label for="nova_senha" class="form-label">Nova Senha</label>
-                            <input type="password" class="form-control bb-password" id="nova_senha" name="nova_senha" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}" title="Mínimo 8, com maiúscula, minúscula, número e símbolo.">
-                            <small class="text-muted">Mínimo 8, com maiúscula, minúscula, número e símbolo.</small>
+                            <label for="nova_senha" class="form-label"><?= t('admin.new_password') ?></label>
+                            <input type="password" class="form-control bb-password" id="nova_senha" name="nova_senha" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}" title="<?= t('admin.password_hint') ?>">
                         </div>
 
                         <div class="mb-4">
-                            <label for="confirma_senha" class="form-label">Confirmar Nova Senha</label>
+                            <label for="confirma_senha" class="form-label"><?= t('admin.new_password_confirm') ?></label>
                             <input type="password" class="form-control bb-password-confirm" id="confirma_senha" name="confirma_senha" data-match="#nova_senha">
                         </div>
                         
                         <button type="submit" class="dashboard-action w-100">
-                            <i class="bi bi-check-circle"></i> Atualizar Perfil
+                            <i class="bi bi-check-circle"></i> <?= t('admin.update_profile') ?>
                         </button>
                     </form>
                 </div>

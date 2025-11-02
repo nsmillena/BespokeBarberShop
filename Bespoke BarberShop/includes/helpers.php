@@ -99,3 +99,70 @@ if (!function_exists('bb_verify_captcha')) {
         return true; // nenhum configurado => não exige
     }
 }
+
+if (!function_exists('bb_status_label')) {
+    // Map DB status to localized human-readable label
+    function bb_status_label($status) {
+        $s = trim((string)$status);
+        switch (mb_strtolower($s, 'UTF-8')) {
+            case 'agendado':
+                return t('status.scheduled');
+            case 'cancelado':
+                return t('status.canceled');
+            case 'finalizado':
+                return t('status.completed');
+            case 'pendente':
+                return t('status.pending');
+            case 'pago':
+                return t('status.paid');
+            case 'todos':
+                return t('status.all');
+            default:
+                return $status; // fallback: show as-is
+        }
+    }
+}
+
+if (!function_exists('bb_slugify')) {
+    // Convert a string to a simple slug (ASCII, lowercase, dash-separated)
+    function bb_slugify($text) {
+        $text = (string)$text;
+        // Normalize accents
+        $text = iconv('UTF-8', 'ASCII//TRANSLIT', $text);
+        $text = strtolower($text);
+        $text = preg_replace('/[^a-z0-9]+/i', '-', $text);
+        $text = trim($text, '-');
+        return $text ?: '';
+    }
+}
+
+if (!function_exists('bb_service_display')) {
+    // Localize a service name from DB using translation keys services.<slug>; fallback to original when missing
+    function bb_service_display($name) {
+        $name = (string)$name;
+        if ($name === '') return $name;
+        if (!function_exists('t')) return $name;
+        $slug = bb_slugify($name);
+        if ($slug === '') return $name;
+        $key = 'services.' . $slug;
+        $val = t($key);
+        // When key not found, t() returns the key path
+        if ($val === $key) return $name;
+        return $val;
+    }
+}
+
+if (!function_exists('bb_service_desc_display')) {
+    // Localize a service description using services_desc.<slug>; fallback to original description
+    function bb_service_desc_display($serviceName, $description) {
+        $serviceName = (string)$serviceName;
+        $description = (string)$description;
+        if (!function_exists('t')) return $description;
+        $slug = bb_slugify($serviceName);
+        if ($slug === '') return $description;
+        $key = 'services_desc.' . $slug;
+        $val = t($key);
+        if ($val === $key || $val === '' || $val === null) return $description;
+        return $val;
+    }
+}

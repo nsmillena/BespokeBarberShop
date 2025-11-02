@@ -18,9 +18,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   $temEspecial  = preg_match('/[^A-Za-z0-9]/', $senha);
 
   if ($senha !== $confirmar) {
-    $erro = "As senhas não coincidem!";
+    $erro = t('signup.err_mismatch');
   } elseif (strlen($senha) < 8 || !$temMaiuscula || !$temMinuscula || !$temDigito || !$temEspecial) {
-    $erro = "A senha deve ter no mínimo 8 caracteres e incluir maiúscula, minúscula, número e símbolo.";
+    $erro = t('signup.err_strength');
   } else {
         $bd = new Banco();
         $conn = $bd->getConexao();
@@ -31,8 +31,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->execute();
         $stmt->store_result();
 
-        if ($stmt->num_rows > 0) {
-            $erro = "E-mail já cadastrado!";
+    if ($stmt->num_rows > 0) {
+      $erro = t('signup.err_email_exists');
         } else {
             // Armazenar senha como hash seguro (compatível com login.php que aceita hash e legado)
             $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
@@ -40,10 +40,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stmt = $conn->prepare("INSERT INTO Cliente (nomeCliente, emailCliente, telefoneCliente, senhaCliente) VALUES (?, ?, ?, ?)");
             $stmt->bind_param("ssss", $nome, $email, $telefone, $senhaHash);
 
-      if ($stmt->execute()) {
-                $sucesso = "Cadastro realizado com sucesso! <a href='login.php'>Faça login</a>";
-            } else {
-                $erro = "Erro ao cadastrar. Tente novamente.";
+    if ($stmt->execute()) {
+        $sucesso = t('signup.success') . " <a href='login.php'>" . t('signup.login') . "</a>";
+      } else {
+        $erro = t('signup.err_generic');
             }
         }
         $stmt->close();
@@ -52,11 +52,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 ?>
 <!doctype html>
-<html lang="pt-br">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-br' ?>">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Cadastro - Bespoke BarberShop</title>
+  <title><?= t('signup.title') ?> - Bespoke BarberShop</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="cadastro.css">
@@ -70,7 +70,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       <div class="row justify-content-center">
         <div class="col-12 col-md-8 col-lg-6">
         <div class="card cadastro-card p-4">
-          <h3 class="text-center cadastro-title mb-4">Cadastro</h3>
+          <?php
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $uri = $_SERVER['REQUEST_URI'] ?? '';
+            $currentUrl = $scheme.'://'.$host.$uri;
+          ?>
+          <div class="d-flex justify-content-end mb-2">
+            <div class="btn-group btn-group-sm" role="group" aria-label="<?= t('nav.language') ?>">
+              <a class="btn btn-outline-warning <?= bb_is_en() ? '' : 'active' ?>" href="includes/locale.php?set=pt_BR&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.pt') ?></a>
+              <a class="btn btn-outline-warning <?= bb_is_en() ? 'active' : '' ?>" href="includes/locale.php?set=en_US&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.en') ?></a>
+            </div>
+          </div>
+          <h3 class="text-center cadastro-title mb-4"><?= t('signup.title') ?></h3>
 
           <?php if ($erro): ?>
             <div class="alert alert-danger text-center"><?= $erro ?></div>
@@ -81,30 +93,30 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
           <form method="POST" action="" class="needs-validation" novalidate>
             <div class="mb-3">
-              <label for="nome" class="form-label">Nome Completo</label>
-              <input type="text" class="form-control" id="nome" name="nome" placeholder="Digite seu nome" required>
-              <div class="invalid-feedback">Informe seu nome completo.</div>
+              <label for="nome" class="form-label"><?= t('signup.name') ?></label>
+              <input type="text" class="form-control" id="nome" name="nome" placeholder="<?= t('signup.name') ?>" required>
+              <div class="invalid-feedback"><?= t('signup.val_name') ?></div>
             </div>
             <div class="mb-3">
-              <label for="email" class="form-label">E-mail</label>
-              <input type="email" class="form-control" id="email" name="email" placeholder="Digite seu e-mail" required>
-              <div class="invalid-feedback">Informe um e-mail válido.</div>
+              <label for="email" class="form-label"><?= t('signup.email') ?></label>
+              <input type="email" class="form-control" id="email" name="email" placeholder="<?= t('signup.email') ?>" required>
+              <div class="invalid-feedback"><?= t('signup.val_email') ?></div>
             </div>
             <div class="mb-3">
-              <label for="telefone" class="form-label">Telefone</label>
+              <label for="telefone" class="form-label"><?= t('signup.phone') ?></label>
               <input type="tel" class="form-control" id="telefone" name="telefone" placeholder="(xx) xxxxx-xxxx">
             </div>
             <div class="mb-3">
-              <label for="senha" class="form-label">Senha</label>
-              <input type="password" class="form-control bb-password" id="senha" name="senha" placeholder="Crie uma senha" required pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}" title="Mínimo 8, com maiúscula, minúscula, número e símbolo.">
-              <div class="invalid-feedback">Senha inválida. Siga os requisitos acima.</div>
+              <label for="senha" class="form-label"><?= t('signup.password') ?></label>
+              <input type="password" class="form-control bb-password" id="senha" name="senha" placeholder="<?= t('signup.password_placeholder') ?>" required pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}" title="<?= t('signup.err_strength') ?>">
+              <div class="invalid-feedback"><?= t('signup.val_password') ?></div>
             </div>
             <div class="mb-3">
-              <label for="confirmar" class="form-label">Confirmar Senha</label>
-              <input type="password" class="form-control bb-password-confirm" id="confirmar" name="confirmar" placeholder="Repita a senha" required data-match="#senha">
-              <div class="invalid-feedback">Repita a mesma senha.</div>
+              <label for="confirmar" class="form-label"><?= t('signup.confirm') ?></label>
+              <input type="password" class="form-control bb-password-confirm" id="confirmar" name="confirmar" placeholder="<?= t('signup.confirm_placeholder') ?>" required data-match="#senha">
+              <div class="invalid-feedback"><?= t('signup.val_confirm') ?></div>
             </div>
-            <button type="submit" class="btn btn-cadastrar w-100 fw-bold">Cadastrar</button>
+            <button type="submit" class="btn btn-cadastrar w-100 fw-bold"><?= t('signup.create') ?></button>
           </form>
 
           <?php if ((defined('SHOW_GOOGLE_BUTTON') && SHOW_GOOGLE_BUTTON) && (defined('GOOGLE_CLIENT_ID') && GOOGLE_CLIENT_ID !== '')): ?>
@@ -117,7 +129,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ?>
             <div class="auth-divider d-flex align-items-center my-3">
               <hr class="flex-grow-1">
-              <span class="px-2">ou</span>
+              <span class="px-2"><?= t('auth.or') ?></span>
               <hr class="flex-grow-1">
             </div>
             <div class="d-flex justify-content-center">
@@ -150,11 +162,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           <?php endif; ?>
 
           <p class="text-center mt-3">
-            Já tem conta? <a href="login.php" class="link-login">Faça login</a>
+            <?= t('signup.have_account') ?> <a href="login.php" class="link-login"><?= t('signup.login') ?></a>
           </p>
           <p class="text-center mt-3">
-            <a href="index.php" class="link-site">Voltar ao Site</a>
+            <a href="index.php" class="link-site"><?= t('auth.back_site') ?></a>
           </p>
+          
         </div>
         </div>
       </div>

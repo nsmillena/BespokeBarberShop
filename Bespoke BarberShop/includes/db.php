@@ -1,6 +1,9 @@
 <?php
 // App config (OAuth, email)
 @include_once __DIR__ . '/config.php';
+// i18n + formatting helpers (site-wide)
+@include_once __DIR__ . '/i18n.php';
+@include_once __DIR__ . '/format.php';
 
 // Define timezone
 date_default_timezone_set('America/Sao_Paulo');

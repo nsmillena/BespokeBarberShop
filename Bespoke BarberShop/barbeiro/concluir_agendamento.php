@@ -11,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 include_once "../includes/db.php";
+require_once "../includes/i18n.php";
 $bd = new Banco();
 $conn = $bd->getConexao();
 
@@ -25,7 +26,7 @@ $mustQ->bind_result($must);
 $mustQ->fetch();
 $mustQ->close();
 if ((int)$must === 1) {
-    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Antes de concluir atendimentos, altere sua senha temporária.'));
+    header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('barber.must_change_required')));
     exit;
 }
 
@@ -50,7 +51,7 @@ function bb_build_redirect($baseUrl, $params){
 }
 
 if ($idAgendamento <= 0) {
-    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'0','msg'=>'Atendimento inválido.']));
+    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'0','msg'=>t('barber.invalid_appointment')]));
     exit;
 }
 
@@ -61,13 +62,13 @@ $stmt->execute();
 $stmt->bind_result($statusAtual);
 if (!$stmt->fetch()) {
     $stmt->close();
-    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'0','msg'=>'Atendimento não encontrado.']));
+    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'0','msg'=>t('barber.appointment_not_found')]));
     exit;
 }
 $stmt->close();
 
 if ($statusAtual !== 'Agendado') {
-    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'0','msg'=>'Este atendimento não pode ser concluído.']));
+    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'0','msg'=>t('barber.cannot_complete')]));
     exit;
 }
 
@@ -76,11 +77,11 @@ $upd = $conn->prepare("UPDATE Agendamento SET statusAgendamento = 'Finalizado' W
 $upd->bind_param("ii", $idAgendamento, $idBarbeiro);
 if ($upd->execute()) {
     $upd->close();
-    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'1','msg'=>'Atendimento finalizado com sucesso.']));
+    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'1','msg'=>t('barber.appointment_completed')]));
     exit;
 } else {
     $erro = $conn->error;
     $upd->close();
-    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'0','msg'=>'Falha ao concluir atendimento: ' . $erro]));
+    header('Location: ' . bb_build_redirect($returnTo, ['ok'=>'0','msg'=>t('barber.fail_complete') . ' ' . $erro]));
     exit;
 }

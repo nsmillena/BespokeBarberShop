@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   $hora = $_POST['hora'] ?? '';
   $barbeiroId = $_POST['barbeiro_id'] ?? null;
   $servicoId = $_POST['servico_id'] ?? null;
-  $preco = $_POST['preco'] ?? '';
+  $precoBrl = isset($_POST['preco_brl']) ? (float)$_POST['preco_brl'] : (float)0;
   $duracao = $_POST['duracao'] ?? '';
   $duracaoFmt = bb_format_minutes($duracao);
 
@@ -33,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   $stmtCount->close();
 }
   if ($ativosQtd >= 5) {
-    $msg = "<div class='alert alert-warning text-center'>Você atingiu o limite de 5 agendamentos ativos. Cancele um agendamento existente antes de criar um novo.</div>";
+    $msg = "<div class='alert alert-warning text-center'>" . t('user.limit_reached') . "</div>";
   } else if ($barbeiroId && $unidadeId && $servicoId) {
     // 1) Verifica folga semanal e férias (dia indisponível)
     // Folga semanal ativa neste dia
@@ -41,7 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $qf->bind_param("isss", $barbeiroId, $data, $data, $data);
     $qf->execute(); $qf->store_result(); $isDayOff = $qf->num_rows > 0; $qf->close();
     if ($isDayOff) {
-      $msg = "<div class='alert alert-danger text-center'>Este dia é folga semanal do barbeiro selecionado. Escolha outro dia.</div>";
+      $msg = "<div class='alert alert-danger text-center'>" . t('sched.day_off') . "</div>";
     }
     // Férias
     if (empty($msg)) {
@@ -49,7 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       $qv->bind_param("iss", $barbeiroId, $data, $data);
       $qv->execute(); $qv->store_result(); $inVacation = $qv->num_rows > 0; $qv->close();
       if ($inVacation) {
-        $msg = "<div class='alert alert-danger text-center'>O barbeiro está de férias neste período. Escolha outra data.</div>";
+        $msg = "<div class='alert alert-danger text-center'>" . t('sched.vacation') . "</div>";
       }
     }
     
@@ -71,7 +71,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $qBloq->store_result();
     $temBloqueio = $qBloq->num_rows > 0; $qBloq->close();
     if ($temBloqueio) {
-      $msg = "<div class='alert alert-danger text-center'>Este horário está indisponível para o barbeiro escolhido. Escolha outro horário.</div>";
+      $msg = "<div class='alert alert-danger text-center'>" . t('sched.unavailable_time') . "</div>";
     } else {
     $status = 'Agendado';
     $stmt = $conn->prepare("INSERT INTO Agendamento (Cliente_idCliente, data, hora, Barbeiro_idBarbeiro, Unidade_idUnidade, statusAgendamento) VALUES (?, ?, ?, ?, ?, ?)");
@@ -81,23 +81,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $idAgendamento = $conn->insert_id;
         // Associar serviço ao agendamento
         $stmtServ = $conn->prepare("INSERT INTO Agendamento_has_Servico (Agendamento_idAgendamento, Servico_idServico, precoFinal, tempoEstimado) VALUES (?, ?, ?, ?)");
-        $precoF = floatval(str_replace(["R$", " ", ".", ","], ["", "", "", "."], $preco));
+        $precoF = (float)$precoBrl; // sempre BRL
         $stmtServ->bind_param("iidd", $idAgendamento, $servicoId, $precoF, $duracaoF);
         $stmtServ->execute();
         $stmtServ->close();
-        $msg = "<div class='alert alert-success text-center'>Agendamento realizado com sucesso! <a href='usuario/agendamentos_usuario.php'>Ver meus agendamentos</a></div>";
+        $msg = "<div class='alert alert-success text-center'>" . t('sched.success_booked') . " <a href='usuario/agendamentos_usuario.php'>" . t('user.my_appointments') . "</a></div>";
       }
     } catch (mysqli_sql_exception $e) {
       if (strpos($e->getMessage(), 'uk_Barbeiro_Horario') !== false) {
-        $msg = "<div class='alert alert-danger text-center'>Este horário já está ocupado para o barbeiro escolhido. Por favor, escolha outro horário.</div>";
+        $msg = "<div class='alert alert-danger text-center'>" . t('sched.already_booked') . "</div>";
       } else {
-        $msg = "<div class='alert alert-danger text-center'>Erro ao agendar. Tente novamente.</div>";
+        $msg = "<div class='alert alert-danger text-center'>" . t('user.action_failed') . "</div>";
       }
     }
     if (isset($stmt)) { $stmt->close(); }
     }
   } else {
-    $msg = "<div class='alert alert-danger text-center'>Dados incompletos. Tente novamente.</div>";
+    $msg = "<div class='alert alert-danger text-center'>" . t('common.incomplete_data') . "</div>";
   }
   // $conn->close(); // Mover para depois da exibição dos detalhes
 } else {
@@ -106,11 +106,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-br' ?>">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Resumo do Agendamento</title>
+<title><?= t('sched.summary_title') ?></title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
@@ -180,16 +180,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <main class="container py-5">
     <header>
-      <h1>Resumo do Agendamento</h1>
+  <h1><?= t('sched.summary_title') ?></h1>
     </header>
 
     <main class="container py-5">
       <?php if (isset($msg)) echo $msg; ?>
       <div class="card p-4 mt-4">
-        <a href="usuario/index_usuario.php" class="btn btn-outline-warning top-right-action d-flex align-items-center"><i class="bi bi-box-arrow-left"></i> Voltar ao Painel</a>
-        <h2 class="card-title mb-4">Detalhes do Agendamento</h2>
+        <a href="usuario/index_usuario.php" class="btn btn-outline-warning top-right-action d-flex align-items-center"><i class="bi bi-box-arrow-left"></i> <?= t('sched.back_panel') ?></a>
+        <h2 class="card-title mb-4"><?= t('sched.details_title') ?></h2>
         <div class="card-body">
-          <p><i class="bi bi-shop"></i> <strong>Unidade:</strong> <span>
+          <p><i class="bi bi-shop"></i> <strong><?= t('sched.unit') ?>:</strong> <span>
             <?php
             // Buscar nome da unidade
             $nomeUnidade = '';
@@ -206,9 +206,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             echo htmlspecialchars($nomeUnidade);
             ?>
           </span></p>
-          <p><i class="bi bi-calendar-event"></i> <strong>Data:</strong> <span><?php echo htmlspecialchars($_POST['data'] ?? ''); ?></span></p>
-          <p><i class="bi bi-clock"></i> <strong>Hora:</strong> <span><?php echo htmlspecialchars($hora); ?></span></p>
-          <p><i class="bi bi-scissors"></i> <strong>Barbeiro:</strong> <span>
+          <p><i class="bi bi-calendar-event"></i> <strong><?= t('sched.date') ?>:</strong> <span><?php echo htmlspecialchars(bb_format_date($data)); ?></span></p>
+          <p><i class="bi bi-clock"></i> <strong><?= t('sched.time') ?>:</strong> <span><?php echo htmlspecialchars(bb_format_time($hora)); ?></span></p>
+          <p><i class="bi bi-scissors"></i> <strong><?= t('sched.barber') ?>:</strong> <span>
             <?php
             // Buscar nome do barbeiro
             $nomeBarbeiro = '';
@@ -225,7 +225,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             echo htmlspecialchars($nomeBarbeiro);
             ?>
           </span></p>
-          <p><i class="bi bi-star"></i> <strong>Serviço:</strong> <span>
+          <p><i class="bi bi-star"></i> <strong><?= t('sched.service') ?>:</strong> <span>
             <?php
             // Buscar nome do serviço
             $nomeServico = '';
@@ -235,25 +235,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
               $stmtS->execute();
               $resS = $stmtS->get_result();
               if ($rowS = $resS->fetch_assoc()) {
-                $nomeServico = $rowS['nomeServico'];
+                $nomeServico = bb_service_display($rowS['nomeServico']);
               }
               $stmtS->close();
             }
             echo htmlspecialchars($nomeServico);
             ?>
           </span></p>
-          <p><i class="bi bi-cash-coin"></i> <strong>Valor:</strong> <span><?php echo htmlspecialchars($preco); ?></span></p>
-          <p><i class="bi bi-hourglass-split"></i> <strong>Duração:</strong> <span><?php echo htmlspecialchars($duracaoFmt); ?></span></p>
+          <p><i class="bi bi-cash-coin"></i> <strong><?= t('sched.value') ?>:</strong> <span><?php echo htmlspecialchars(bb_format_currency_local($precoBrl)); ?></span></p>
+          <p><i class="bi bi-hourglass-split"></i> <strong><?= t('sched.duration') ?>:</strong> <span><?php echo htmlspecialchars($duracaoFmt); ?></span></p>
         </div>
         <div class="d-flex flex-column flex-md-row justify-content-between mt-4 gap-2">
           <a href="agendamento.php" class="btn btn-secondary btn-wide d-flex align-items-center justify-content-center">
-            <i class="bi bi-arrow-left-circle"></i> Reagendar
+            <i class="bi bi-arrow-left-circle"></i> <?= t('sched.reschedule') ?>
           </a>
           <?php if (isset($idAgendamento)): ?>
-          <form method="POST" action="cancelar.php" onsubmit="return confirm('Tem certeza que deseja cancelar este agendamento?');" class="d-inline-block ms-md-auto">
+          <form method="POST" action="cancelar.php" onsubmit="return confirm('<?= t('sched.confirm_cancel') ?>');" class="d-inline-block ms-md-auto">
             <input type="hidden" name="idAgendamento" value="<?= $idAgendamento ?>">
             <button type="submit" class="btn btn-danger btn-wide d-flex align-items-center justify-content-center">
-              <i class="bi bi-x-circle"></i> Cancelar Agendamento
+              <i class="bi bi-x-circle"></i> <?= t('sched.cancel') ?>
             </button>
           </form>
           <?php endif; ?>

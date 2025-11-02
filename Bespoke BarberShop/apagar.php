@@ -19,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['idAgendamento'])) {
     $stmtChk->execute();
     $resChk = $stmtChk->get_result();
     if (!$resChk || $resChk->num_rows === 0) {
-        header("Location: usuario/agendamentos_usuario.php?erro=1");
+        header("Location: usuario/agendamentos_usuario.php?ok=0&msg=" . urlencode(t('user.action_failed')));
         exit;
     }
     $stmtChk->close();
@@ -36,10 +36,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['idAgendamento'])) {
     $stmtIns = $conn->prepare("INSERT IGNORE INTO AgendamentoOcultoCliente (Cliente_id, Agendamento_id) VALUES (?, ?)");
     $stmtIns->bind_param("ii", $idCliente, $idAgendamento);
     if ($stmtIns->execute()) {
-        header("Location: usuario/agendamentos_usuario.php?confirmado=1");
+        header("Location: usuario/agendamentos_usuario.php?ok=1&msg=" . urlencode(t('user.appointment_hidden')));
         exit;
     } else {
-        header("Location: usuario/agendamentos_usuario.php?erro=1");
+        header("Location: usuario/agendamentos_usuario.php?ok=0&msg=" . urlencode(t('user.action_failed')));
         exit;
     }
 } else {

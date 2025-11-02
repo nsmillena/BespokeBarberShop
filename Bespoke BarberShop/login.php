@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     // Verificação de Captcha (hCaptcha preferencial; fallback reCAPTCHA)
     $captchaErr = null;
     if (!bb_verify_captcha($_POST, $_SERVER['REMOTE_ADDR'] ?? null, $captchaErr)) {
-      $erro = $captchaErr ?: 'Falha na verificação do captcha. Tente novamente.';
+      $erro = $captchaErr ?: t('auth.captcha_fail');
     }
 
     // Verifica nas três tabelas
@@ -65,13 +65,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if ($agora > $dtExpira) {
               // Expirou: limpar sessão e mostrar erro
               session_unset(); session_destroy();
-              $erro = "Sua senha temporária expirou. Solicite um novo reset ao administrador.";
+              $erro = t('auth.temp_expired');
               break; // sai do foreach
             }
           }
           if ($must === 1) {
             $_SESSION['must_change_password'] = 1;
-            header("Location: barbeiro/editar_perfil.php?ok=0&msg=" . urlencode('Troca de senha obrigatória no primeiro acesso. Informe a senha temporária como atual e defina uma nova.'));
+            header("Location: barbeiro/editar_perfil.php?ok=0&msg=" . urlencode(t('auth.force_change')));
             exit;
           }
         }
@@ -88,21 +88,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     }
 
-  $erro = "E-mail ou senha inválidos!";
+  $erro = t('auth.invalid');
   } // end if !isset($erro)
 }
 ?>
 <!doctype html>
-<html lang="pt-br">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-br' ?>">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login - Bespoke BarberShop</title>
+  <title><?= t('auth.login_title') ?> - Bespoke BarberShop</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="login.css"> 
     <?php if (defined('RECAPTCHA_SITE_KEY') && RECAPTCHA_SITE_KEY !== ''): ?>
-      <script src="https://www.google.com/recaptcha/api.js?hl=pt-BR" async defer></script>
+  <script src="https://www.google.com/recaptcha/api.js?hl=<?= bb_recaptcha_hl() ?>" async defer></script>
     <?php endif; ?>
   </head>
   <body class="login-body">
@@ -110,7 +110,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <div class="container d-flex justify-content-center align-items-center vh-100">
       <div class="card-container">
         <div class="card login-card p-4">
-          <h3 class="text-center login-title mb-4">Login</h3>
+          <?php
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $uri = $_SERVER['REQUEST_URI'] ?? '';
+            $currentUrl = $scheme.'://'.$host.$uri;
+          ?>
+          <div class="d-flex justify-content-end mb-2">
+            <div class="btn-group btn-group-sm" role="group" aria-label="<?= t('nav.language') ?>">
+              <a class="btn btn-outline-warning <?= bb_is_en() ? '' : 'active' ?>" href="includes/locale.php?set=pt_BR&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.pt') ?></a>
+              <a class="btn btn-outline-warning <?= bb_is_en() ? 'active' : '' ?>" href="includes/locale.php?set=en_US&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.en') ?></a>
+            </div>
+          </div>
+          <h3 class="text-center login-title mb-4"><?= t('auth.login_title') ?></h3>
 
           <?php if (isset($erro)): ?>
             <div class="alert alert-danger text-center"><?= $erro ?></div>
@@ -118,12 +130,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
           <form method="POST" action="">
             <div class="mb-3">
-              <label for="email" class="form-label">E-mail</label>
-              <input type="email" class="form-control" id="email" name="email" placeholder="Digite seu e-mail" required>
+              <label for="email" class="form-label"><?= t('auth.email') ?></label>
+              <input type="email" class="form-control" id="email" name="email" placeholder="<?= t('auth.email') ?>" required>
             </div>
             <div class="mb-3">
-              <label for="senha" class="form-label">Senha</label>
-              <input type="password" class="form-control" id="senha" name="senha" placeholder="Digite sua senha" required data-bb-toggle="1">
+              <label for="senha" class="form-label"><?= t('auth.password') ?></label>
+              <input type="password" class="form-control" id="senha" name="senha" placeholder="<?= t('auth.password') ?>" required data-bb-toggle="1">
             </div>
             <?php if (defined('RECAPTCHA_SITE_KEY') && RECAPTCHA_SITE_KEY !== ''): ?>
               <div class="captcha-wrap mt-1 mb-2 d-flex justify-content-center">
@@ -132,10 +144,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <?php endif; ?>
             <?php if (defined('SHOW_FORGOT_PASSWORD') && SHOW_FORGOT_PASSWORD): ?>
               <div class="d-block text-center mt-1 mb-2">
-                <a href="recuperar.php" class="link-site small">Esqueceu a senha?</a>
+                <a href="recuperar.php" class="link-site small"><?= t('auth.forgot') ?></a>
               </div>
             <?php endif; ?>
-            <button type="submit" class="btn btn-login w-100 fw-bold">Entrar</button>
+            <button type="submit" class="btn btn-login w-100 fw-bold"><?= t('auth.enter') ?></button>
           </form>
 
           <?php if ((defined('SHOW_GOOGLE_BUTTON') && SHOW_GOOGLE_BUTTON) && (defined('GOOGLE_CLIENT_ID') && GOOGLE_CLIENT_ID !== '')): ?>
@@ -149,7 +161,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ?>
             <div class="auth-divider d-flex align-items-center mt-3">
               <hr class="flex-grow-1">
-              <span class="px-2">ou</span>
+              <span class="px-2">/</span>
               <hr class="flex-grow-1">
             </div>
             <div class="mt-2 d-flex justify-content-center">
@@ -185,11 +197,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
           <?php endif; ?>
 
           <p class="text-center link-container" style="margin-top: 1rem;">
-            Ainda não tem conta? <a href="cadastro.php" class="link-cadastro">Cadastre-se</a>
+            <?= t('auth.no_account') ?> <a href="cadastro.php" class="link-cadastro"><?= t('auth.signup') ?></a>
           </p>
           <p class="text-center link-container">
-            <a href="index.php" class="link-site">Voltar ao Site</a>
+            <a href="index.php" class="link-site"><?= t('auth.back_site') ?></a>
           </p>
+          
         </div>
       </div>
     </div>

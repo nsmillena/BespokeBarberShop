@@ -1,10 +1,11 @@
+<?php include __DIR__ . '/includes/db.php'; ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-br' ?>">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bespoke BarberShop</title>
+  <title><?= t('home.hero_title') ?></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Yellowtail&display=swap" rel="stylesheet">
@@ -56,55 +57,64 @@
 
           <ul class="navbar-nav d-none d-lg-flex gap-5">
             <li class="nav-item">
-              <a class="nav-link" href="#Inicio">Início</a>
+              <a class="nav-link" href="#Inicio"><?= t('nav.home') ?></a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#SobreNos">Sobre Nós</a>
+              <a class="nav-link" href="#SobreNos"><?= t('nav.about') ?></a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#Espaco">Espaço</a>
+              <a class="nav-link" href="#Espaco"><?= t('nav.space') ?></a>
             </li>
 
             <li class="nav-item">
-              <a class="nav-link" href="#Localizacao">Localização</a>
+              <a class="nav-link" href="#Localizacao"><?= t('nav.location') ?></a>
             </li>
           </ul>
 
           <ul class="navbar-nav d-lg-none flex-column gap-2">
             <li class="nav-item">
-              <a class="nav-link" href="#Inicio">Início</a>
+              <a class="nav-link" href="#Inicio"><?= t('nav.home') ?></a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#SobreNos">Sobre Nós</a>
+              <a class="nav-link" href="#SobreNos"><?= t('nav.about') ?></a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#Espaco">Espaço</a>
+              <a class="nav-link" href="#Espaco"><?= t('nav.space') ?></a>
             </li>
 
             <li class="nav-item">
-              <a class="nav-link" href="#Localizacao">Localização</a>
+              <a class="nav-link" href="#Localizacao"><?= t('nav.location') ?></a>
             </li>
           </ul>
 
 
           <div class="d-lg-none d-flex flex-column gap-3 mt-4">
             <a href="login.php" class="btn btn-outline-warning fw-bold btn-lg">
-              Login
+              <?= t('nav.login') ?>
             </a>
             <a href="cadastro.php" class="btn btn-warning fw-bold text-dark btn-lg">
-              Cadastro
+              <?= t('nav.signup') ?>
             </a>
+            <div class="text-center mt-2">
+              <span class="text-white-50 me-2"><?= t('nav.language') ?>:</span>
+              <a class="link-warning me-2" href="includes/locale.php?set=pt_BR&redirect=<?= urlencode($_SERVER['REQUEST_URI']) ?>">🇧🇷 <?= t('nav.pt') ?></a>
+              <a class="link-warning" href="includes/locale.php?set=en_US&redirect=<?= urlencode($_SERVER['REQUEST_URI']) ?>">🇺🇸 <?= t('nav.en') ?></a>
+            </div>
           </div>
         </div>
       </div>
 
 
       <div class="d-none d-lg-flex gap-2 ms-auto ">
+        <div class="btn-group me-2" role="group" aria-label="<?= t('nav.language') ?>">
+          <a class="btn btn-outline-warning <?= bb_is_en() ? '' : 'active' ?>" href="includes/locale.php?set=pt_BR&redirect=<?= urlencode($_SERVER['REQUEST_URI']) ?>">🇧🇷 <?= t('nav.pt') ?></a>
+          <a class="btn btn-outline-warning <?= bb_is_en() ? 'active' : '' ?>" href="includes/locale.php?set=en_US&redirect=<?= urlencode($_SERVER['REQUEST_URI']) ?>">🇺🇸 <?= t('nav.en') ?></a>
+        </div>
         <a href="login.php" class="btn btn-outline-warning fw-bold px-3">
-          Login
+          <?= t('nav.login') ?>
         </a>
         <a href="cadastro.php" class="btn btn-warning fw-bold text-dark px-3">
-          Cadastro
+          <?= t('nav.signup') ?>
         </a>
       </div>
     </div>
@@ -112,21 +122,21 @@
 
 
 
-  <a href="login.php" class="botao_agen"><span>Marque já seu horário</span></a>
+  <a href="login.php" class="botao_agen"><span><?= t('home.cta') ?></span></a>
   <div class="container" style="background-image: url(imagens/Fundo.jpeg);" id="Inicio">
-    <h1 class="title scroll-anim">Bespoke BarberShop</h1>
-    <p class="subtitle scroll-anim">A barbearia pensada para o seu conforto.</p>
+  <h1 class="title scroll-anim"><?= t('home.hero_title') ?></h1>
+  <p class="subtitle scroll-anim"><?= t('home.hero_subtitle') ?></p>
     <div class="divider"></div>
 
   </div>
   <hr>
   <div class="container" style="background-image: url(imagens/fundoSobreNos.png);" id="SobreNos">
-    <h1 class="titleSobreNos scroll-anim">Nós Somos Bespoke</h1>
+  <h1 class="titleSobreNos scroll-anim"><?= t('home.about_title') ?></h1>
     <div class="divider"></div>
     <div class="text scroll-anim">
-      <p> Nós sabemos o quão importante é o cuidado com a nossa aparência e como precisamos de profissionais de confiança e um ambiente confortável para isso. </p>
-      <p> Com isso em mente, criamos a Bespoke BarberShop, a sua barbearia favorita que conta com profissionais extremamente qualificados para te o fornecer cuidado que você merece. </p>
-      <p> Oferecemos um ambiente descontraído onde você pode assistir o jogo do seu time, jogar uma sinuca ou tomar uma cervejinha, existe algo melhor? </p>
+  <p> <?= t('home.about_p1') ?> </p>
+  <p> <?= t('home.about_p2') ?> </p>
+  <p> <?= t('home.about_p3') ?> </p>
     </div>
   </div>
   <hr>
@@ -138,17 +148,11 @@
         <!-- Texto -->
         <div class="col-12 col-lg-6 text-center text-lg-start scroll-anim">
           <h1 class="text-warning fw-bold mb-4" style="font-family: 'Yellowtail', cursive; font-size: 3.5rem;">
-            COMO É O NOSSO ESPAÇO?
+            <?= t('home.space_title') ?>
           </h1>
-          <p class="text-white fs-5" style="font-family: 'Arapey', serif;">
-            Sem filas, estresse ou tédio, a Bespoke conta com um espaço ideal para o seu tempo sagrado conosco.
-          </p>
-          <p class="text-white fs-5" style="font-family: 'Arapey', serif;">
-            Um ambiente entre amigos te proporciona a confiança em nossos profissionais e um momento de relaxamento enquanto cuidamos da sua aparência.
-          </p>
-          <p class="text-white fs-5" style="font-family: 'Arapey', serif;">
-            Desfrute de um lugar tranquilo com música boa, cerveja gelada, conversas engraçadas e entretenimento. Estamos te esperando!
-          </p>
+          <p class="text-white fs-5" style="font-family: 'Arapey', serif;"><?= t('home.space_p1') ?></p>
+          <p class="text-white fs-5" style="font-family: 'Arapey', serif;"><?= t('home.space_p2') ?></p>
+          <p class="text-white fs-5" style="font-family: 'Arapey', serif;"><?= t('home.space_p3') ?></p>
         </div>
 
         <div class="col-12 col-lg-6 text-center">
@@ -171,27 +175,27 @@
   <div class="footer-container p-4">
     <div class="row mt-4">
       
-      <!-- Mapa do Site -->
+      <!-- Footer: Site Map / Support / Social -->
       <div class="col-lg-4 col-md-12 mb-4 mb-md-0 text-center">
-        <h5 class="text-uppercase mb-4">MAPA DO SITE</h5>
-        <a href="#Inicio" class="d-block mb-2">Início</a>
-        <a href="#SobreNos" class="d-block mb-2">Sobre Nós</a>
-        <a href="#Espaco" class="d-block mb-2">Espaço</a>
-        <a href="#Localizacao" class="d-block mb-2">Localização</a>
+        <h5 class="text-uppercase mb-4"><?= t('footer.sitemap') ?></h5>
+        <a href="#Inicio" class="d-block mb-2"><?= t('nav.home') ?></a>
+        <a href="#SobreNos" class="d-block mb-2"><?= t('nav.about') ?></a>
+        <a href="#Espaco" class="d-block mb-2"><?= t('nav.space') ?></a>
+        <a href="#Localizacao" class="d-block mb-2"><?= t('nav.location') ?></a>
       </div>
 
-      <!-- Atendimento -->
+      <!-- Support -->
       <div class="col-lg-4 col-md-6 mb-4 mb-md-0 text-center">
-        <h5 class="text-uppercase mb-4 pb-1">ATENDIMENTO</h5>
-        <p class="mb-1">Telefone</p>
+        <h5 class="text-uppercase mb-4 pb-1"><?= t('footer.support') ?></h5>
+        <p class="mb-1"><?= t('footer.phone') ?></p>
         <p class="mb-3">(00) 0 0000-0000</p>
-        <p class="mb-1">E-mail</p>
+        <p class="mb-1"><?= t('footer.email') ?></p>
         <p>contato@bespokebarbershop.com.br</p>
       </div>
 
-      <!-- Redes Sociais -->
+      <!-- Social -->
       <div class="col-lg-4 col-md-6 mb-4 mb-md-0 text-center">
-        <h5 class="text-uppercase mb-4">REDES SOCIAIS</h5>
+        <h5 class="text-uppercase mb-4"><?= t('footer.social') ?></h5>
 
         <p class="d-flex align-items-center justify-content-center mb-2">
           <img src="imagens/Facebook.png" alt="Facebook" class="me-2" style="width:20px; height:20px;">
@@ -218,7 +222,7 @@
   <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2);">
     <p class="d-flex align-items-center justify-content-center mb-2">
       <img src="imagens/LogoBespoke.png" alt="LogoBespoke" class="me-2" style="width:100px; height:100px;">
-      Copyright © 2024 Bespoke Barber Cia. Todos os direitos reservados.
+      Copyright © <?= date('Y') ?> Bespoke Barber Cia. <?= t('footer.rights') ?>
     </p>
   </div>
 </footer>

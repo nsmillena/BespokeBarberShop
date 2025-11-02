@@ -19,7 +19,7 @@ $primeiroNome = explode(' ', trim($nomeCompleto))[0];
 
 // Se for obrigatório trocar a senha, redireciona para a página de edição
 if ((int)$deveTrocarSenha === 1) {
-    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Troca de senha obrigatória no primeiro acesso.'));
+    header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('barber.must_change_required')));
     exit;
 }
 
@@ -91,11 +91,11 @@ $stmtHist->execute();
 $resultHist = $stmtHist->get_result();
 ?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang='<?= bb_is_en() ? 'en' : 'pt-br' ?>'>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel do Barbeiro | Bespoke BarberShop</title>
+    <title><?= t('barber.dashboard_title') ?> | Bespoke BarberShop</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="dashboard_barbeiro.css">
@@ -103,34 +103,46 @@ $resultHist = $stmtHist->get_result();
 </head>
 <body class="dashboard-barbeiro-novo">
 <div class="container py-4">
+    <?php
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $currentUrl = $scheme.'://'.$host.$uri;
+    ?>
+    <div class="d-flex justify-content-end mb-2">
+        <div class="btn-group btn-group-sm" role="group" aria-label="<?= t('nav.language') ?>">
+            <a class="btn btn-outline-warning <?= bb_is_en() ? '' : 'active' ?>" href="../includes/locale.php?set=pt_BR&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.pt') ?></a>
+            <a class="btn btn-outline-warning <?= bb_is_en() ? 'active' : '' ?>" href="../includes/locale.php?set=en_US&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.en') ?></a>
+        </div>
+    </div>
     <!-- Resumo do dia e Próximo atendimento -->
     <div class="row g-4 mb-3">
         <div class="col-12">
             <div class="dashboard-card p-3 kpi-accent summary-today">
                 <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                    <div class="dashboard-section-title mb-0"><i class="bi bi-speedometer2"></i> Resumo de hoje</div>
-                    <div class="date-chip"><?= date('d/m') ?></div>
+                    <div class="dashboard-section-title mb-0"><i class="bi bi-speedometer2"></i> <?= t('barber.today_summary') ?></div>
+                    <div class="date-chip"><?= bb_format_date(date('Y-m-d')) ?></div>
                 </div>
                 <div class="row g-3 kpi-row">
                     <div class="col-12 col-md-4">
                         <div class="kpi-card">
-                            <div class="kpi-top"><i class="bi bi-calendar-day kpi-icon"></i><span class="kpi-label">Agendados</span></div>
+                            <div class="kpi-top"><i class="bi bi-calendar-day kpi-icon"></i><span class="kpi-label"><?= t('status.scheduled') ?></span></div>
                             <div class="kpi-value"><?= (int)$kpiAgHoje ?></div>
-                            <div class="kpi-sub">Hoje • <?= date('d/m') ?></div>
+                            <div class="kpi-sub"><?= t('barber.today') ?> • <?= date('d/m') ?></div>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
                         <div class="kpi-card">
-                            <div class="kpi-top"><i class="bi bi-check2-circle kpi-icon"></i><span class="kpi-label">Finalizados</span></div>
+                            <div class="kpi-top"><i class="bi bi-check2-circle kpi-icon"></i><span class="kpi-label"><?= t('status.completed') ?></span></div>
                             <div class="kpi-value"><?= (int)$kpiFinHoje ?></div>
-                            <div class="kpi-sub">Hoje • <?= date('d/m') ?></div>
+                            <div class="kpi-sub"><?= t('barber.today') ?> • <?= date('d/m') ?></div>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
                         <div class="kpi-card">
-                            <div class="kpi-top"><i class="bi bi-clock-history kpi-icon"></i><span class="kpi-label">Duração</span></div>
+                            <div class="kpi-top"><i class="bi bi-clock-history kpi-icon"></i><span class="kpi-label"><?= t('barber.duration') ?></span></div>
                             <div class="kpi-value"><?= ((int)$durHoje > 0 ? bb_format_minutes((int)$durHoje) : '—') ?></div>
-                            <div class="kpi-sub">Total de hoje • <?= date('d/m') ?></div>
+                            <div class="kpi-sub"><?= t('barber.total_today') ?> • <?= date('d/m') ?></div>
                         </div>
                     </div>
                 </div>
@@ -140,23 +152,30 @@ $resultHist = $stmtHist->get_result();
                         <div class="next-card p-3">
                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                                 <div class="d-flex align-items-center gap-3 flex-wrap meta-wrap">
-                                    <div class="badge bg-warning text-dark fw-bold"><i class="bi bi-lightning-charge"></i> Próximo</div>
+                                    <div class="badge bg-warning text-dark fw-bold"><i class="bi bi-lightning-charge"></i> <?= t('barber.next') ?></div>
                                     <?php if($prox): ?>
-                                        <span class="meta-chip"><i class="bi bi-clock"></i> <?= substr($prox['hora'],0,5) ?> • <?= date('d/m', strtotime($prox['data'])) ?></span>
+                                        <span class="meta-chip"><i class="bi bi-clock"></i> <?= bb_format_time($prox['hora']) ?> • <?= bb_format_date($prox['data']) ?></span>
                                         <span class="meta-chip"><i class="bi bi-person"></i> <?= htmlspecialchars($prox['nomeCliente']) ?></span>
-                                        <span class="meta-chip text-truncate" style="max-width:320px;"><i class="bi bi-scissors"></i> <?= htmlspecialchars($prox['servicos']) ?></span>
+                                        <?php
+                                            $srvCsv = (string)($prox['servicos'] ?? '');
+                                            $srvArr = array_map('trim', explode(',', $srvCsv));
+                                            $srvArr = array_filter($srvArr, fn($s)=>$s!=='');
+                                            $srvArrLoc = array_map('bb_service_display', $srvArr);
+                                            $srvCsvLoc = implode(', ', $srvArrLoc);
+                                        ?>
+                                        <span class="meta-chip text-truncate" style="max-width:320px;"><i class="bi bi-scissors"></i> <?= htmlspecialchars($srvCsvLoc) ?></span>
                                     <?php else: ?>
-                                        <div class="text-muted">Sem próximo atendimento agendado.</div>
+                                        <div class="text-muted"><?= t('barber.no_next') ?></div>
                                     <?php endif; ?>
                                 </div>
                                 <div class="sticky-mobile">
                                     <?php if($prox): ?>
                                     <form method="post" action="concluir_agendamento.php" class="d-inline">
                                         <input type="hidden" name="idAgendamento" value="<?= (int)$prox['idAgendamento'] ?>">
-                                        <button type="submit" class="dashboard-action dashboard-btn-small"><i class="bi bi-check2-circle"></i> Concluir</button>
+                                        <button type="submit" class="dashboard-action dashboard-btn-small"><i class="bi bi-check2-circle"></i> <?= t('barber.complete') ?></button>
                                     </form>
                                     <?php else: ?>
-                                    <a href="agendamentos_barbeiro.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-eye"></i> Ver agenda</a>
+                                    <a href="agendamentos_barbeiro.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-eye"></i> <?= t('barber.view_schedule') ?></a>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -171,7 +190,7 @@ $resultHist = $stmtHist->get_result();
     <div class="row mb-4">
         <div class="col-12">
             <div class="dashboard-card dashboard-welcome-card">
-                <span class="dashboard-title fs-1 fs-md-2 fs-lg-1"><i class="bi bi-scissors"></i> Bem-vindo, Barbeiro <?= htmlspecialchars($primeiroNome) ?>!</span>
+                    <span class="dashboard-title fs-1 fs-md-2 fs-lg-1"><i class="bi bi-scissors"></i> <?= t('barber.welcome_barber') ?> <?= htmlspecialchars($primeiroNome) ?>!</span>
             </div>
         </div>
     </div>
@@ -180,14 +199,14 @@ $resultHist = $stmtHist->get_result();
         <div class="col-12 col-lg-7 d-flex align-items-stretch">
             <div class="dashboard-card p-3 flex-fill d-flex flex-column">
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                    <div class="dashboard-section-title mb-0 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-calendar-week"></i> Próximos Atendimentos</div>
+                    <div class="dashboard-section-title mb-0 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-calendar-week"></i> <?= t('barber.next_appointments') ?></div>
                     <div class="row gx-2 align-items-center">
                         <?php $hoje = date('Y-m-d'); $amanha = date('Y-m-d', strtotime('+1 day')); $semIni = $hoje; $semFim = date('Y-m-d', strtotime('+6 days')); ?>
                         <div class="col-auto d-flex gap-2 flex-wrap">
-                            <a href="agendamentos_barbeiro.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-eye"></i> Ver Todos</a>
-                            <a href="agendamentos_barbeiro.php?inicio=<?= $hoje ?>&fim=<?= $hoje ?>" class="dashboard-action dashboard-btn-small" title="Hoje">Hoje</a>
-                            <a href="agendamentos_barbeiro.php?inicio=<?= $amanha ?>&fim=<?= $amanha ?>" class="dashboard-action dashboard-btn-small" title="Amanhã">Amanhã</a>
-                            <a href="agendamentos_barbeiro.php?inicio=<?= $semIni ?>&fim=<?= $semFim ?>" class="dashboard-action dashboard-btn-small" title="Semana">Semana</a>
+                            <a href="agendamentos_barbeiro.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-eye"></i> <?= t('barber.view_all') ?></a>
+                            <a href="agendamentos_barbeiro.php?inicio=<?= $hoje ?>&fim=<?= $hoje ?>" class="dashboard-action dashboard-btn-small" title="<?= t('barber.today') ?>"><?= t('barber.today') ?></a>
+                            <a href="agendamentos_barbeiro.php?inicio=<?= $amanha ?>&fim=<?= $amanha ?>" class="dashboard-action dashboard-btn-small" title="<?= t('barber.tomorrow') ?>"><?= t('barber.tomorrow') ?></a>
+                            <a href="agendamentos_barbeiro.php?inicio=<?= $semIni ?>&fim=<?= $semFim ?>" class="dashboard-action dashboard-btn-small" title="<?= t('barber.week') ?>"><?= t('barber.week') ?></a>
                         </div>
                     </div>
                 </div>
@@ -196,24 +215,31 @@ $resultHist = $stmtHist->get_result();
                     <table class="table table-dark table-striped table-sm align-middle mb-0 dashboard-table">
                         <thead>
                             <tr>
-                                <th>Data</th>
-                                <th>Hora</th>
-                                <th>Cliente</th>
-                                <th>Serviços</th>
-                                <th>Total</th>
-                                <th>Duração</th>
-                                <th>Status</th>
-                                <th>Ações</th>
+                                <th><?= t('sched.date') ?></th>
+                                <th><?= t('sched.time') ?></th>
+                                <th><?= t('barber.client') ?></th>
+                                <th><?= t('sched.service') ?></th>
+                                <th><?= t('user.total') ?></th>
+                                <th><?= t('sched.duration') ?></th>
+                                <th><?= t('user.status') ?></th>
+                                <th><?= t('user.actions') ?></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php while($row = $resultHoje->fetch_assoc()) { ?>
                                 <tr>
-                                    <td title="<?= date('d/m/Y', strtotime($row['data'])) ?>"><?= date('d/m', strtotime($row['data'])) ?></td>
-                                    <td title="<?= htmlspecialchars($row['hora']) ?>"><?= substr($row['hora'], 0, 5) ?></td>
+                                    <td title="<?= bb_format_date($row['data']) ?>"><?= bb_format_date($row['data']) ?></td>
+                                    <td title="<?= bb_format_time($row['hora']) ?>"><?= bb_format_time($row['hora']) ?></td>
                                     <td title="<?= htmlspecialchars($row['nomeCliente']) ?>"><?= substr(htmlspecialchars($row['nomeCliente']), 0, 12) ?></td>
-                                    <td title="<?= htmlspecialchars($row['servicos']) ?>"><?= substr(htmlspecialchars($row['servicos']), 0, 22) ?></td>
-                                    <td title="R$ <?= number_format($row['precoTotal'],2,',','.') ?>">R$ <?= number_format($row['precoTotal'],0,',','.') ?></td>
+                                    <?php
+                                        $tblSrvCsv = (string)($row['servicos'] ?? '');
+                                        $tblSrvArr = array_map('trim', explode(',', $tblSrvCsv));
+                                        $tblSrvArr = array_filter($tblSrvArr, fn($s)=>$s!=='');
+                                        $tblSrvArrLoc = array_map('bb_service_display', $tblSrvArr);
+                                        $tblSrvCsvLoc = implode(', ', $tblSrvArrLoc);
+                                    ?>
+                                    <td title="<?= htmlspecialchars($tblSrvCsvLoc) ?>"><?= substr(htmlspecialchars($tblSrvCsvLoc), 0, 22) ?></td>
+                                    <td title="<?= bb_format_currency_local((float)$row['precoTotal']) ?>"><?= bb_format_currency_local((float)$row['precoTotal']) ?></td>
                                     <td title="<?= (int)$row['tempoTotal'] ?> minutos"><?= bb_format_minutes((int)$row['tempoTotal']) ?></td>
                                     <td>
                                         <?php 
@@ -221,19 +247,19 @@ $resultHist = $stmtHist->get_result();
                                             $isAtrasado = $isHoje && (substr($row['hora'],0,5) < date('H:i')) && $row['statusAgendamento']==='Agendado';
                                         ?>
                                         <?php if($isAtrasado): ?>
-                                            <span class="badge badge-atrasado"><i class="bi bi-exclamation-triangle-fill"></i> Atrasado</span>
+                                            <span class="badge badge-atrasado"><i class="bi bi-exclamation-triangle-fill"></i> <?= t('barber.late') ?></span>
                                         <?php else: ?>
-                                            <span class="badge bg-secondary">Agendado</span>
+                                            <span class="badge bg-secondary"><?= bb_status_label('Agendado') ?></span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php if ($row['statusAgendamento'] === 'Agendado'): ?>
                                             <form method="post" action="concluir_agendamento.php" class="d-inline form-concluir">
                                                 <input type="hidden" name="idAgendamento" value="<?= (int)$row['idAgendamento'] ?>">
-                                                <button type="button" class="dashboard-action dashboard-btn-small btn-open-concluir btn-concluir"><i class="bi bi-check2-circle"></i> Concluir</button>
+                                                <button type="button" class="dashboard-action dashboard-btn-small btn-open-concluir btn-concluir"><i class="bi bi-check2-circle"></i> <?= t('barber.complete') ?></button>
                                             </form>
                                         <?php else: ?>
-                                            <span class="badge bg-success">Finalizado</span>
+                                            <span class="badge bg-success"><?= bb_status_label('Finalizado') ?></span>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
@@ -244,13 +270,13 @@ $resultHist = $stmtHist->get_result();
                 <?php else: ?>
                 <div class="flex-fill">
                     <div class="text-center text-warning mb-3">
-                        <p>Nenhum atendimento futuro encontrado.</p>
+                        <p><?= t('barber.no_future') ?></p>
                     </div>
                 </div>
                 <?php endif; ?>
                 <ul class="dashboard-info-list text-warning mb-2 fs-5 fs-md-6 fs-lg-5" style="font-size:1rem;">
-                    <li>Visualize todos os seus atendimentos e detalhes dos clientes.</li>
-                    <li>Mantenha-se atento aos horários e serviços marcados.</li>
+                    <li><?= t('barber.info1_dashboard') ?></li>
+                    <li><?= t('barber.info2_dashboard') ?></li>
                 </ul>
             </div>
         </div>
@@ -258,36 +284,43 @@ $resultHist = $stmtHist->get_result();
         <div class="col-12 col-lg-7 d-flex align-items-stretch">
             <div class="dashboard-card p-3 flex-fill d-flex flex-column">
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                    <div class="dashboard-section-title mb-0 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-clock-history"></i> Histórico recente de atendimentos</div>
+                    <div class="dashboard-section-title mb-0 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-clock-history"></i> <?= t('barber.recent_history') ?></div>
                 </div>
                 <div class="table-responsive flex-fill mb-2 table-container-fix">
                     <table class="table table-dark table-striped table-sm align-middle mb-0 dashboard-table">
                         <thead>
                             <tr>
-                                <th>Data</th>
-                                <th>Hora</th>
-                                <th>Cliente</th>
-                                <th>Serviços</th>
-                                <th>Total</th>
-                                <th>Duração</th>
-                                <th>Status</th>
+                                <th><?= t('sched.date') ?></th>
+                                <th><?= t('sched.time') ?></th>
+                                <th><?= t('barber.client') ?></th>
+                                <th><?= t('sched.service') ?></th>
+                                <th><?= t('user.total') ?></th>
+                                <th><?= t('sched.duration') ?></th>
+                                <th><?= t('user.status') ?></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if ($resultHist->num_rows > 0): ?>
                                 <?php while($row = $resultHist->fetch_assoc()) { ?>
                                     <tr>
-                                        <td title="<?= date('d/m/Y', strtotime($row['data'])) ?>"><?= date('d/m', strtotime($row['data'])) ?></td>
-                                        <td title="<?= htmlspecialchars($row['hora']) ?>"><?= substr($row['hora'], 0, 5) ?></td>
+                                        <td title="<?= bb_format_date($row['data']) ?>"><?= bb_format_date($row['data']) ?></td>
+                                        <td title="<?= bb_format_time($row['hora']) ?>"><?= bb_format_time($row['hora']) ?></td>
                                         <td title="<?= htmlspecialchars($row['nomeCliente']) ?>"><?= substr(htmlspecialchars($row['nomeCliente']), 0, 12) ?></td>
-                                        <td title="<?= htmlspecialchars($row['servicos']) ?>"><?= substr(htmlspecialchars($row['servicos']), 0, 22) ?></td>
-                                        <td title="R$ <?= number_format($row['precoTotal'],2,',','.') ?>">R$ <?= number_format($row['precoTotal'],0,',','.') ?></td>
+                                        <?php
+                                            $histSrvCsv = (string)($row['servicos'] ?? '');
+                                            $histSrvArr = array_map('trim', explode(',', $histSrvCsv));
+                                            $histSrvArr = array_filter($histSrvArr, fn($s)=>$s!=='');
+                                            $histSrvArrLoc = array_map('bb_service_display', $histSrvArr);
+                                            $histSrvCsvLoc = implode(', ', $histSrvArrLoc);
+                                        ?>
+                                        <td title="<?= htmlspecialchars($histSrvCsvLoc) ?>"><?= substr(htmlspecialchars($histSrvCsvLoc), 0, 22) ?></td>
+                                        <td title="<?= bb_format_currency_local((float)$row['precoTotal']) ?>"><?= bb_format_currency_local((float)$row['precoTotal']) ?></td>
                                         <td title="<?= (int)$row['tempoTotal'] ?> minutos"><?= bb_format_minutes((int)$row['tempoTotal']) ?></td>
-                                        <td><span class="badge bg-success">Finalizado</span></td>
+                                        <td><span class="badge bg-success"><?= bb_status_label('Finalizado') ?></span></td>
                                     </tr>
                                 <?php } ?>
                             <?php else: ?>
-                                <tr><td colspan="7" class="text-center text-muted">Sem finalizações recentes.</td></tr>
+                                <tr><td colspan="7" class="text-center text-muted"><?= t('barber.no_recent') ?></td></tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
@@ -297,19 +330,19 @@ $resultHist = $stmtHist->get_result();
         <!-- Card Perfil e Info -->
         <div class="col-12 col-lg-5 d-flex flex-column gap-4">
             <div class="dashboard-card p-3 flex-fill mb-0">
-                <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-person-circle"></i> Meu Perfil</div>
-                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Nome:</b> <?= htmlspecialchars($nomeCompleto) ?></div>
-                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Email:</b> <?= htmlspecialchars($email) ?></div>
-                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Telefone:</b> <?= htmlspecialchars($telefone) ?></div>
-                <a href="editar_perfil.php" class="dashboard-action mt-2 w-100"><i class="bi bi-pencil-square"></i> Editar Perfil</a>
-                <a href="bloqueios.php" class="dashboard-action mt-2 w-100"><i class="bi bi-calendar-x"></i> Bloquear horários</a>
-                <a href="../logout.php" class="dashboard-action mt-2 w-100 dashboard-btn-logout"><i class="bi bi-box-arrow-right"></i> Sair</a>
+                <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-person-circle"></i> <?= t('user.profile') ?></div>
+                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b><?= t('user.name') ?>:</b> <?= htmlspecialchars($nomeCompleto) ?></div>
+                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b><?= t('user.email') ?>:</b> <?= htmlspecialchars($email) ?></div>
+                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b><?= t('user.phone') ?>:</b> <?= htmlspecialchars($telefone) ?></div>
+                <a href="editar_perfil.php" class="dashboard-action mt-2 w-100"><i class="bi bi-pencil-square"></i> <?= t('user.edit_profile') ?></a>
+                <a href="bloqueios.php" class="dashboard-action mt-2 w-100"><i class="bi bi-calendar-x"></i> <?= t('barber.block_times') ?></a>
+                <a href="../logout.php" class="dashboard-action mt-2 w-100 dashboard-btn-logout"><i class="bi bi-box-arrow-right"></i> <?= t('user.logout') ?></a>
             </div>
             <div class="dashboard-card p-3 flex-fill mb-0">
-                <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-info-circle"></i> Informações úteis</div>
+                <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-info-circle"></i> <?= t('user.useful_info') ?></div>
                 <ul class="dashboard-info-list fs-5 fs-md-6 fs-lg-5">
-                    <li>Consulte seus agendamentos para se organizar melhor.</li>
-                    <li>Em caso de dúvidas, entre em contato com a administração.</li>
+                    <li><?= t('barber.info1_dashboard') ?></li>
+                    <li><?= t('barber.info2_dashboard') ?></li>
                 </ul>
             </div>
         </div>
@@ -320,15 +353,15 @@ $resultHist = $stmtHist->get_result();
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-dark text-light">
             <div class="modal-header border-secondary">
-                <h5 class="modal-title"><i class="bi bi-check2-circle"></i> Confirmar conclusão</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                <h5 class="modal-title"><i class="bi bi-check2-circle"></i> <?= t('barber.confirm_complete') ?></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="<?= t('sched.back') ?>"></button>
             </div>
             <div class="modal-body">
-                Deseja marcar este agendamento como concluído?
+                <?= t('barber.confirm_complete_body') ?>
             </div>
             <div class="modal-footer border-secondary d-flex justify-content-between">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle"></i> Cancelar</button>
-                <button type="button" class="btn btn-success" id="btnConfirmConcluir"><i class="bi bi-check"></i> Confirmar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle"></i> <?= t('sched.back') ?></button>
+                <button type="button" class="btn btn-success" id="btnConfirmConcluir"><i class="bi bi-check"></i> <?= t('user.confirm') ?></button>
             </div>
         </div>
     </div>

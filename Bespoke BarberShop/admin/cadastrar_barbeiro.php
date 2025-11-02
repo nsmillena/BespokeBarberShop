@@ -8,6 +8,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['papel'] !== 'admin') {
 include_once "../includes/db.php";
 $bd = new Banco();
 $conn = $bd->getConexao();
+require_once "../includes/i18n.php";
 $admin_id = $_SESSION['usuario_id'];
 if (empty($_SESSION['csrf_token'])) { $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); }
 
@@ -25,7 +26,7 @@ $erro = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $token = $_POST['csrf_token'] ?? '';
     if (!hash_equals($_SESSION['csrf_token'], $token)) {
-        header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode('Falha de segurança. Atualize a página e tente novamente.'));
+        header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode(t('user.security_fail')));
         exit;
     }
     $nome = trim($_POST['nome']);
@@ -35,11 +36,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirma = $_POST['confirma'] ?? '';
     
     if (empty($nome) || empty($email) || empty($telefone) || empty($senha)) {
-        header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode('Todos os campos são obrigatórios.'));
+        header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode(t('admin.err_all_fields')));
         exit;
     } else {
         if ($senha !== $confirma) {
-            header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode('As senhas não conferem.'));
+            header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode(t('admin.err_pw_mismatch')));
             exit;
         }
         // Validação de força da senha: mínimo 8, maiúscula, minúscula, dígito e símbolo
@@ -48,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $temDigito    = preg_match('/\d/', $senha);
         $temEspecial  = preg_match('/[^A-Za-z0-9]/', $senha);
         if (strlen($senha) < 8 || !$temMaiuscula || !$temMinuscula || !$temDigito || !$temEspecial) {
-            header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode('A senha deve ter no mínimo 8 caracteres e incluir maiúscula, minúscula, número e símbolo.'));
+            header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode(t('admin.err_pw_strength')));
             exit;
         }
         // Verificar se o email já existe
@@ -59,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($check->num_rows > 0) {
             $check->close();
-            header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode('Este email já está cadastrado.'));
+            header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode(t('admin.err_email_exists')));
             exit;
         } else {
             // Inserir novo barbeiro
@@ -71,11 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $insert->close();
                 // Armazena a senha em sessão para exibir uma única vez após o redirect
                 $_SESSION['new_barber_password_show_once'] = $senha;
-                header('Location: cadastrar_barbeiro.php?ok=1&msg=' . urlencode('Barbeiro cadastrado com sucesso!'));
+                header('Location: cadastrar_barbeiro.php?ok=1&msg=' . urlencode(t('admin.ok_barber_created')));
                 exit;
             } else {
                 $insert->close();
-                header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode('Erro ao cadastrar barbeiro. Tente novamente.'));
+                header('Location: cadastrar_barbeiro.php?ok=0&msg=' . urlencode(t('admin.err_barber_create')));
                 exit;
             }
         }
@@ -84,10 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-BR' ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Cadastrar Barbeiro - Admin</title>
+    <title><?= t('admin.barber_register_title') ?> - Admin</title>
     <link rel="stylesheet" href="dashboard_admin.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
@@ -102,46 +103,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php if (!empty($_SESSION['new_barber_password_show_once'])): $onePw = $_SESSION['new_barber_password_show_once']; unset($_SESSION['new_barber_password_show_once']); ?>
                         <div class="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
                             <div>
-                                <strong>Senha inicial do barbeiro:</strong>
+                                <strong><?= t('admin.initial_pw') ?></strong>
                                 <span id="newBarberPw" style="font-family:monospace;"><?= htmlspecialchars($onePw) ?></span>
-                                <small class="d-block text-muted">Copie e compartilhe com segurança. Esta senha não será exibida novamente.</small>
+                                <small class="d-block text-muted"><?= t('admin.initial_pw_note') ?></small>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-dark" onclick="copyNewPw()"><i class="bi bi-clipboard"></i> Copiar</button>
+                            <button type="button" class="btn btn-sm btn-outline-dark" onclick="copyNewPw()"><i class="bi bi-clipboard"></i> <?= t('admin.copy') ?></button>
                         </div>
                     <?php endif; ?>
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="dashboard-title mb-0"><i class="bi bi-person-plus"></i> Cadastrar Barbeiro</h2>
-                        <a href="index_admin.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> Voltar</a>
+                        <h2 class="dashboard-title mb-0"><i class="bi bi-person-plus"></i> <?= t('admin.barber_register_title') ?></h2>
+                        <a href="index_admin.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> <?= t('common.back') ?></a>
                     </div>
                     <form method="POST">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                         <div class="mb-3">
-                            <label for="nome" class="form-label">Nome Completo</label>
+                            <label for="nome" class="form-label"><?= t('admin.full_name') ?></label>
                             <input type="text" class="form-control" id="nome" name="nome" required>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
+                            <label for="email" class="form-label"><?= t('admin.email') ?? 'Email' ?></label>
                             <input type="email" class="form-control" id="email" name="email" required>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="telefone" class="form-label">Telefone</label>
+                            <label for="telefone" class="form-label"><?= t('admin.phone') ?></label>
                             <input type="tel" class="form-control bb-phone" id="telefone" name="telefone" required>
                         </div>
                         
                         <div class="mb-2">
-                            <label for="senha" class="form-label">Senha</label>
-                            <input type="password" class="form-control bb-password" id="senha" name="senha" required pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}" title="Mínimo 8, com maiúscula, minúscula, número e símbolo.">
+                            <label for="senha" class="form-label"><?= t('admin.password') ?></label>
+                            <input type="password" class="form-control bb-password" id="senha" name="senha" required pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}" title="<?= t('admin.password_hint') ?>">
                         </div>
                         <div class="mb-4">
-                            <label for="confirma" class="form-label">Confirmar Senha</label>
+                            <label for="confirma" class="form-label"><?= t('admin.password_confirm') ?></label>
                             <input type="password" class="form-control bb-password-confirm" id="confirma" name="confirma" required data-match="#senha">
-                            <small class="text-muted">Mínimo 8, com maiúscula, minúscula, número e símbolo.</small>
+                            <small class="text-muted"><?= t('admin.password_hint') ?></small>
                         </div>
                         
                         <button type="submit" class="dashboard-action w-100">
-                            <i class="bi bi-person-plus"></i> Cadastrar Barbeiro
+                            <i class="bi bi-person-plus"></i> <?= t('admin.register_barber') ?>
                         </button>
                     </form>
                 </div>

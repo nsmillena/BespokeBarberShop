@@ -50,11 +50,11 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
 }
 ?>
 <!doctype html>
-<html lang="pt-br">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-br' ?>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Redefinir senha</title>
+  <title><?= t('password.recover_title') ?></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-dark text-light">
@@ -63,26 +63,26 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
       <div class="col-12 col-md-6">
         <div class="card bg-secondary-subtle text-dark">
           <div class="card-body p-4">
-            <h4 class="mb-3">Definir nova senha</h4>
+            <h4 class="mb-3"><?= t('password.recover_title') ?></h4>
             <?php if ($msg): ?>
               <div class="alert <?= $ok?'alert-success':'alert-danger' ?>"><?= htmlspecialchars($msg) ?></div>
             <?php endif; ?>
             <?php if (!$token || (!$valid && !$ok)): ?>
-              <div class="alert alert-warning">Token inválido ou expirado. Solicite um novo <a href="recuperar.php">aqui</a>.</div>
+              <div class="alert alert-warning">Token inválido ou expirado. <a href="recuperar.php"><?= t('password.recover_title') ?></a></div>
             <?php endif; ?>
             <?php if ($token && ($valid || $ok)): ?>
               <form method="post">
                 <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
                 <div class="mb-3">
-                  <label class="form-label">Nova senha</label>
+                  <label class="form-label"><?= t('signup.password') ?></label>
                   <input type="password" name="senha" class="form-control" required minlength="6">
                 </div>
                 <div class="mb-3">
-                  <label class="form-label">Confirmar senha</label>
+                  <label class="form-label"><?= t('signup.confirm') ?></label>
                   <input type="password" name="conf" class="form-control" required minlength="6">
                 </div>
-                <button class="btn btn-warning">Salvar</button>
-                <a class="btn btn-link" href="login.php">Voltar ao login</a>
+                <button class="btn btn-warning"><?= t('auth.enter') ?></button>
+                <a class="btn btn-link" href="login.php"><?= t('password.back_login') ?></a>
               </form>
             <?php endif; ?>
           </div>

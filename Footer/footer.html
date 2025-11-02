@@ -25,26 +25,26 @@
             }
         </style>
 
-        <footer class="text-white text-center text-lg-start" style="background-color: #000;">
+    <footer class="text-white text-center text-lg-start" style="background-color: #000;">
             <!-- Grid container -->
             <div class="container p-4">
                 <!--Grid row-->
                 <div class="row mt-4">
                     <!--Grid column-->
                     <div class="col-lg-4 col-md-12 mb-4 mb-md-0 text-center">
-                        <h5 class="text-uppercase mb-4">MAPA DO SITE</h5>
+                        <h5 class="text-uppercase mb-4"><?= function_exists('t') ? t('footer.sitemap') : 'MAPA DO SITE' ?></h5>
 
                         <!-- Links do mapa do site com margem inferior -->
-                        <a href="" class="d-block mb-2">Início</a>
-                        <a href="" class="d-block mb-2">Sobre Nós</a>
-                        <a href="" class="d-block mb-2">Espaço</a>
-                        <a href="" class="d-block mb-2">Localização</a>
+                        <a href="#Inicio" class="d-block mb-2"><?= function_exists('t') ? t('nav.home') : 'Início' ?></a>
+                        <a href="#SobreNos" class="d-block mb-2"><?= function_exists('t') ? t('nav.about') : 'Sobre Nós' ?></a>
+                        <a href="#Espaco" class="d-block mb-2"><?= function_exists('t') ? t('nav.space') : 'Espaço' ?></a>
+                        <a href="#Localizacao" class="d-block mb-2"><?= function_exists('t') ? t('nav.location') : 'Localização' ?></a>
 
                     </div>
 
                     <!--Grid column-->
                     <div class="col-lg-4 col-md-6 mb-4 mb-md-0 text-center">
-                        <h5 class="text-uppercase mb-4 pb-1">ATENDIMENTO</h5>
+                        <h5 class="text-uppercase mb-4 pb-1"><?= function_exists('t') ? t('footer.support') : 'ATENDIMENTO' ?></h5>
                         <p class="mb-1">Telefone</p>
                         <p class="mb-3">(00) 0 0000-0000</p>
                         <p class="mb-1">E-mail</p>
@@ -55,7 +55,7 @@
                     <!--Grid column-->
 
                     <div class="col-lg-4 col-md-6 mb-4 mb-md-0 text-center">
-                        <h5 class="text-uppercase mb-4">REDES SOCIAIS</h5>
+                        <h5 class="text-uppercase mb-4"><?= function_exists('t') ? t('footer.social') : 'REDES SOCIAIS' ?></h5>
 
                         <p class="d-flex align-items-center justify-content-center mb-2">
                             <img src="Imagens/Facebook.png" alt="Facebook" class="me-2"
@@ -91,7 +91,11 @@
             <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2);">
                 <p class="d-flex align-items-center justify-content-center mb-2">
                     <img src="Imagens/LogoBespoke.png" alt="LogoBespoke" class="me-2" style="width:100px; height:100px;">
-                    Copyright © 2024 Bespoke Barber Cia. Todos os direitos reservados.
+                    <?php if (function_exists('bb_is_en') && bb_is_en()): ?>
+                        Copyright © 2024 Bespoke Barber Co. All rights reserved.
+                    <?php else: ?>
+                        Copyright © 2024 Bespoke Barber Cia. Todos os direitos reservados.
+                    <?php endif; ?>
                 </p>
             </div>
             <!-- Copyright -->

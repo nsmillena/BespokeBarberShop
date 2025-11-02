@@ -59,21 +59,33 @@ if ($stNext = $conn->prepare("SELECT a.idAgendamento, a.data, a.hora, u.idUnidad
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-br' ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Bespoke BarberShop</title>
+    <title><?= t('user.dashboard_title') ?> | Bespoke BarberShop</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="dashboard_usuario.css">
 </head>
 <body>
 <div class="container py-4">
+    <?php
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $currentUrl = $scheme.'://'.$host.$uri;
+    ?>
+    <div class="d-flex justify-content-end mb-2">
+        <div class="btn-group btn-group-sm" role="group" aria-label="<?= t('nav.language') ?>">
+            <a class="btn btn-outline-warning <?= bb_is_en() ? '' : 'active' ?>" href="../includes/locale.php?set=pt_BR&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.pt') ?></a>
+            <a class="btn btn-outline-warning <?= bb_is_en() ? 'active' : '' ?>" href="../includes/locale.php?set=en_US&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.en') ?></a>
+        </div>
+    </div>
     <div class="row mb-3">
         <div class="col-12">
             <div class="dashboard-card dashboard-welcome-card">
-                <span class="dashboard-welcome-text">Olá, <?= htmlspecialchars($primeiroNome) ?></span>
+                <span class="dashboard-welcome-text"><?= t('user.hello') ?> <?= htmlspecialchars($primeiroNome) ?></span>
             </div>
         </div>
     </div>
@@ -82,10 +94,10 @@ if ($stNext = $conn->prepare("SELECT a.idAgendamento, a.data, a.hora, u.idUnidad
         <div class="col-12">
             <div class="dashboard-card p-3 next-card">
                 <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                    <div class="dashboard-section-title mb-0"><i class="bi bi-lightning-charge"></i> Seu próximo horário</div>
+                    <div class="dashboard-section-title mb-0"><i class="bi bi-lightning-charge"></i> <?= t('user.next_appt') ?></div>
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <?php if($prox): ?><div class="next-meta">Em <?= date('d/m', strtotime($prox['data'])) ?> às <?= substr($prox['hora'],0,5) ?></div><?php endif; ?>
-                        <?php if($prox): ?><span class="badge bg-warning text-dark fw-semibold" title="Política de cancelamento">Cancelamento até 2h antes</span><?php endif; ?>
+                        <?php if($prox): ?><div class="next-meta"><?= bb_format_date($prox['data']) ?> · <?= bb_format_time($prox['hora']) ?></div><?php endif; ?>
+                        <?php if($prox): ?><span class="badge bg-warning text-dark fw-semibold" title="<?= t('user.cancel_policy') ?>"><?= t('user.cancel_policy') ?></span><?php endif; ?>
                     </div>
                 </div>
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -93,25 +105,32 @@ if ($stNext = $conn->prepare("SELECT a.idAgendamento, a.data, a.hora, u.idUnidad
                         <?php if($prox): ?>
                             <div><i class="bi bi-person-badge"></i> <?= htmlspecialchars($prox['nomeBarbeiro']) ?></div>
                             <div><i class="bi bi-geo-alt"></i> <?= htmlspecialchars($prox['nomeUnidade']) ?></div>
-                            <div class="text-truncate" style="max-width: 360px;"><i class="bi bi-scissors"></i> <?= htmlspecialchars($prox['servicos']) ?></div>
+                            <?php
+                                $proxSrvCsv = (string)($prox['servicos'] ?? '');
+                                $proxSrvArr = array_map('trim', explode(',', $proxSrvCsv));
+                                $proxSrvArr = array_filter($proxSrvArr, fn($s)=>$s!=='');
+                                $proxSrvArrLoc = array_map('bb_service_display', $proxSrvArr);
+                                $proxSrvCsvLoc = implode(', ', $proxSrvArrLoc);
+                            ?>
+                            <div class="text-truncate" style="max-width: 360px;"><i class="bi bi-scissors"></i> <?= htmlspecialchars($proxSrvCsvLoc) ?></div>
                             <div><i class="bi bi-clock"></i> <?= bb_format_minutes((int)$prox['tempoTotal']) ?></div>
-                            <div><i class="bi bi-cash"></i> R$ <?= number_format($prox['precoTotal'], 2, ',', '.') ?></div>
+                            <div><i class="bi bi-cash"></i> <?= bb_format_currency_local((float)$prox['precoTotal']) ?></div>
                         <?php else: ?>
-                            <div class="text-muted">Você não tem um próximo horário marcado.</div>
+                            <div class="text-muted"><?= t('user.no_upcoming') ?></div>
                         <?php endif; ?>
                     </div>
                     <div class="d-flex gap-2">
                         <?php if($prox): ?>
-                            <a href="agendamentos_usuario.php" class="dashboard-action dashboard-btn-small" aria-label="Gerenciar agendamentos"><i class="bi bi-pencil"></i> Gerenciar</a>
-                            <a href="../agendamento.php?unidade=<?= (int)$prox['unidadeId'] ?>&barbeiro=<?= (int)$prox['barbeiroId'] ?>" class="dashboard-action dashboard-btn-small" aria-label="Reagendar"><i class="bi bi-arrow-repeat"></i> Reagendar</a>
+                            <a href="agendamentos_usuario.php" class="dashboard-action dashboard-btn-small" aria-label="<?= t('user.manage') ?>"><i class="bi bi-pencil"></i> <?= t('user.manage') ?></a>
+                            <a href="../agendamento.php?unidade=<?= (int)$prox['unidadeId'] ?>&barbeiro=<?= (int)$prox['barbeiroId'] ?>" class="dashboard-action dashboard-btn-small" aria-label="<?= t('user.reschedule') ?>"><i class="bi bi-arrow-repeat"></i> <?= t('user.reschedule') ?></a>
                             <form method="post" action="../cancelar.php" class="d-inline form-cancelar">
                                 <input type="hidden" name="idAgendamento" value="<?= (int)$prox['idAgendamento'] ?>">
-                                <button type="button" class="dashboard-action dashboard-btn-small btn-open-cancelar" aria-label="Cancelar agendamento"><i class="bi bi-x-circle"></i> Cancelar</button>
+                                <button type="button" class="dashboard-action dashboard-btn-small btn-open-cancelar" aria-label="<?= t('user.cancel') ?>"><i class="bi bi-x-circle"></i> <?= t('user.cancel') ?></button>
                             </form>
                         <?php else: ?>
-                            <a href="../agendamento.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-plus-circle"></i> Agendar agora</a>
+                            <a href="../agendamento.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-plus-circle"></i> <?= t('user.schedule_now') ?></a>
                             <?php if (!empty($prefill['unidadeId']) && !empty($prefill['barbeiroId']) && !empty($prefill['servicoId'])): ?>
-                            <a href="../agendamento.php?unidade=<?= (int)$prefill['unidadeId'] ?>&barbeiro=<?= (int)$prefill['barbeiroId'] ?>&servico=<?= (int)$prefill['servicoId'] ?>" class="dashboard-action dashboard-btn-small"><i class="bi bi-arrow-repeat"></i> Repetir último</a>
+                            <a href="../agendamento.php?unidade=<?= (int)$prefill['unidadeId'] ?>&barbeiro=<?= (int)$prefill['barbeiroId'] ?>&servico=<?= (int)$prefill['servicoId'] ?>" class="dashboard-action dashboard-btn-small"><i class="bi bi-arrow-repeat"></i> <?= t('user.repeat_last') ?></a>
                             <?php endif; ?>
                         <?php endif; ?>
                     </div>
@@ -119,18 +138,18 @@ if ($stNext = $conn->prepare("SELECT a.idAgendamento, a.data, a.hora, u.idUnidad
             </div>
         </div>
     </div>
-    <!-- Modal de confirmação de cancelamento -->
+    <!-- Modal de confirmação de cancelamento / Cancel confirmation -->
     <div class="modal fade" id="modalCancelarCli" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content bg-dark text-light">
                 <div class="modal-header border-secondary">
-                    <h5 class="modal-title"><i class="bi bi-x-circle"></i> Confirmar cancelamento</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    <h5 class="modal-title"><i class="bi bi-x-circle"></i> <?= t('sched.cancel') ?></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">Deseja cancelar este agendamento?</div>
+                <div class="modal-body"><?= t('sched.confirm_cancel') ?></div>
                 <div class="modal-footer border-secondary d-flex justify-content-between">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-arrow-left"></i> Voltar</button>
-                    <button type="button" class="btn btn-danger" id="btnConfirmCancelarCli"><i class="bi bi-x"></i> Cancelar agendamento</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-arrow-left"></i> <?= t('sched.back') ?></button>
+                    <button type="button" class="btn btn-danger" id="btnConfirmCancelarCli"><i class="bi bi-x"></i> <?= t('sched.cancel') ?></button>
                 </div>
             </div>
         </div>
@@ -140,17 +159,17 @@ if ($stNext = $conn->prepare("SELECT a.idAgendamento, a.data, a.hora, u.idUnidad
         <div class="col-12 col-lg-7 d-flex align-items-stretch">
             <div class="dashboard-card p-3 flex-fill d-flex flex-column">
                 <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                    <div class="dashboard-section-title mb-0 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-calendar-event"></i> Meus Agendamentos</div>
+                    <div class="dashboard-section-title mb-0 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-calendar-event"></i> <?= t('user.my_appointments') ?></div>
                     <div class="row gx-2">
                         <div class="col-auto">
-                            <a href="../agendamento.php" class="dashboard-action dashboard-btn-small btn-novo-agendamento"><i class="bi bi-plus-circle"></i> Novo</a>
+                            <a href="../agendamento.php" class="dashboard-action dashboard-btn-small btn-novo-agendamento"><i class="bi bi-plus-circle"></i> <?= t('user.new') ?></a>
                         </div>
                         <div class="col-auto">
-                            <a href="agendamentos_usuario.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-pencil"></i> Editar</a>
+                            <a href="agendamentos_usuario.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-pencil"></i> <?= t('user.edit') ?></a>
                         </div>
                         <?php if (!empty($prefill['unidadeId']) && !empty($prefill['barbeiroId']) && !empty($prefill['servicoId'])): ?>
                         <div class="col-auto">
-                            <a href="../agendamento.php?unidade=<?= (int)$prefill['unidadeId'] ?>&barbeiro=<?= (int)$prefill['barbeiroId'] ?>&servico=<?= (int)$prefill['servicoId'] ?>" class="dashboard-action dashboard-btn-small"><i class="bi bi-arrow-repeat"></i> Repetir último serviço</a>
+                            <a href="../agendamento.php?unidade=<?= (int)$prefill['unidadeId'] ?>&barbeiro=<?= (int)$prefill['barbeiroId'] ?>&servico=<?= (int)$prefill['servicoId'] ?>" class="dashboard-action dashboard-btn-small"><i class="bi bi-arrow-repeat"></i> <?= t('user.repeat_last') ?></a>
                         </div>
                         <?php endif; ?>
                     </div>
@@ -159,32 +178,39 @@ if ($stNext = $conn->prepare("SELECT a.idAgendamento, a.data, a.hora, u.idUnidad
                 <table class="table table-dark table-striped table-sm align-middle mb-0 dashboard-table">
                     <thead>
                         <tr>
-                            <th>Data</th>
-                            <th>Hora</th>
-                            <th>Unidade</th>
-                            <th>Barbeiro</th>
-                            <th>Serviços</th>
-                            <th>Total</th>
-                            <th>Duração</th>
-                            <th>Status</th>
+                            <th><?= t('sched.date') ?></th>
+                            <th><?= t('sched.time') ?></th>
+                            <th><?= t('sched.unit') ?></th>
+                            <th><?= t('sched.barber') ?></th>
+                            <th><?= t('sched.service') ?></th>
+                            <th><?= t('user.total') ?></th>
+                            <th><?= t('sched.duration') ?></th>
+                            <th><?= t('user.status') ?></th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if($result->num_rows > 0): ?>
                             <?php while($row = $result->fetch_assoc()) { ?>
                                 <tr>
-                                    <td title="<?= date('d/m/Y', strtotime($row['data'])) ?>"><?= date('d/m', strtotime($row['data'])) ?></td>
-                                    <td title="<?= $row['hora'] ?>"><?= substr($row['hora'], 0, 5) ?></td>
+                                    <td title="<?= bb_format_date($row['data']) ?>"><?= bb_format_date($row['data']) ?></td>
+                                    <td title="<?= bb_format_time($row['hora']) ?>"><?= bb_format_time($row['hora']) ?></td>
                                     <td title="<?= htmlspecialchars($row['nomeUnidade']) ?>"><?= substr(htmlspecialchars($row['nomeUnidade']), 0, 8) ?></td>
                                     <td title="<?= htmlspecialchars($row['nomeBarbeiro']) ?>"><?= substr(htmlspecialchars($row['nomeBarbeiro']), 0, 10) ?></td>
-                                    <td title="<?= htmlspecialchars($row['servicos']) ?>"><?= substr(htmlspecialchars($row['servicos']), 0, 12) ?></td>
-                                    <td title="R$ <?= number_format($row['precoTotal'],2,',','.') ?>">R$ <?= number_format($row['precoTotal'],0,',','.') ?></td>
-                                    <td title="<?= (int)$row['tempoTotal'] ?> minutos"><?= bb_format_minutes((int)$row['tempoTotal']) ?></td>
-                                    <td title="<?= htmlspecialchars($row['statusAgendamento']) ?>"><?= substr(htmlspecialchars($row['statusAgendamento']), 0, 6) ?></td>
+                                    <?php
+                                        $rowSrvCsv = (string)($row['servicos'] ?? '');
+                                        $rowSrvArr = array_map('trim', explode(',', $rowSrvCsv));
+                                        $rowSrvArr = array_filter($rowSrvArr, fn($s)=>$s!=='');
+                                        $rowSrvArrLoc = array_map('bb_service_display', $rowSrvArr);
+                                        $rowSrvCsvLoc = implode(', ', $rowSrvArrLoc);
+                                    ?>
+                                    <td title="<?= htmlspecialchars($rowSrvCsvLoc) ?>"><?= substr(htmlspecialchars($rowSrvCsvLoc), 0, 12) ?></td>
+                                    <td title="<?= bb_format_currency_local((float)$row['precoTotal']) ?>"><?= bb_format_currency_local((float)$row['precoTotal']) ?></td>
+                                    <td title="<?= bb_format_minutes((int)$row['tempoTotal']) ?>"><?= bb_format_minutes((int)$row['tempoTotal']) ?></td>
+                                    <td title="<?= htmlspecialchars($row['statusAgendamento']) ?>"><?= htmlspecialchars(bb_status_label($row['statusAgendamento'])) ?></td>
                                 </tr>
                             <?php } ?>
                         <?php else: ?>
-                            <tr><td colspan="8" class="text-center text-warning">Nenhum agendamento encontrado. <a href="../agendamento.php" class="dashboard-action dashboard-btn-small">Agende agora</a></td></tr>
+                            <tr><td colspan="8" class="text-center text-warning"><?= t('user.no_active') ?> <a href="../agendamento.php" class="dashboard-action dashboard-btn-small"><?= t('user.schedule_now') ?></a></td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -194,19 +220,19 @@ if ($stNext = $conn->prepare("SELECT a.idAgendamento, a.data, a.hora, u.idUnidad
         <!-- Card Perfil e Info -->
         <div class="col-12 col-lg-5 d-flex flex-column gap-4">
             <div class="dashboard-card p-3 flex-fill mb-0">
-                <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-person-circle"></i> Meu Perfil</div>
-                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Nome:</b> <?= htmlspecialchars($nomeCompleto) ?></div>
-                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Email:</b> <?= htmlspecialchars($email) ?></div>
-                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b>Telefone:</b> <?= htmlspecialchars($telefone) ?></div>
-                <a href="editar_perfil.php" class="dashboard-action mt-2 w-100"><i class="bi bi-pencil-square"></i> Editar Perfil</a>
-                <a href="../logout.php" class="dashboard-action mt-2 w-100 dashboard-btn-logout"><i class="bi bi-box-arrow-right"></i> Sair</a>
+                <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-person-circle"></i> <?= t('user.profile') ?></div>
+                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b><?= t('user.name') ?>:</b> <?= htmlspecialchars($nomeCompleto) ?></div>
+                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b><?= t('user.email') ?>:</b> <?= htmlspecialchars($email) ?></div>
+                <div class="mb-1 fs-5 fs-md-6 fs-lg-5"><b><?= t('user.phone') ?>:</b> <?= htmlspecialchars($telefone) ?></div>
+                <a href="editar_perfil.php" class="dashboard-action mt-2 w-100"><i class="bi bi-pencil-square"></i> <?= t('user.edit_profile') ?></a>
+                <a href="../logout.php" class="dashboard-action mt-2 w-100 dashboard-btn-logout"><i class="bi bi-box-arrow-right"></i> <?= t('user.logout') ?></a>
             </div>
             <div class="dashboard-card p-3 flex-fill mb-0">
-                <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-info-circle"></i> Informações úteis</div>
+                <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-info-circle"></i> <?= t('user.useful_info') ?></div>
                 <ul class="dashboard-info-list fs-5 fs-md-6 fs-lg-5">
-                    <li>Você pode cancelar agendamentos neste painel.</li>
-                    <li>Chegue com 5 minutos de antecedência para garantir seu horário.</li>
-                    <li>Em caso de dúvidas, entre em contato pelo WhatsApp da barbearia.</li>
+                    <li><?= t('user.tip1') ?></li>
+                    <li><?= t('user.tip2') ?></li>
+                    <li><?= t('user.tip3') ?></li>
                 </ul>
             </div>
         </div>
@@ -242,7 +268,8 @@ document.querySelectorAll('.btn-novo-agendamento').forEach((el)=>{
             if (data.allow) {
                 window.location.href = href;
             } else {
-                const msg = data.message ? data.message.replace(/<[^>]+>/g, '').trim() : 'Você atingiu o limite de 5 agendamentos ativos. Cancele um agendamento existente antes de criar um novo.';
+                const fallback = <?= json_encode(t('user.limit_reached')) ?>;
+                const msg = data.message ? data.message.replace(/<[^>]+>/g, '').trim() : fallback;
                 showLimitToast(msg);
             }
         } catch (err) {

@@ -20,7 +20,7 @@ $chkMust->bind_result($must);
 $chkMust->fetch();
 $chkMust->close();
 if ((int)$must === 1) {
-    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Troca de senha obrigatória no primeiro acesso.'));
+    header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('barber.must_change_required')));
     exit;
 }
 
@@ -94,11 +94,11 @@ if ($stmt) {
 }
 ?>
 <!DOCTYPE html>
-<html lang='pt-br'>
+<html lang='<?= bb_is_en() ? 'en' : 'pt-br' ?>'>
 <head>
     <meta charset='UTF-8'>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meus Agendamentos - Barbeiro</title>
+        <title><?= t('barber.all_appointments') ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="dashboard_barbeiro.css">
@@ -114,6 +114,7 @@ if ($stmt) {
         <div class="col-12">
             <div class="dashboard-card dashboard-welcome-card">
                 <span class="dashboard-title"><i class="bi bi-calendar-week"></i> Todos os seus atendimentos</span>
+                    <span class="dashboard-title"><i class="bi bi-calendar-week"></i> <?= t('barber.all_appointments') ?></span>
             </div>
         </div>
     </div>
@@ -123,8 +124,9 @@ if ($stmt) {
             <div class="dashboard-card p-3 mb-0">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="dashboard-section-title mb-0"><i class="bi bi-funnel"></i> Filtros</div>
+                        <div class="dashboard-section-title mb-0"><i class="bi bi-funnel"></i> <?= t('barber.filters') ?></div>
                     <button class="dashboard-action dashboard-btn-small" type="button" data-bs-toggle="collapse" data-bs-target="#filtros" aria-expanded="false" aria-controls="filtros">
-                        <i class="bi bi-sliders"></i> Filtrar
+                        <i class="bi bi-sliders"></i> <?= t('barber.filter') ?>
                     </button>
                 </div>
                 <div class="collapse" id="filtros">
@@ -135,11 +137,11 @@ if ($stmt) {
                         foreach($opts as $opt):
                             $active = ($status === $opt) ? 'style="background:#bfa12a !important;color:#fff !important;"' : '';
                         ?>
-                        <a href="?status=<?= $opt ?>" class="dashboard-action dashboard-btn-small" <?= $active ?>><i class="bi <?= $mk($opt) ?>"></i> <?= $opt ?></a>
+                        <a href="?status=<?= $opt ?>" class="dashboard-action dashboard-btn-small" <?= $active ?>><i class="bi <?= $mk($opt) ?>"></i> <?= htmlspecialchars(bb_status_label($opt)) ?></a>
                         <?php endforeach; ?>
                     </div>
                 </div>
-                <div class="mt-2 text-warning" style="font-size:0.95rem;">Filtro atual de atendimentos: <b><?= htmlspecialchars($status) ?></b>
+                <div class="mt-2 text-warning" style="font-size:0.95rem;"><?= t('barber.current_filter') ?> <b><?= htmlspecialchars(bb_status_label($status)) ?></b>
                 <?php if(!empty($periodoTxt)): ?> • Período: <b><?= htmlspecialchars($periodoTxt) ?></b><?php endif; ?></div>
             </div>
         </div>
@@ -151,37 +153,44 @@ if ($stmt) {
                     <table class='table table-dark table-striped table-sm align-middle mb-0 dashboard-table'>
                         <thead>
                             <tr>
-                                <th>Data</th>
-                                <th>Hora</th>
-                                <th>Cliente</th>
-                                <th>Serviços</th>
-                                <th>Total</th>
-                                <th>Duração</th>
-                                <th>Status</th>
-                                <th>Ações</th>
+                                <th><?= t('sched.date') ?></th>
+                                <th><?= t('sched.time') ?></th>
+                                <th><?= t('barber.client') ?></th>
+                                <th><?= t('sched.service') ?></th>
+                                <th><?= t('user.total') ?></th>
+                                <th><?= t('sched.duration') ?></th>
+                                <th><?= t('user.status') ?></th>
+                                <th><?= t('user.actions') ?></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php while($row = $result->fetch_assoc()): ?>
                             <?php $status = $row['statusAgendamento']; $idAg = (int)$row['idAgendamento']; ?>
                             <tr>
-                                <td><?= date('d/m/Y', strtotime($row['data'])) ?></td>
-                                <td><?= substr($row['hora'], 0, 5) ?></td>
+                                <td><?= bb_format_date($row['data']) ?></td>
+                                <td><?= bb_format_time($row['hora']) ?></td>
                                 <td><?= htmlspecialchars($row['nomeCliente']) ?></td>
-                                <td><?= htmlspecialchars($row['servicos']) ?></td>
-                                <td>R$ <?= number_format($row['precoTotal'],2,',','.') ?></td>
+                                <?php
+                                    $srvCsv = (string)($row['servicos'] ?? '');
+                                    $srvArr = array_map('trim', explode(',', $srvCsv));
+                                    $srvArr = array_filter($srvArr, fn($s)=>$s!=='');
+                                    $srvArrLoc = array_map('bb_service_display', $srvArr);
+                                    $srvCsvLoc = implode(', ', $srvArrLoc);
+                                ?>
+                                <td><?= htmlspecialchars($srvCsvLoc) ?></td>
+                                <td><?= bb_format_currency_local((float)$row['precoTotal']) ?></td>
                                 <td><?= bb_format_minutes((int)$row['tempoTotal']) ?></td>
-                                <td><?= htmlspecialchars($status) ?></td>
+                                <td><?= htmlspecialchars(bb_status_label($status)) ?></td>
                                 <td>
                                     <?php if ($status === 'Agendado' && $idAg > 0): ?>
                                         <form method="post" action="concluir_agendamento.php" class="d-inline form-concluir" data-id="<?= $idAg ?>">
                                             <input type="hidden" name="idAgendamento" value="<?= $idAg ?>">
-                                            <button type="button" class="dashboard-action dashboard-btn-small btn-open-concluir btn-concluir"><i class="bi bi-check2-circle"></i> Concluir</button>
+                                            <button type="button" class="dashboard-action dashboard-btn-small btn-open-concluir btn-concluir"><i class="bi bi-check2-circle"></i> <?= t('sched.finalize') ?></button>
                                         </form>
                                     <?php elseif ($status === 'Cancelado'): ?>
-                                        <span class="badge bg-danger">Cancelado</span>
+                                        <span class="badge bg-danger"><?= bb_status_label('Cancelado') ?></span>
                                     <?php elseif ($status === 'Finalizado'): ?>
-                                        <span class="badge bg-success">Finalizado</span>
+                                        <span class="badge bg-success"><?= bb_status_label('Finalizado') ?></span>
                                     <?php else: ?>
                                         <span class="badge bg-secondary">-</span>
                                     <?php endif; ?>
@@ -192,7 +201,7 @@ if ($stmt) {
                     </table>
                 </div>
                 <div class="mt-3">
-                    <a href='index_barbeiro.php' class='dashboard-action dashboard-btn-small'><i class="bi bi-arrow-left"></i> Voltar ao painel</a>
+                    <a href='index_barbeiro.php' class='dashboard-action dashboard-btn-small'><i class="bi bi-arrow-left"></i> <?= t('barber.back_panel') ?></a>
                 </div>
             </div>
         </div>
@@ -203,15 +212,15 @@ if ($stmt) {
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content bg-dark text-light">
             <div class="modal-header border-secondary">
-                <h5 class="modal-title"><i class="bi bi-check2-circle"></i> Confirmar conclusão</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                <h5 class="modal-title"><i class="bi bi-check2-circle"></i> <?= t('barber.confirm_complete') ?></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="<?= t('sched.back') ?>"></button>
             </div>
             <div class="modal-body">
-                Deseja marcar este agendamento como concluído?
+                <?= t('barber.confirm_complete_body') ?>
             </div>
             <div class="modal-footer border-secondary d-flex justify-content-between">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle"></i> Cancelar</button>
-                <button type="button" class="btn btn-success" id="btnConfirmConcluir"><i class="bi bi-check"></i> Confirmar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="bi bi-x-circle"></i> <?= t('sched.back') ?></button>
+                <button type="button" class="btn btn-success" id="btnConfirmConcluir"><i class="bi bi-check"></i> <?= t('user.confirm') ?></button>
             </div>
         </div>
     </div>

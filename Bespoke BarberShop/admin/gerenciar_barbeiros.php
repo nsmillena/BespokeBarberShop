@@ -7,6 +7,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['papel'] !== 'admin') {
 include_once "../includes/db.php";
 $bd = new Banco();
 $conn = $bd->getConexao();
+require_once "../includes/i18n.php";
+require_once "../includes/format.php";
 if (empty($_SESSION['csrf_token'])) { $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); }
 $admin_id = $_SESSION['usuario_id'];
 
@@ -18,14 +20,14 @@ $sql->bind_result($unidade_id);
 $sql->fetch();
 $sql->close();
 if (empty($unidade_id)) {
-    header('Location: index_admin.php?ok=0&msg=' . urlencode('Associe uma unidade ao admin antes de gerenciar barbeiros.'));
+    header('Location: index_admin.php?ok=0&msg=' . urlencode(t('admin.not_linked_unit')));
     exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $token = $_POST['csrf_token'] ?? '';
     if (!hash_equals($_SESSION['csrf_token'], $token)) {
-        header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode('Falha de segurança. Atualize a página e tente novamente.'));
+        header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode(t('user.security_fail')));
         exit;
     }
     $acao = $_POST['acao'] ?? '';
@@ -38,15 +40,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $chk->bind_param("ii", $id, $unidade_id);
         $chk->execute();
         $ok = $chk->get_result()->num_rows > 0; $chk->close();
-        if (!$ok) { header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode('Barbeiro inválido.')); exit; }
+        if (!$ok) { header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode(t('admin.invalid_barber'))); exit; }
         if ($novoStatus === 'Ativo') { $dataRetorno = null; }
         $upd = $conn->prepare("UPDATE Barbeiro SET statusBarbeiro=?, dataRetorno=? WHERE idBarbeiro=?");
         $upd->bind_param("ssi", $novoStatus, $dataRetorno, $id);
         if ($upd->execute()) {
-            header('Location: gerenciar_barbeiros.php?ok=1&msg=' . urlencode('Status atualizado.'));
+            header('Location: gerenciar_barbeiros.php?ok=1&msg=' . urlencode(t('admin.ok_status_updated')));
             exit;
         } else {
-            header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode('Falha ao atualizar status.'));
+            header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode(t('admin.err_status_update')));
             exit;
         }
     } elseif ($acao === 'excluir') {
@@ -56,14 +58,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $chk->bind_param("ii", $id, $unidade_id);
         $chk->execute();
         $ok = $chk->get_result()->num_rows > 0; $chk->close();
-        if (!$ok) { header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode('Barbeiro inválido.')); exit; }
+        if (!$ok) { header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode(t('admin.invalid_barber'))); exit; }
         $del = $conn->prepare("DELETE FROM Barbeiro WHERE idBarbeiro=?");
         $del->bind_param("i", $id);
         if ($del->execute()) {
-            header('Location: gerenciar_barbeiros.php?ok=1&msg=' . urlencode('Barbeiro excluído com sucesso.'));
+            header('Location: gerenciar_barbeiros.php?ok=1&msg=' . urlencode(t('admin.ok_barber_deleted')));
             exit;
         } else {
-            header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode('Falha ao excluir barbeiro.'));
+            header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode(t('admin.err_barber_delete')));
             exit;
         }
     } elseif ($acao === 'reset_pw') {
@@ -73,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $chk->bind_param("ii", $id, $unidade_id);
         $chk->execute();
         $ok = $chk->get_result()->num_rows > 0; $chk->close();
-        if (!$ok) { header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode('Barbeiro inválido.')); exit; }
+    if (!$ok) { header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode(t('admin.invalid_barber'))); exit; }
         // Gerar senha temporária forte
         function bb_gen_temp_pw($len=12){
             $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@$%!#?&*';
@@ -88,10 +90,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $up->bind_param("si", $hash, $id);
         if ($up->execute()){
             $_SESSION['reset_barber_password_show_once'] = $temp;
-            header('Location: gerenciar_barbeiros.php?ok=1&msg=' . urlencode('Senha temporária gerada. Compartilhe com segurança.'));
+            header('Location: gerenciar_barbeiros.php?ok=1&msg=' . urlencode(t('admin.temp_pw_generated')));
             exit;
         } else {
-            header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode('Falha ao resetar a senha.'));
+            header('Location: gerenciar_barbeiros.php?ok=0&msg=' . urlencode(t('admin.err_reset_pw')));
             exit;
         }
     }
@@ -107,10 +109,10 @@ while ($row = $rs->fetch_assoc()) { $barbeiros[] = $row; }
 $qr->close();
 ?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-BR' ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Gerenciar Barbeiros - Admin</title>
+    <title><?= t('admin.manage_barbers') ?> - Admin</title>
     <link rel="stylesheet" href="dashboard_admin.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
@@ -123,27 +125,27 @@ $qr->close();
         <?php if (!empty($_SESSION['reset_barber_password_show_once'])): $onePw = $_SESSION['reset_barber_password_show_once']; unset($_SESSION['reset_barber_password_show_once']); ?>
             <div class="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
                 <div>
-                    <strong>Senha temporária gerada:</strong>
+                    <strong><?= t('admin.temp_pw_generated') ?></strong>
                     <span id="resetBarberPw" style="font-family:monospace;"><?= htmlspecialchars($onePw) ?></span>
-                    <small class="d-block text-muted">Copie e entregue ao barbeiro. Recomende trocar no primeiro login.</small>
+                    <small class="d-block text-muted">&nbsp;</small>
                 </div>
-                <button type="button" class="btn btn-sm btn-outline-dark" onclick="copyResetPw()"><i class="bi bi-clipboard"></i> Copiar</button>
+                <button type="button" class="btn btn-sm btn-outline-dark" onclick="copyResetPw()"><i class="bi bi-clipboard"></i> <?= t('admin.copy') ?></button>
             </div>
         <?php endif; ?>
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="dashboard-title mb-0"><i class="bi bi-people"></i> Gerenciar Barbeiros</h2>
-            <a href="index_admin.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> Voltar</a>
+            <h2 class="dashboard-title mb-0"><i class="bi bi-people"></i> <?= t('admin.manage_barbers') ?></h2>
+            <a href="index_admin.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> <?= t('common.back') ?></a>
         </div>
         <div class="table-responsive">
             <table class="table table-dark table-striped align-middle">
                 <thead>
                     <tr>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Telefone</th>
-                        <th>Status</th>
-                        <th>Retorno</th>
-                        <th>Ações</th>
+                        <th><?= t('admin.name') ?></th>
+                        <th><?= t('admin.email') ?? 'Email' ?></th>
+                        <th><?= t('admin.phone') ?></th>
+                        <th><?= t('user.status') ?></th>
+                        <th><?= t('admin.return') ?></th>
+                        <th><?= t('common.actions') ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -152,26 +154,26 @@ $qr->close();
                         <td><?= htmlspecialchars($b['nomeBarbeiro']) ?></td>
                         <td><?= htmlspecialchars($b['emailBarbeiro']) ?></td>
                         <td><?= htmlspecialchars($b['telefoneBarbeiro']) ?></td>
-                        <td><?= htmlspecialchars($b['statusBarbeiro']) ?></td>
-                        <td><?= $b['dataRetorno'] ? date('d/m/Y', strtotime($b['dataRetorno'])) : '-' ?></td>
+                        <td><?= ($b['statusBarbeiro']==='Ativo') ? t('admin.active') : t('admin.inactive') ?></td>
+                        <td><?= $b['dataRetorno'] ? bb_format_date($b['dataRetorno']) : '-' ?></td>
                         <td>
                             <?php if ($b['statusBarbeiro'] === 'Ativo'): ?>
-                                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalInativar" data-id="<?= (int)$b['idBarbeiro'] ?>" data-nome="<?= htmlspecialchars($b['nomeBarbeiro']) ?>"><i class="bi bi-slash-circle"></i> Inativar</button>
+                                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalInativar" data-id="<?= (int)$b['idBarbeiro'] ?>" data-nome="<?= htmlspecialchars($b['nomeBarbeiro']) ?>"><i class="bi bi-slash-circle"></i> <?= t('admin.deactivate') ?></button>
                             <?php else: ?>
                                 <form method="POST" style="display:inline;">
                                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                                     <input type="hidden" name="acao" value="toggle">
                                     <input type="hidden" name="id" value="<?= (int)$b['idBarbeiro'] ?>">
                                     <input type="hidden" name="status" value="Ativo">
-                                    <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check2-circle"></i> Ativar</button>
+                                    <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check2-circle"></i> <?= t('admin.activate') ?></button>
                                 </form>
                             <?php endif; ?>
-                            <button class="btn btn-warning btn-sm ms-1" data-bs-toggle="modal" data-bs-target="#modalReset" data-id="<?= (int)$b['idBarbeiro'] ?>" data-nome="<?= htmlspecialchars($b['nomeBarbeiro']) ?>"><i class="bi bi-shield-lock"></i> Resetar Senha</button>
-                            <button class="btn btn-outline-danger btn-sm ms-1" data-bs-toggle="modal" data-bs-target="#modalExcluir" data-id="<?= (int)$b['idBarbeiro'] ?>" data-nome="<?= htmlspecialchars($b['nomeBarbeiro']) ?>"><i class="bi bi-trash"></i> Excluir</button>
+                            <button class="btn btn-warning btn-sm ms-1" data-bs-toggle="modal" data-bs-target="#modalReset" data-id="<?= (int)$b['idBarbeiro'] ?>" data-nome="<?= htmlspecialchars($b['nomeBarbeiro']) ?>"><i class="bi bi-shield-lock"></i> <?= t('admin.reset_password') ?></button>
+                            <button class="btn btn-outline-danger btn-sm ms-1" data-bs-toggle="modal" data-bs-target="#modalExcluir" data-id="<?= (int)$b['idBarbeiro'] ?>" data-nome="<?= htmlspecialchars($b['nomeBarbeiro']) ?>"><i class="bi bi-trash"></i> <?= t('admin.delete') ?></button>
                         </td>
                     </tr>
                 <?php endforeach; else: ?>
-                    <tr><td colspan="6" class="text-center">Nenhum barbeiro encontrado.</td></tr>
+                    <tr><td colspan="6" class="text-center"><?= t('admin.none_found') ?></td></tr>
                 <?php endif; ?>
                 </tbody>
             </table>
@@ -184,7 +186,7 @@ $qr->close();
   <div class="modal-dialog">
     <div class="modal-content bg-dark text-light">
       <div class="modal-header">
-        <h5 class="modal-title text-warning"><i class="bi bi-exclamation-triangle"></i> Inativar Barbeiro</h5>
+                <h5 class="modal-title text-warning"><i class="bi bi-exclamation-triangle"></i> <?= t('admin.inactivate_barber') ?></h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form method="POST">
@@ -193,14 +195,14 @@ $qr->close();
           <input type="hidden" name="acao" value="toggle">
           <input type="hidden" name="id" id="inaId">
           <input type="hidden" name="status" value="Inativo">
-          <p>Informe, se desejar, uma data de retorno:</p>
+                    <p><?= t('admin.inform_return_date') ?></p>
           <div class="mb-2">
             <input type="date" class="form-control" name="dataRetorno" id="inaData">
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-danger">Confirmar Inativação</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= t('common.cancel') ?></button>
+                    <button type="submit" class="btn btn-danger"><?= t('admin.confirm_deactivate') ?></button>
         </div>
       </form>
     </div>
@@ -212,7 +214,7 @@ $qr->close();
     <div class="modal-dialog">
         <div class="modal-content bg-dark text-light">
             <div class="modal-header">
-                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-octagon"></i> Excluir Barbeiro</h5>
+                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-octagon"></i> <?= t('admin.delete') ?></h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST">
@@ -220,11 +222,11 @@ $qr->close();
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                     <input type="hidden" name="acao" value="excluir">
                     <input type="hidden" name="id" id="excId">
-                    <p>Tem certeza que deseja excluir este barbeiro? Esta ação removerá também os agendamentos dele.</p>
+                    <p><?= t('admin.confirm_delete_barber') ?></p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Excluir</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= t('common.cancel') ?></button>
+                    <button type="submit" class="btn btn-danger"><?= t('admin.delete') ?></button>
                 </div>
             </form>
         </div>
@@ -236,7 +238,7 @@ $qr->close();
     <div class="modal-dialog">
         <div class="modal-content bg-dark text-light">
             <div class="modal-header">
-                <h5 class="modal-title text-warning"><i class="bi bi-shield-lock"></i> Resetar Senha do Barbeiro</h5>
+                <h5 class="modal-title text-warning"><i class="bi bi-shield-lock"></i> <?= t('admin.reset_password') ?></h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST">
@@ -244,11 +246,11 @@ $qr->close();
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                     <input type="hidden" name="acao" value="reset_pw">
                     <input type="hidden" name="id" id="resetId">
-                    <p>Gerar uma senha temporária forte e substituir a senha atual do barbeiro. A nova senha será exibida apenas uma vez.</p>
+                    <p>&nbsp;</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-warning"><i class="bi bi-shield-lock"></i> Resetar Senha</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= t('common.cancel') ?></button>
+                    <button type="submit" class="btn btn-warning"><i class="bi bi-shield-lock"></i> <?= t('admin.reset_password') ?></button>
                 </div>
             </form>
         </div>
@@ -256,6 +258,7 @@ $qr->close();
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../js/date-mask.js"></script>
 <script>
 // Toasts
 function getParam(name){ const url = new URL(window.location.href); return url.searchParams.get(name); }

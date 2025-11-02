@@ -15,10 +15,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['idAgendamento'])) {
     $stmt = $conn->prepare("UPDATE Agendamento SET statusAgendamento = 'Cancelado' WHERE idAgendamento = ? AND Cliente_idCliente = ?");
     $stmt->bind_param("ii", $idAgendamento, $_SESSION['usuario_id']);
     if ($stmt->execute()) {
-        header("Location: usuario/agendamentos_usuario.php?cancelado=1");
+        header("Location: usuario/agendamentos_usuario.php?ok=1&msg=" . urlencode(t('user.appointment_canceled')));
         exit;
     } else {
-        header("Location: usuario/agendamentos_usuario.php?erro=1");
+        header("Location: usuario/agendamentos_usuario.php?ok=0&msg=" . urlencode(t('user.action_failed')));
         exit;
     }
 } else {

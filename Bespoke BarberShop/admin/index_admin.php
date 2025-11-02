@@ -143,10 +143,10 @@ if (!empty($unidade_id)) {
 
 ?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-br' ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Painel do Administrador</title>
+        <title><?= t('admin.dashboard_title') ?> | Bespoke BarberShop</title>
     <link rel="stylesheet" href="dashboard_admin.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
@@ -154,50 +154,62 @@ if (!empty($unidade_id)) {
 </head>
 <body class="dashboard-admin">
     <div class="container py-4">
+        <?php
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $uri = $_SERVER['REQUEST_URI'] ?? '';
+            $currentUrl = $scheme.'://'.$host.$uri;
+        ?>
+        <div class="d-flex justify-content-end mb-2">
+            <div class="btn-group btn-group-sm" role="group" aria-label="<?= t('nav.language') ?>">
+                <a class="btn btn-outline-warning <?= bb_is_en() ? '' : 'active' ?>" href="../includes/locale.php?set=pt_BR&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.pt') ?></a>
+                <a class="btn btn-outline-warning <?= bb_is_en() ? 'active' : '' ?>" href="../includes/locale.php?set=en_US&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.en') ?></a>
+            </div>
+        </div>
         <?php if (!empty($unidade_id)): ?>
         <div class="row g-4 stack-xl">
             <div class="col-12">
                 <div class="dashboard-card p-3 kpi-accent">
                     <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                        <div class="dashboard-section-title mb-0" style="color:#ffd24d;"><i class="bi bi-speedometer2"></i> Resumo do mês (Finalizados)</div>
+                        <div class="dashboard-section-title mb-0" style="color:#ffd24d;"><i class="bi bi-speedometer2"></i> <?= t('admin.month_summary') ?></div>
                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <div class="text-muted fw-semibold">Período: <?= date('d/m', strtotime($inicioMes)) ?> - <?= date('d/m', strtotime($fimMes)) ?></div>
-                            <a href="relatorios.php?status=Finalizado&inicio=<?= $inicioMes ?>&fim=<?= $fimMes ?>" class="dashboard-action dashboard-btn-small" title="Ver relatório do mês">
-                                <i class="bi bi-graph-up"></i> Ver relatório do mês
+                            <div class="text-muted fw-semibold"><?= t('admin.period') ?> <?= date('d/m', strtotime($inicioMes)) ?> - <?= date('d/m', strtotime($fimMes)) ?></div>
+                            <a href="relatorios.php?status=Finalizado&inicio=<?= $inicioMes ?>&fim=<?= $fimMes ?>" class="dashboard-action dashboard-btn-small" title="<?= t('admin.view_month_report') ?>">
+                                <i class="bi bi-graph-up"></i> <?= t('admin.view_month_report') ?>
                             </a>
                         </div>
                     </div>
                     <div class="row g-3">
                         <div class="col-12 col-md-4">
                             <div class="kpi-card">
-                                <div class="kpi-top"><i class="bi bi-people kpi-icon"></i><span class="kpi-label">Atendimentos</span></div>
+                                <div class="kpi-top"><i class="bi bi-people kpi-icon"></i><span class="kpi-label"><?= t('admin.appointments') ?></span></div>
                                 <div class="kpi-value"><?= (int)$kpiQtd ?></div>
-                                <div class="kpi-sub">Média duração: <?= ((int)$kpiQtd>0? bb_format_minutes($kpiMedio) : '—') ?></div>
+                                <div class="kpi-sub"><?= t('admin.avg_duration') ?> <?= ((int)$kpiQtd>0? bb_format_minutes($kpiMedio) : '—') ?></div>
                                 <div class="kpi-trend <?= ($tQtd>=0?'up':'down') ?>">
                                     <i class="bi <?= ($tQtd>=0? 'bi-arrow-up-right':'bi-arrow-down-right') ?>"></i>
-                                    <?= ($tQtd>=0?'+':'') . $tQtd ?>% vs mês anterior
+                                        <?= ($tQtd>=0?'+':'') . $tQtd ?>% <?= t('admin.vs_prev_month') ?>
                                 </div>
                             </div>
                         </div>
                         <div class="col-12 col-md-4">
                             <div class="kpi-card">
-                                <div class="kpi-top"><i class="bi bi-cash-coin kpi-icon"></i><span class="kpi-label">Receita</span></div>
-                                <div class="kpi-value">R$ <?= number_format((float)$kpiReceita, 2, ',', '.') ?></div>
-                                <div class="kpi-sub">Ticket médio: <?= ((int)$kpiQtd>0? 'R$ ' . number_format($kpiReceita/$kpiQtd, 2, ',', '.') : '—') ?></div>
+                                <div class="kpi-top"><i class="bi bi-cash-coin kpi-icon"></i><span class="kpi-label"><?= t('admin.kpi_revenue') ?></span></div>
+                                <div class="kpi-value"><?= bb_format_currency_local((float)$kpiReceita) ?></div>
+                                    <div class="kpi-sub"><?= t('admin.avg_ticket') ?>: <?= ((int)$kpiQtd>0? bb_format_currency_local((float)$kpiReceita/(int)$kpiQtd) : '—') ?></div>
                                 <div class="kpi-trend <?= ($tRec>=0?'up':'down') ?>">
                                     <i class="bi <?= ($tRec>=0? 'bi-arrow-up-right':'bi-arrow-down-right') ?>"></i>
-                                    <?= ($tRec>=0?'+':'') . $tRec ?>% vs mês anterior
+                                        <?= ($tRec>=0?'+':'') . $tRec ?>% <?= t('admin.vs_prev_month') ?>
                                 </div>
                             </div>
                         </div>
                         <div class="col-12 col-md-4">
                             <div class="kpi-card">
-                                <div class="kpi-top"><i class="bi bi-clock-history kpi-icon"></i><span class="kpi-label">Duração</span></div>
+                                <div class="kpi-top"><i class="bi bi-clock-history kpi-icon"></i><span class="kpi-label"><?= t('admin.duration_label') ?></span></div>
                                 <div class="kpi-value"><?= bb_format_minutes($kpiTempo) ?></div>
-                                <div class="kpi-sub">Finalizados no mês</div>
+                                <div class="kpi-sub"><?= t('admin.finished_in_month') ?></div>
                                 <div class="kpi-trend <?= ($tTmp>=0?'up':'down') ?>">
                                     <i class="bi <?= ($tTmp>=0? 'bi-arrow-up-right':'bi-arrow-down-right') ?>"></i>
-                                    <?= ($tTmp>=0?'+':'') . $tTmp ?>% vs mês anterior
+                                    <?= ($tTmp>=0?'+':'') . $tTmp ?>% <?= t('admin.vs_prev_month') ?>
                                 </div>
                             </div>
                         </div>
@@ -205,14 +217,14 @@ if (!empty($unidade_id)) {
                     <div class="row g-3 mt-2">
                         <div class="col-12 col-md-6">
                             <div class="kpi-card" style="border-style:dashed;">
-                                <div class="text-warning" style="font-weight:600;"><i class="bi bi-calendar-day"></i> Hoje</div>
-                                <div class="fs-5" style="font-weight:800; color:#ffd24d;">Agendados: <?= (int)$cntHoje ?></div>
+                                <div class="text-warning" style="font-weight:600;"><i class="bi bi-calendar-day"></i> <?= bb_is_en() ? 'Today' : 'Hoje' ?></div>
+                                <div class="fs-5" style="font-weight:800; color:#ffd24d;"><?= bb_is_en() ? 'Scheduled' : 'Agendados' ?>: <?= (int)$cntHoje ?></div>
                             </div>
                         </div>
                         <div class="col-12 col-md-6">
                             <div class="kpi-card" style="border-style:dashed;">
-                                <div class="text-warning" style="font-weight:600;"><i class="bi bi-calendar-check"></i> Amanhã</div>
-                                <div class="fs-5" style="font-weight:800; color:#ffd24d;">Agendados: <?= (int)$cntAmanha ?></div>
+                                <div class="text-warning" style="font-weight:600;"><i class="bi bi-calendar-check"></i> <?= bb_is_en() ? 'Tomorrow' : 'Amanhã' ?></div>
+                                <div class="fs-5" style="font-weight:800; color:#ffd24d;"><?= bb_is_en() ? 'Scheduled' : 'Agendados' ?>: <?= (int)$cntAmanha ?></div>
                             </div>
                         </div>
                     </div>
@@ -225,8 +237,8 @@ if (!empty($unidade_id)) {
     <div class="row mb-4 welcome-gap">
             <div class="col-12">
                 <div class="dashboard-card dashboard-welcome-card">
-                    <span class="dashboard-welcome-text fs-1 fs-md-2 fs-lg-1">Bem-vindo, Administrador <?= htmlspecialchars($nome_admin) ?>!</span>
-                    <div class="mt-2 fs-4 fs-md-5 fs-lg-4">Unidade: <span style="color:#daa520; font-weight:600;"><?= htmlspecialchars($unidade_nome) ?></span></div>
+                    <span class="dashboard-welcome-text fs-1 fs-md-2 fs-lg-1"><?= t('admin.welcome_admin') ?> <?= htmlspecialchars($nome_admin) ?>!</span>
+                    <div class="mt-2 fs-4 fs-md-5 fs-lg-4"><?= t('admin.unit_label') ?>: <span style="color:#daa520; font-weight:600;"><?= htmlspecialchars($unidade_nome) ?></span></div>
                 </div>
             </div>
         </div>
@@ -234,7 +246,7 @@ if (!empty($unidade_id)) {
             <?php if (empty($unidade_id)): ?>
             <div class="col-12">
                 <div class="alert alert-warning border-0" role="alert">
-                    <i class="bi bi-exclamation-triangle"></i> Este administrador ainda não está vinculado a uma unidade. Associe uma unidade para habilitar o gerenciamento de barbeiros e serviços.
+                    <i class="bi bi-exclamation-triangle"></i> <?= t('admin.not_linked_unit') ?>
                 </div>
             </div>
             <?php endif; ?>
@@ -243,12 +255,12 @@ if (!empty($unidade_id)) {
             <div class="col-12 col-lg-12 d-flex align-items-stretch">
                 <div class="dashboard-card p-3 flex-fill d-flex flex-column">
                     <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                        <div class="dashboard-section-title mb-0 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-calendar-week"></i> Próximos Atendimentos da Unidade</div>
+                        <div class="dashboard-section-title mb-0 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-calendar-week"></i> <?= t('admin.next_unit_appointments') ?></div>
                         <div class="row gx-2">
                             <div class="col-auto">
                                 <?php $d1 = date('Y-m-d'); $d2 = date('Y-m-d', strtotime('+30 days')); ?>
                                 <a href="relatorios.php?status=Agendado&inicio=<?= $d1 ?>&fim=<?= $d2 ?>" class="dashboard-action dashboard-btn-small" title="Ver próximos 30 dias">
-                                    <i class="bi bi-eye"></i> Ver todos
+                                    <i class="bi bi-eye"></i> <?= t('admin.view_all') ?>
                                 </a>
                             </div>
                         </div>
@@ -257,30 +269,37 @@ if (!empty($unidade_id)) {
                         <table class="table table-dark table-striped table-sm align-middle mb-0 dashboard-table">
                             <thead>
                                 <tr>
-                                    <th>Data</th>
-                                    <th>Hora</th>
-                                    <th>Cliente</th>
-                                    <th>Barbeiro</th>
-                                    <th>Serviços</th>
-                                    <th>Total</th>
-                                    <th>Duração</th>
-                                    <th>Status</th>
+                                    <th><?= t('sched.date') ?></th>
+                                    <th><?= t('sched.time') ?></th>
+                                    <th><?= t('barber.client') ?></th>
+                                    <th><?= t('sched.barber') ?></th>
+                                    <th><?= t('sched.service') ?></th>
+                                    <th><?= t('user.total') ?></th>
+                                    <th><?= t('sched.duration') ?></th>
+                                    <th><?= t('user.status') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (count($proxAg) > 0): foreach($proxAg as $row): ?>
                                     <tr>
-                                        <td title="<?= date('d/m/Y', strtotime($row['data'])) ?>"><?= date('d/m', strtotime($row['data'])) ?></td>
-                                        <td><?= substr($row['hora'],0,5) ?></td>
+                                        <td title="<?= bb_format_date($row['data']) ?>"><?= bb_format_date($row['data']) ?></td>
+                                        <td><?= bb_format_time($row['hora']) ?></td>
                                         <td><?= htmlspecialchars($row['nomeCliente']) ?></td>
                                         <td><?= htmlspecialchars($row['nomeBarbeiro']) ?></td>
-                                        <td title="<?= htmlspecialchars($row['servicos']) ?>"><?= htmlspecialchars(strlen($row['servicos'])>28 ? substr($row['servicos'],0,28).'…' : $row['servicos']) ?></td>
-                                        <td>R$ <?= number_format($row['precoTotal'], 2, ',', '.') ?></td>
+                                        <?php
+                                            $srvCsv = (string)($row['servicos'] ?? '');
+                                            $srvArr = array_map('trim', explode(',', $srvCsv));
+                                            $srvArr = array_filter($srvArr, fn($s)=>$s!=='');
+                                            $srvArrLoc = array_map('bb_service_display', $srvArr);
+                                            $srvCsvLoc = implode(', ', $srvArrLoc);
+                                        ?>
+                                        <td title="<?= htmlspecialchars($srvCsvLoc) ?>"><?= htmlspecialchars(strlen($srvCsvLoc)>28 ? substr($srvCsvLoc,0,28).'…' : $srvCsvLoc) ?></td>
+                                        <td><?= bb_format_currency_local((float)$row['precoTotal']) ?></td>
                                         <td><?= bb_format_minutes((int)$row['tempoTotal']) ?></td>
-                                        <td><?= htmlspecialchars($row['statusAgendamento']) ?></td>
+                                        <td><?= htmlspecialchars(bb_status_label($row['statusAgendamento'])) ?></td>
                                     </tr>
                                 <?php endforeach; else: ?>
-                                    <tr><td colspan="8" class="text-center text-muted">Sem atendimentos futuros.</td></tr>
+                                    <tr><td colspan="8" class="text-center text-muted"><?= t('admin.no_future') ?></td></tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
@@ -292,14 +311,14 @@ if (!empty($unidade_id)) {
             <div class="col-12 col-lg-7 d-flex align-items-stretch">
                 <div class="dashboard-card p-3 flex-fill d-flex flex-column">
                     <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-                        <div class="dashboard-section-title mb-0 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-person-badge"></i> Barbeiros da Unidade</div>
+                        <div class="dashboard-section-title mb-0 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-person-badge"></i> <?= t('admin.unit_barbers') ?></div>
                         <div class="row gx-2">
                             <div class="col-auto">
-                                <a href="cadastrar_barbeiro.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-person-plus"></i> Cadastrar</a>
+                                <a href="cadastrar_barbeiro.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-person-plus"></i> <?= t('admin.register_barber') ?></a>
                             </div>
                             <?php if (!empty($unidade_id)): ?>
                             <div class="col-auto">
-                                <a href="gerenciar_barbeiros.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-people"></i> Gerenciar</a>
+                                <a href="gerenciar_barbeiros.php" class="dashboard-action dashboard-btn-small"><i class="bi bi-people"></i> <?= t('admin.manage_barbers') ?></a>
                             </div>
                             <?php endif; ?>
                         </div>
@@ -309,22 +328,22 @@ if (!empty($unidade_id)) {
                             <?php if (count($barbeiros) > 0): foreach($barbeiros as $b): ?>
                                 <li class="list-group-item bg-transparent text-light border-0 ps-0 fs-5 fs-md-6 fs-lg-5"><i class="bi bi-scissors"></i> <?= htmlspecialchars($b) ?></li>
                             <?php endforeach; else: ?>
-                                <li class="list-group-item bg-transparent text-light border-0 ps-0">Nenhum barbeiro cadastrado.</li>
+                                <li class="list-group-item bg-transparent text-light border-0 ps-0"><?= t('admin.none_found') ?></li>
                             <?php endif; ?>
                         </ul>
                     </div>
                     
-                    <div class="dashboard-section-title mb-2 mt-3 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-gear"></i> Serviços Disponíveis <?= !empty($unidade_id) ? 'da Unidade' : '(Catálogo)' ?></div>
+                    <div class="dashboard-section-title mb-2 mt-3 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-gear"></i> <?= !empty($unidade_id) ? t('admin.available_services_unit') : t('admin.available_services_catalog') ?></div>
                     <div class="flex-fill">
                         <ul class="list-group list-group-flush mb-3">
                             <?php foreach($servicos as $serv): ?>
-                                <li class="list-group-item bg-transparent text-light border-0 ps-0 fs-5 fs-md-6 fs-lg-5"><i class="bi bi-check2-circle"></i> <?= htmlspecialchars($serv['nomeServico']) ?></li>
+                                <li class="list-group-item bg-transparent text-light border-0 ps-0 fs-5 fs-md-6 fs-lg-5"><i class="bi bi-check2-circle"></i> <?= htmlspecialchars(bb_service_display($serv['nomeServico'])) ?></li>
                             <?php endforeach; ?>
                             <?php if (empty($servicos)): ?>
-                                <li class="list-group-item bg-transparent text-light border-0 ps-0">Nenhum serviço vinculado à unidade. <a href="gerenciar_servicos.php" class="text-warning">Vincular agora</a>.</li>
+                                <li class="list-group-item bg-transparent text-light border-0 ps-0"><?= t('admin.no_services_unit') ?> <a href="gerenciar_servicos.php" class="text-warning"><?= t('admin.link_now') ?></a>.</li>
                             <?php endif; ?>
                         </ul>
-                        <a href="gerenciar_servicos.php" class="dashboard-action w-100"><i class="bi bi-pencil-square"></i> Gerenciar Serviços</a>
+                        <a href="gerenciar_servicos.php" class="dashboard-action w-100"><i class="bi bi-pencil-square"></i> <?= t('admin.manage_services') ?></a>
                     </div>
                 </div>
             </div>
@@ -332,21 +351,21 @@ if (!empty($unidade_id)) {
             <!-- Card de perfil e ações -->
             <div class="col-12 col-lg-5 d-flex flex-column gap-4">
                 <div class="dashboard-card p-3 flex-fill mb-0">
-                    <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-person-circle"></i> Meu Perfil</div>
-                    <div class="mb-2 fs-5 fs-md-6 fs-lg-5">Gerencie seus dados de acesso e informações pessoais.</div>
-                    <a href="editar_perfil.php" class="dashboard-action mt-2 w-100"><i class="bi bi-pencil-square"></i> Editar Perfil</a>
-                    <a href="bloqueios.php" class="dashboard-action mt-2 w-100"><i class="bi bi-calendar-x"></i> Bloqueios de horários</a>
-                    <a href="escalas.php" class="dashboard-action mt-2 w-100"><i class="bi bi-calendar3"></i> Escalas (6x1 e Férias)</a>
-                    <a href="metas.php" class="dashboard-action mt-2 w-100"><i class="bi bi-bullseye"></i> Metas da Unidade</a>
-                    <a href="../logout.php" class="dashboard-action mt-2 w-100 dashboard-btn-logout"><i class="bi bi-box-arrow-right"></i> Sair</a>
+                    <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-person-circle"></i> <?= t('admin.my_profile') ?></div>
+                    <div class="mb-2 fs-5 fs-md-6 fs-lg-5"><?= t('admin.manage_profile_desc') ?></div>
+                    <a href="editar_perfil.php" class="dashboard-action mt-2 w-100"><i class="bi bi-pencil-square"></i> <?= t('admin.edit_profile') ?></a>
+                    <a href="bloqueios.php" class="dashboard-action mt-2 w-100"><i class="bi bi-calendar-x"></i> <?= t('admin.unit_blocks') ?></a>
+                    <a href="escalas.php" class="dashboard-action mt-2 w-100"><i class="bi bi-calendar3"></i> <?= t('admin.scales_title') ?></a>
+                    <a href="metas.php" class="dashboard-action mt-2 w-100"><i class="bi bi-bullseye"></i> <?= t('admin.goals_title') ?></a>
+                    <a href="../logout.php" class="dashboard-action mt-2 w-100 dashboard-btn-logout"><i class="bi bi-box-arrow-right"></i> <?= t('user.logout') ?></a>
                 </div>
                 
                 <div class="dashboard-card p-3 flex-fill mb-0">
-                    <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-info-circle"></i> Informações Importantes</div>
+                    <div class="dashboard-section-title mb-2 fs-3 fs-md-4 fs-lg-3"><i class="bi bi-info-circle"></i> <?= t('admin.important_info') ?></div>
                     <ul class="dashboard-info-list fs-5 fs-md-6 fs-lg-5">
-                        <li>Gerencie barbeiros e serviços da sua unidade.</li>
-                        <li>Monitore a qualidade do atendimento.</li>
-                        <li>Mantenha os dados sempre atualizados.</li>
+                        <li><?= t('admin.info1') ?></li>
+                        <li><?= t('admin.info2') ?></li>
+                        <li><?= t('admin.info3') ?></li>
                     </ul>
                 </div>
             </div>

@@ -9,6 +9,8 @@ include_once "../includes/db.php";
 include_once "../includes/helpers.php";
 $bd = new Banco();
 $conn = $bd->getConexao();
+require_once "../includes/i18n.php";
+require_once "../includes/format.php";
 // CSRF token setup
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -162,10 +164,10 @@ if (!empty($unidade_id)) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-BR' ?>">
 <head>
     <meta charset="UTF-8">
-    <title>Gerenciar Serviços - Admin</title>
+    <title><?= t('admin.manage_services') ?> - Admin</title>
     <link rel="stylesheet" href="dashboard_admin.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
@@ -179,18 +181,18 @@ if (!empty($unidade_id)) {
             <div class="col-12">
                 <div class="dashboard-card">
                     <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h2 class="dashboard-title mb-0"><i class="bi bi-gear"></i> Gerenciar Serviços</h2>
+                        <h2 class="dashboard-title mb-0"><i class="bi bi-gear"></i> <?= t('admin.manage_services') ?></h2>
                         <div>
                             <button type="button" class="dashboard-action me-2" data-bs-toggle="modal" data-bs-target="#modalAdicionar">
-                                <i class="bi bi-plus-circle"></i> Adicionar Serviço
+                                <i class="bi bi-plus-circle"></i> <?= t('admin.add_service') ?>
                             </button>
-                            <a href="index_admin.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> Voltar</a>
+                            <a href="index_admin.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> <?= t('common.back') ?></a>
                         </div>
                     </div>
                     <!-- Barra de busca -->
                     <div class="input-group mb-3">
                         <span class="input-group-text bg-dark text-warning border-secondary"><i class="bi bi-search"></i></span>
-                        <input type="text" id="filtro-servicos" class="form-control bg-dark text-light border-secondary" placeholder="Filtrar serviços por nome ou descrição...">
+                        <input type="text" id="filtro-servicos" class="form-control bg-dark text-light border-secondary" placeholder="<?= t('admin.filter_placeholder') ?>">
                     </div>
 
                     <div class="table-responsive">
@@ -198,21 +200,21 @@ if (!empty($unidade_id)) {
                             <thead>
                                 <tr>
                                     <th>ID</th>
-                                    <th>Nome do Serviço</th>
-                                    <th>Preço</th>
-                                    <th>Duração</th>
-                                    <th>Descrição</th>
-                                    <th>Ações</th>
+                                    <th><?= t('admin.service_name') ?></th>
+                                    <th><?= t('admin.price') ?></th>
+                                    <th><?= t('admin.duration') ?></th>
+                                    <th><?= t('admin.description') ?></th>
+                                    <th><?= t('common.actions') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($servicos as $servico): ?>
                                     <tr>
                                         <td><?= $servico['idServico'] ?></td>
-                                        <td><?= htmlspecialchars($servico['nomeServico']) ?></td>
-                                        <td>R$ <?= number_format($servico['precoServico'], 2, ',', '.') ?></td>
+                                        <td title="<?= htmlspecialchars($servico['nomeServico']) ?>"><?= htmlspecialchars(bb_service_display($servico['nomeServico'])) ?></td>
+                                        <td><?= bb_format_currency_local((float)$servico['precoServico']) ?></td>
                                         <td><?= bb_format_minutes((int)$servico['duracaoPadrao']) ?></td>
-                                        <td class="text-truncate" style="max-width:280px;" title="<?= htmlspecialchars($servico['descricaoServico']) ?>"><?= htmlspecialchars($servico['descricaoServico']) ?></td>
+                                        <td class="text-truncate" style="max-width:280px;" title="<?= htmlspecialchars(bb_service_desc_display($servico['nomeServico'], $servico['descricaoServico'])) ?>"><?= htmlspecialchars(bb_service_desc_display($servico['nomeServico'], $servico['descricaoServico'])) ?></td>
                                         <td>
                                             <button type="button" class="btn btn-warning btn-sm me-1" onclick="editarServico(<?= $servico['idServico'] ?>, '<?= htmlspecialchars($servico['nomeServico']) ?>', <?= $servico['precoServico'] ?>, <?= (int)$servico['duracaoPadrao'] ?>, '<?= htmlspecialchars($servico['descricaoServico']) ?>')">
                                                 <i class="bi bi-pencil"></i>
@@ -225,7 +227,7 @@ if (!empty($unidade_id)) {
                                 <?php endforeach; ?>
                                 <?php if (empty($servicos)): ?>
                                     <tr>
-                                        <td colspan="6" class="text-center">Nenhum serviço cadastrado.</td>
+                                        <td colspan="6" class="text-center"><?= t('admin.no_services') ?></td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
@@ -234,7 +236,7 @@ if (!empty($unidade_id)) {
 
                     <?php if (!empty($unidade_id)): ?>
                     <hr class="my-4" style="border-color: rgba(218,165,32,0.3);">
-                    <h5 class="dashboard-section-title"><i class="bi bi-building"></i> Serviços desta unidade</h5>
+                    <h5 class="dashboard-section-title"><i class="bi bi-building"></i> <?= t('admin.unit_services') ?></h5>
                     <form method="POST" class="mb-2">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                         <input type="hidden" name="acao" value="vincular_unidade">
@@ -243,13 +245,13 @@ if (!empty($unidade_id)) {
                                 <div class="col-12 col-md-6 col-lg-4">
                                     <div class="form-check text-light">
                                         <input class="form-check-input" type="checkbox" id="su_<?= $sid ?>" name="servicos_unidade[]" value="<?= $sid ?>" <?= $chk? 'checked' : '' ?>>
-                                        <label class="form-check-label" for="su_<?= $sid ?>"><?= htmlspecialchars($servico['nomeServico']) ?></label>
+                                        <label class="form-check-label" for="su_<?= $sid ?>"><?= htmlspecialchars(bb_service_display($servico['nomeServico'])) ?></label>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
                         </div>
                         <div class="mt-3">
-                            <button type="submit" class="dashboard-action"><i class="bi bi-save"></i> Salvar vinculações</button>
+                            <button type="submit" class="dashboard-action"><i class="bi bi-save"></i> <?= t('admin.save_links') ?></button>
                         </div>
                     </form>
                     <?php endif; ?>
@@ -263,7 +265,7 @@ if (!empty($unidade_id)) {
         <div class="modal-dialog">
             <div class="modal-content bg-dark">
                 <div class="modal-header">
-                    <h5 class="modal-title text-warning"><i class="bi bi-plus-circle"></i> Adicionar Serviço</h5>
+                    <h5 class="modal-title text-warning"><i class="bi bi-plus-circle"></i> <?= t('admin.add_service') ?></h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST">
@@ -271,25 +273,25 @@ if (!empty($unidade_id)) {
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                         <input type="hidden" name="acao" value="adicionar">
                         <div class="mb-3">
-                            <label for="nome" class="form-label">Nome do Serviço</label>
+                            <label for="nome" class="form-label"><?= t('admin.service_name') ?></label>
                             <input type="text" class="form-control" id="nome" name="nome" required>
                         </div>
                         <div class="mb-3">
-                            <label for="preco" class="form-label">Preço (R$)</label>
+                            <label for="preco" class="form-label"><?= t('admin.price') ?></label>
                             <input type="number" step="0.01" min="0" class="form-control" id="preco" name="preco" required>
                         </div>
                         <div class="mb-3">
-                            <label for="duracao" class="form-label">Duração (minutos)</label>
+                            <label for="duracao" class="form-label"><?= t('admin.duration') ?></label>
                             <input type="number" min="1" class="form-control" id="duracao" name="duracao" required>
                         </div>
                         <div class="mb-3">
-                            <label for="descricao" class="form-label">Descrição do Serviço</label>
+                            <label for="descricao" class="form-label"><?= t('admin.description') ?></label>
                             <textarea class="form-control" id="descricao" name="descricao" rows="2" placeholder="Ex.: Corte com acabamento e lavagem"></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-warning">Adicionar</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= t('common.cancel') ?></button>
+                        <button type="submit" class="btn btn-warning"><?= t('admin.add_service') ?></button>
                     </div>
                 </form>
             </div>
@@ -301,7 +303,7 @@ if (!empty($unidade_id)) {
         <div class="modal-dialog">
             <div class="modal-content bg-dark">
                 <div class="modal-header">
-                    <h5 class="modal-title text-warning"><i class="bi bi-pencil"></i> Editar Serviço</h5>
+                    <h5 class="modal-title text-warning"><i class="bi bi-pencil"></i> <?= t('admin.edit_service') ?></h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST">
@@ -310,25 +312,25 @@ if (!empty($unidade_id)) {
                         <input type="hidden" name="acao" value="editar">
                         <input type="hidden" name="id" id="editId">
                         <div class="mb-3">
-                            <label for="editNome" class="form-label">Nome do Serviço</label>
+                            <label for="editNome" class="form-label"><?= t('admin.service_name') ?></label>
                             <input type="text" class="form-control" id="editNome" name="nome" required>
                         </div>
                         <div class="mb-3">
-                            <label for="editPreco" class="form-label">Preço (R$)</label>
+                            <label for="editPreco" class="form-label"><?= t('admin.price') ?></label>
                             <input type="number" step="0.01" min="0" class="form-control" id="editPreco" name="preco" required>
                         </div>
                         <div class="mb-3">
-                            <label for="editDuracao" class="form-label">Duração (minutos)</label>
+                            <label for="editDuracao" class="form-label"><?= t('admin.duration') ?></label>
                             <input type="number" min="1" class="form-control" id="editDuracao" name="duracao" required>
                         </div>
                         <div class="mb-3">
-                            <label for="editDescricao" class="form-label">Descrição do Serviço</label>
+                            <label for="editDescricao" class="form-label"><?= t('admin.description') ?></label>
                             <textarea class="form-control" id="editDescricao" name="descricao" rows="2"></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-warning">Atualizar</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= t('common.cancel') ?></button>
+                        <button type="submit" class="btn btn-warning"><?= t('common.save') ?></button>
                     </div>
                 </form>
             </div>
@@ -340,7 +342,7 @@ if (!empty($unidade_id)) {
         <div class="modal-dialog">
             <div class="modal-content bg-dark">
                 <div class="modal-header">
-                    <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle"></i> Confirmar Exclusão</h5>
+                    <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle"></i> <?= t('admin.delete_confirm_title') ?></h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST">
@@ -348,12 +350,11 @@ if (!empty($unidade_id)) {
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
                         <input type="hidden" name="acao" value="deletar">
                         <input type="hidden" name="id" id="deleteId">
-                        <p>Tem certeza que deseja deletar o serviço <strong id="deleteNome"></strong>?</p>
-                        <p class="text-warning">Esta ação não pode ser desfeita.</p>
+                        <p><?= t('admin.delete_confirm_body') ?> <strong id="deleteNome"></strong>?</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger">Deletar</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?= t('common.cancel') ?></button>
+                        <button type="submit" class="btn btn-danger"><?= t('admin.delete') ?></button>
                     </div>
                 </form>
             </div>

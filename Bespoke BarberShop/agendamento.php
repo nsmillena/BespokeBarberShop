@@ -33,11 +33,11 @@ $prefill = [
 ];
 ?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-br' ?>">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Agendamento - Barbearia</title>
+<title><?= t('sched.title') ?> - Bespoke BarberShop</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
@@ -48,17 +48,17 @@ $prefill = [
 <!-- Botão Voltar ao Painel agora fica fixo no canto inferior esquerdo (definido ao final da página) -->
 
 <div class="progress-container mb-4">
-  <div class="step active" id="step1"><div class="circle">1</div><small>Unidade</small></div>
-  <div class="step" id="step2"><div class="circle">2</div><small>Barbeiro</small></div>
-  <div class="step" id="step3"><div class="circle">3</div><small>Data & Hora</small></div>
-  <div class="step" id="step4"><div class="circle">4</div><small>Serviço</small></div>
+  <div class="step active" id="step1"><div class="circle">1</div><small><?= t('sched.step_unit') ?></small></div>
+  <div class="step" id="step2"><div class="circle">2</div><small><?= t('sched.step_barber') ?></small></div>
+  <div class="step" id="step3"><div class="circle">3</div><small><?= t('sched.step_datetime') ?></small></div>
+  <div class="step" id="step4"><div class="circle">4</div><small><?= t('sched.step_service') ?></small></div>
 </div>
 
 <div id="step-content">
 
   <!-- PASSO 1: Escolha a Unidade (cards) -->
   <div class="card-custom step-card" data-step="1">
-    <h5>Escolha a Unidade</h5>
+  <h5><?= t('sched.choose_unit') ?></h5>
     <div class="d-flex gap-4 justify-content-center flex-wrap">
       <?php foreach($unidades as $unidade): ?>
         <div class="card-custom unit-btn" onclick="selectUnit(<?= $unidade['idUnidade'] ?>, this)">
@@ -71,17 +71,17 @@ $prefill = [
 
   <!-- PASSO 2: Escolha o Barbeiro (cards filtrados) -->
   <div class="card-custom step-card d-none" data-step="2">
-    <h5>Escolha o Barbeiro</h5>
+    <h5><?= t('sched.choose_barber') ?></h5>
     <div class="d-flex gap-3 justify-content-center flex-wrap mt-3" id="barber-container"></div>
     <div class="d-flex justify-content-between mt-3 w-100">
-      <button class="btn-custom btn-back" onclick="prevStep(2)">← Voltar</button>
-      <button class="btn-custom" onclick="nextStep(2)">Continuar →</button>
+  <button class="btn-custom btn-back" onclick="prevStep(2)">← <?= t('sched.back') ?></button>
+  <button class="btn-custom" onclick="nextStep(2)"><?= t('sched.continue') ?> →</button>
     </div>
   </div>
 
   <!-- PASSO 3: Data & Hora -->
   <div class="card-custom step-card d-none" data-step="3">
-    <h5>Escolha a Data e o Horário</h5>
+    <h5><?= t('sched.choose_datetime') ?></h5>
     <div class="d-flex gap-4 justify-content-center flex-wrap">
       <div class="calendar">
         <div class="calendar-header">
@@ -92,9 +92,7 @@ $prefill = [
           </div>
           <span class="change-btn" id="next-month">&gt;</span>
         </div>
-        <div class="calendar-week-day">
-          <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
-        </div>
+        <div class="calendar-week-day" id="weekday-header"></div>
         <div class="calendar-day" id="calendar-days"></div>
       </div>
 
@@ -102,26 +100,26 @@ $prefill = [
         <div id="time-buttons-container"></div>
       </div>
     </div>
-    <div id="day-unavailable" class="text-warning mt-2 d-none">Barbeiro indisponível nesta data.</div>
+  <div id="day-unavailable" class="text-warning mt-2 d-none"><?= t('sched.unavailable_day') ?></div>
     <div class="d-flex justify-content-between mt-3 w-100">
-      <button class="btn-custom btn-back" onclick="prevStep(3)">← Voltar</button>
-      <button class="btn-custom" onclick="nextStep(3)">Continuar →</button>
+  <button class="btn-custom btn-back" onclick="prevStep(3)">← <?= t('sched.back') ?></button>
+  <button class="btn-custom" onclick="nextStep(3)"><?= t('sched.continue') ?> →</button>
     </div>
   </div>
 
   <!-- PASSO 4: Serviço -->
   <div class="card-custom step-card d-none" data-step="4">
-    <h5>Escolha o Serviço</h5>
+    <h5><?= t('sched.choose_service') ?></h5>
     <div class="service-container">
       <?php foreach($servicos as $serv): ?>
-              <div class="service-card" data-id="<?= $serv['idServico'] ?>" data-durmins="<?= (int)$serv['duracaoPadrao'] ?>" data-preco="<?= number_format($serv['precoServico'],2,',','.') ?>" onclick="selectService(this)">
-                <h6><?= htmlspecialchars($serv['nomeServico']) ?></h6>
-                <small>R$ <?= number_format($serv['precoServico'],2,',','.') ?> | <?= bb_format_minutes($serv['duracaoPadrao']) ?></small>
+              <div class="service-card" data-id="<?= $serv['idServico'] ?>" data-durmins="<?= (int)$serv['duracaoPadrao'] ?>" data-preco_brl="<?= htmlspecialchars((float)$serv['precoServico']) ?>" onclick="selectService(this)">
+                <h6><?= htmlspecialchars(bb_service_display($serv['nomeServico'])) ?></h6>
+                <small><?= bb_format_currency_local((float)$serv['precoServico']) ?> | <?= bb_format_minutes($serv['duracaoPadrao']) ?></small>
               </div>
       <?php endforeach; ?>
     </div>
     <div class="final-actions d-flex justify-content-between mt-3 align-items-center w-100" style="gap: 16px;">
-      <button class="btn-custom btn-back" onclick="prevStep(4)">← Voltar</button>
+      <button class="btn-custom btn-back" onclick="prevStep(4)">← <?= t('sched.back') ?></button>
       <form id="form-agendamento" method="POST" action="resumo.php" class="d-flex align-items-center ms-auto" style="gap: 16px;">
         <input type="hidden" name="unidade" id="form-unidade">
         <input type="hidden" name="data" id="form-data">
@@ -130,9 +128,9 @@ $prefill = [
         <input type="hidden" name="barbeiro_id" id="form-barbeiro-id">
         <input type="hidden" name="servico" id="form-servico">
         <input type="hidden" name="servico_id" id="form-servico-id">
-        <input type="hidden" name="preco" id="form-preco">
+        <input type="hidden" name="preco_brl" id="form-preco-brl">
         <input type="hidden" name="duracao" id="form-duracao">
-        <button id="finalize-btn" class="btn-custom finalize-btn" disabled type="button" onclick="finalizeAgendamento()">Finalizar Agendamento →</button>
+        <button id="finalize-btn" class="btn-custom finalize-btn" disabled type="button" onclick="finalizeAgendamento()"><?= t('sched.finalize') ?> →</button>
       </form>
     </div>
   </div>
@@ -197,7 +195,7 @@ function populateBarbers(){
   const container = document.getElementById('barber-container');
   container.innerHTML = '';
   if (!currentUnit || !barbersData[currentUnit]) {
-    container.innerHTML = '<div class="text-warning">Selecione uma unidade para ver os barbeiros disponíveis.</div>';
+    container.innerHTML = '<div class="text-warning"><?= t('sched.select_unit_barbers') ?></div>';
     return;
   }
   barbersData[currentUnit].forEach(barb => {
@@ -226,7 +224,18 @@ let today = new Date();
 let currentMonth = today.getMonth();
 let currentYear = today.getFullYear();
 
-const months = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const isEn = <?= bb_is_en() ? 'true' : 'false' ?>;
+const months = isEn
+  ? ["January","February","March","April","May","June","July","August","September","October","November","December"]
+  : ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const weekdays = isEn
+  ? ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]
+  : ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+// render weekday header
+document.addEventListener('DOMContentLoaded', ()=>{
+  const w = document.getElementById('weekday-header');
+  if (w) w.innerHTML = weekdays.map(d=>`<div>${d}</div>`).join('');
+});
 // Limite de navegação: mês atual e próximo mês
 const maxDate = new Date(today.getFullYear(), today.getMonth() + 1, 1); // primeiro dia do próximo mês
 function renderCalendar(month, year){
@@ -325,6 +334,12 @@ function businessWindowFor(date){
   const closeMin = reduced ? 16*60 : 21*60; // fecha mais cedo em domingos/feriados
   return { openMin, closeMin };
 }
+function toDisplayTime(h, m){
+  if (!isEn) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hh = h % 12 || 12;
+  return `${hh}:${String(m).padStart(2,'0')} ${ampm}`;
+}
 function renderTimesForDate(date){
   const { openMin, closeMin } = businessWindowFor(date);
   timeContainer.innerHTML = "";
@@ -332,11 +347,12 @@ function renderTimesForDate(date){
     const h = Math.floor(mins/60), m = mins%60;
     const btn = document.createElement("button");
     btn.className = "time-btn";
-    btn.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    btn.textContent = toDisplayTime(h, m);
+    btn.dataset.value24 = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
     btn.onclick = ()=>{
       document.querySelectorAll(".time-btn").forEach(b=>b.classList.remove("selected"));
       btn.classList.add("selected");
-      selectedTime = btn.textContent;
+      selectedTime = btn.dataset.value24;
       updateFinalizeButtonState();
     };
     timeContainer.appendChild(btn);
@@ -363,7 +379,7 @@ function finalizeAgendamento(){
   const barbeiroId=selectedBarber.getAttribute('data-id');
   const servNome=selectedService.querySelector('h6')?selectedService.querySelector('h6').textContent.trim():selectedService.textContent.trim();
   const servId=selectedService.getAttribute('data-id');
-  const preco = selectedService.dataset.preco || '';
+  const preco = selectedService.dataset.precoBrl || selectedService.dataset.preco_brl || selectedService.dataset.preco || '';
   const duracao = (selectedService.dataset.durmins || '').toString();
   // Preencher os campos do formulário
   document.getElementById('form-unidade').value = currentUnit;
@@ -373,7 +389,7 @@ function finalizeAgendamento(){
   document.getElementById('form-barbeiro-id').value = barbeiroId;
   document.getElementById('form-servico').value = servNome;
   document.getElementById('form-servico-id').value = servId;
-  document.getElementById('form-preco').value = preco;
+  document.getElementById('form-preco-brl').value = preco;
   document.getElementById('form-duracao').value = duracao;
   // Submeter o formulário
   document.getElementById('form-agendamento').submit();
@@ -444,7 +460,7 @@ async function markUnavailableTimes(){
     const dayUnavailableBanner = document.getElementById('day-unavailable');
     if (data.dayOff || data.ferias) {
       // Limpa horário antes de desabilitar todos
-      document.querySelectorAll('.time-btn').forEach(btn=>{ btn.classList.remove('selected'); btn.disabled=true; btn.classList.add('disabled'); btn.title = data.ferias ? 'Férias: indisponível' : 'Folga semanal: indisponível'; });
+      document.querySelectorAll('.time-btn').forEach(btn=>{ btn.classList.remove('selected'); btn.disabled=true; btn.classList.add('disabled'); btn.title = data.ferias ? '<?= t('sched.vacation') ?>' : '<?= t('sched.day_off') ?>'; });
       selectedTime = null;
       // Remove seleção da data indisponível para não permitir avanço
       selectedDay = null;
@@ -464,7 +480,7 @@ async function markUnavailableTimes(){
     };
     let selectedStillValid = true;
     document.querySelectorAll('.time-btn').forEach(btn=>{
-      const t = btn.textContent.trim();
+  const t = (btn.dataset.value24 || btn.textContent.trim());
       // HH:MM to seconds
       const [hh,mm] = t.split(':').map(x=>parseInt(x,10));
       const start = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:00`;
@@ -478,8 +494,8 @@ async function markUnavailableTimes(){
       const bookedOverlap = booked.some(b=>overlaps(start,end,b));
       if (afterClose || blockedOverlap || bookedOverlap) {
         btn.disabled = true; btn.classList.add('disabled');
-        if (afterClose) btn.title = 'Fora do horário de funcionamento';
-        else btn.title = bookedOverlap ? 'Horário já ocupado' : 'Horário indisponível';
+        if (afterClose) btn.title = '<?= t('sched.outside_hours') ?>';
+        else btn.title = bookedOverlap ? '<?= t('sched.already_booked') ?>' : '<?= t('sched.unavailable_time') ?>';
         if (selectedTime === t) { selectedStillValid = false; }
       }
     });
@@ -513,6 +529,6 @@ async function fetchMonthDisabledDays(){
 </body>
 <!-- Botão fixo no canto inferior esquerdo -->
 <a href="usuario/index_usuario.php" class="btn btn-outline-warning" style="position: fixed; left: 16px; bottom: 16px; z-index: 1050;">
-  <i class="bi bi-box-arrow-left"></i> Voltar ao Painel
+  <i class="bi bi-box-arrow-left"></i> <?= t('sched.back_panel') ?>
 </a>
 </html>

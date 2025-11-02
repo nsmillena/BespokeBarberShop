@@ -12,9 +12,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
   $captchaErr = null;
   $captchaOk = bb_verify_captcha($_POST, $_SERVER['REMOTE_ADDR'] ?? null, $captchaErr);
   if (!$captchaOk) {
-    $msg = $captchaErr ?: 'Falha na verificação do captcha. Tente novamente.';
+    $msg = $captchaErr ?: t('password.invalid_captcha');
   } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)){
-        $msg = 'Informe um e-mail válido.';
+        $msg = t('password.invalid_email');
     } else {
         $bd = new Banco(); $conn = $bd->getConexao();
         // Descobrir papel pela existência do email
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
             if ($res->fetch_row()){ $papel=$r['papel']; $st->close(); break; }
             $st->close();
         }
-    if (!$papel){ $msg = 'Se o e-mail existir em nossa base, você receberá as instruções.'; $ok=true; }
+  if (!$papel){ $msg = t('password.request_received'); $ok=true; }
         else {
             $token = bin2hex(random_bytes(32));
             $expires = (new DateTime('+1 hour'))->format('Y-m-d H:i:s');
@@ -48,8 +48,8 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
             }
             $link = $base.'/resetar.php?token='.$token;
             $html = '<p>Recebemos um pedido para redefinir sua senha.</p><p>Clique no link abaixo para continuar (válido por 1 hora):</p><p><a href="'.$link.'">'.$link.'</a></p><p>Se você não solicitou, ignore este e-mail.</p>';
-      bb_send_mail($email, 'Redefinir senha - Bespoke BarberShop', $html);
-      $msg = 'Se o e-mail existir em nossa base, você receberá as instruções.'; $ok=true;
+  bb_send_mail($email, 'Redefinir senha - Bespoke BarberShop', $html);
+  $msg = t('password.request_received'); $ok=true;
       // Em desenvolvimento/local, mostra o link diretamente para facilitar testes
       $hostLower = strtolower($_SERVER['HTTP_HOST'] ?? '');
       $isLocal = (str_starts_with($hostLower,'localhost') || str_starts_with($hostLower,'127.0.0.1'));
@@ -61,22 +61,22 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
 }
 ?>
 <!doctype html>
-<html lang="pt-br">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-br' ?>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Recuperar senha</title>
+  <title><?= t('password.recover_title') ?></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="login.css">
   <?php if (defined('RECAPTCHA_SITE_KEY') && RECAPTCHA_SITE_KEY !== ''): ?>
-    <script src="https://www.google.com/recaptcha/api.js?hl=pt-BR" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js?hl=<?= bb_recaptcha_hl() ?>" async defer></script>
   <?php endif; ?>
 </head>
 <body class="login-body">
   <div class="container d-flex justify-content-center align-items-center vh-100">
     <div class="card-container">
       <div class="card login-card p-4">
-        <h3 class="text-center login-title mb-4">Recuperar Senha</h3>
+  <h3 class="text-center login-title mb-4"><?= t('password.recover_title') ?></h3>
 
         <?php if ($msg): ?>
           <div class="alert <?= $ok?'alert-success':'alert-danger' ?> text-center"><?= htmlspecialchars($msg) ?></div>
@@ -84,19 +84,19 @@ if ($_SERVER['REQUEST_METHOD']==='POST'){
 
         <form method="post">
           <div class="mb-3">
-            <label class="form-label" for="rec_email">Seu e-mail</label>
-            <input type="email" id="rec_email" name="email" class="form-control" placeholder="Digite seu e-mail" required>
+            <label class="form-label" for="rec_email"><?= t('password.email_label') ?></label>
+            <input type="email" id="rec_email" name="email" class="form-control" placeholder="<?= t('password.email_placeholder') ?>" required>
           </div>
           <?php if (defined('RECAPTCHA_SITE_KEY') && RECAPTCHA_SITE_KEY !== ''): ?>
             <div class="captcha-wrap mt-2 mb-4 d-flex justify-content-center">
               <div class="g-recaptcha" data-sitekey="<?= htmlspecialchars(RECAPTCHA_SITE_KEY) ?>" data-theme="light"></div>
             </div>
           <?php endif; ?>
-          <button class="btn btn-login w-100 fw-bold" type="submit">Enviar link</button>
+          <button class="btn btn-login w-100 fw-bold" type="submit"><?= t('password.send_link') ?></button>
         </form>
 
         <p class="text-center link-container" style="margin-top: 1rem;">
-          <a href="login.php" class="link-site">Voltar ao login</a>
+          <a href="login.php" class="link-site"><?= t('password.back_login') ?></a>
         </p>
       </div>
     </div>

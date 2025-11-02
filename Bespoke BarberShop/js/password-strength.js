@@ -1,4 +1,34 @@
 (function(){
+  // Simple i18n dictionary based on document language
+  const lang = (document.documentElement.lang || '').toLowerCase().startsWith('en') ? 'en' : 'pt';
+  const I18N = {
+    en: {
+      strengthLabel: 'Password strength: ',
+      typeHint: 'Type a password (min. 8, uppercase, lowercase, number and symbol)',
+      levels: {
+        vweak: 'Very weak', weak: 'Weak', fair: 'Fair', good: 'Good', strong: 'Strong', excellent: 'Excellent'
+      },
+      req: {
+        len: 'Min. 8 characters', lower: 'Lowercase letter', upper: 'Uppercase letter', digit: 'Number', symbol: 'Symbol'
+      },
+      showHide: 'Show/Hide password',
+      confirmOk: 'Passwords match',
+      confirmBad: 'Passwords do not match'
+    },
+    pt: {
+      strengthLabel: 'Força da senha: ',
+      typeHint: 'Digite uma senha (mín. 8, maiúscula, minúscula, número e símbolo)',
+      levels: {
+        vweak: 'Muito fraca', weak: 'Fraca', fair: 'Razoável', good: 'Boa', strong: 'Forte', excellent: 'Excelente'
+      },
+      req: {
+        len: 'Mín. 8 caracteres', lower: 'Letra minúscula', upper: 'Letra maiúscula', digit: 'Número', symbol: 'Símbolo'
+      },
+      showHide: 'Mostrar/ocultar senha',
+      confirmOk: 'Senhas conferem',
+      confirmBad: 'Senhas não conferem'
+    }
+  }[lang];
   // Inject minimal styles once (scoped by .bb-pass-wrap / .bb-strength)
   if (!document.getElementById('bb-strength-styles')){
     const css = `
@@ -42,12 +72,12 @@
     let label;
     let clazz;
     switch(true){
-      case score <= 1: label = 'Muito fraca'; clazz='bg-danger'; break;
-      case score === 2: label = 'Fraca'; clazz='bg-warning'; break;
-      case score === 3: label = 'Razoável'; clazz='bg-info'; break;
-      case score === 4: label = 'Boa'; clazz='bg-primary'; break;
-      case score === 5: label = 'Forte'; clazz='bg-success'; break;
-      default: label = 'Excelente'; clazz='bg-success'; break;
+      case score <= 1: label = I18N.levels.vweak; clazz='bg-danger'; break;
+      case score === 2: label = I18N.levels.weak; clazz='bg-warning'; break;
+      case score === 3: label = I18N.levels.fair; clazz='bg-info'; break;
+      case score === 4: label = I18N.levels.good; clazz='bg-primary'; break;
+      case score === 5: label = I18N.levels.strong; clazz='bg-success'; break;
+      default: label = I18N.levels.excellent; clazz='bg-success'; break;
     }
     return {percent, label, clazz};
   }
@@ -61,7 +91,7 @@
     const toggle = document.createElement('button');
     toggle.type = 'button';
     toggle.className = 'bb-toggle-pass';
-    toggle.setAttribute('aria-label','Mostrar/ocultar senha');
+  toggle.setAttribute('aria-label', I18N.showHide);
     toggle.innerHTML = '<i class="bi bi-eye"></i>';
     // Keep the eye vertically centered relative to the INPUT (not the wrapper)
     function positionToggle(){
@@ -104,11 +134,11 @@
     const req = document.createElement('ul');
     req.className = 'bb-req-list';
     req.innerHTML = `
-      <li data-rule="len"><i class="bi bi-x-circle"></i><span>Mín. 8 caracteres</span></li>
-      <li data-rule="lower"><i class="bi bi-x-circle"></i><span>Letra minúscula</span></li>
-      <li data-rule="upper"><i class="bi bi-x-circle"></i><span>Letra maiúscula</span></li>
-      <li data-rule="digit"><i class="bi bi-x-circle"></i><span>Número</span></li>
-      <li data-rule="symbol"><i class="bi bi-x-circle"></i><span>Símbolo</span></li>
+      <li data-rule="len"><i class="bi bi-x-circle"></i><span>${I18N.req.len}</span></li>
+      <li data-rule="lower"><i class="bi bi-x-circle"></i><span>${I18N.req.lower}</span></li>
+      <li data-rule="upper"><i class="bi bi-x-circle"></i><span>${I18N.req.upper}</span></li>
+      <li data-rule="digit"><i class="bi bi-x-circle"></i><span>${I18N.req.digit}</span></li>
+      <li data-rule="symbol"><i class="bi bi-x-circle"></i><span>${I18N.req.symbol}</span></li>
     `;
     strength.appendChild(progress);
     strength.appendChild(small);
@@ -144,7 +174,7 @@
     const ui = scoreToUI(score);
     meter.bar.style.width = ui.percent + '%';
     meter.bar.className = 'progress-bar ' + ui.clazz;
-    meter.small.textContent = pw ? 'Força da senha: ' + ui.label : 'Digite uma senha (mín. 8, maiúscula, minúscula, número e símbolo)';
+  meter.small.textContent = pw ? (I18N.strengthLabel + ui.label) : I18N.typeHint;
     updateChecklist(meter, pw);
   }
 
@@ -175,9 +205,9 @@
         return;
       }
 
-      const ok = pwVal.length > 0 && confVal.length > 0 && pwVal === confVal;
-      confirmInput.setCustomValidity(ok ? '' : 'Senhas não conferem');
-      msg.textContent = ok ? 'Senhas conferem' : (confVal ? 'Senhas não conferem' : '');
+  const ok = pwVal.length > 0 && confVal.length > 0 && pwVal === confVal;
+  confirmInput.setCustomValidity(ok ? '' : I18N.confirmBad);
+  msg.textContent = ok ? I18N.confirmOk : (confVal ? I18N.confirmBad : '');
       msg.className = 'bb-confirm-msg ' + (ok ? 'text-success' : (confVal ? 'text-danger' : ''));
     }
     confirmInput.addEventListener('input', validate);

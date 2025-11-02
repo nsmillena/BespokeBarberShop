@@ -53,15 +53,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $base = $scheme.'://'.$host.rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
             }
             $link = $base.'/resetar.php?token='.$token;
-            $html = '<p>Olá '.htmlspecialchars($nomeAlvo).',</p><p>Recebemos um pedido para definir/alterar sua senha.</p><p>Clique no link abaixo (válido por 1 hora):</p><p><a href="'.$link.'">'.$link.'</a></p><p>Se você não solicitou, ignore este e-mail.</p>';
+            $html = '<p>'.t('user.hello').' '.htmlspecialchars($nomeAlvo).',</p><p>'.t('password.request_received').'</p><p><a href="'.$link.'">'.$link.'</a></p>';
             bb_send_mail($emailAlvo, 'Definir/Redefinir senha - Bespoke BarberShop', $html);
-            $alert = 'Se o e-mail existir em nossa base, enviamos o link para redefinir a senha.';
+            $alert = t('password.request_received');
             $alertType = 'success';
             $hostLower = strtolower($_SERVER['HTTP_HOST'] ?? '');
             $isLocal = (function_exists('str_starts_with') && (str_starts_with($hostLower,'localhost') || str_starts_with($hostLower,'127.0.0.1')));
             if ($isLocal) { $alert .= ' (Dev: <a href="'.htmlspecialchars($link).'">abrir link direto</a>)'; }
         } else {
-            $alert = 'Não foi possível localizar seu e-mail.';
+            $alert = t('user.email_not_found');
             $alertType = 'danger';
         }
     } else {
@@ -75,9 +75,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stChk->bind_param("si", $email, $idCliente);
         $stChk->execute();
         $stChk->store_result();
-        if ($stChk->num_rows > 0) {
+            if ($stChk->num_rows > 0) {
             $stChk->close();
-            $alert = 'Este e-mail já está em uso.';
+                $alert = t('user.err_email_in_use');
             $alertType = 'danger';
         } else {
             $stChk->close();
@@ -94,13 +94,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $temCamposSenha = ($senhaAtual !== '' || $novaSenha !== '' || $confirmaSenha !== '');
             if ($temCamposSenha) {
                 if ($novaSenha === '' || $confirmaSenha === '' || (!$noPassword && $senhaAtual === '')) {
-                    $alert = 'Preencha todos os campos de senha para alterar a senha.';
+                    $alert = t('user.err_fill_all_pw_fields');
                     $alertType = 'danger';
                 } elseif ($novaSenha !== $confirmaSenha) {
-                    $alert = 'As senhas novas não conferem.';
+                    $alert = t('user.err_password_mismatch');
                     $alertType = 'danger';
                 } elseif (!bb_pw_is_strong($novaSenha)) {
-                    $alert = 'A nova senha não atende aos requisitos mínimos.';
+                    $alert = t('user.err_password_weak');
                     $alertType = 'danger';
                 } else {
                     // Buscar hash atual
@@ -127,15 +127,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $up->bind_param("si", $novoHash, $idCliente);
                         $up->execute();
                         $up->close();
-                        $alert = 'Senha atualizada com sucesso.';
+                        $alert = t('user.password_updated');
                         $alertType = 'success';
                     } else {
-                        $alert = 'Senha atual incorreta.';
+                        $alert = t('user.err_wrong_current_password');
                         $alertType = 'danger';
                     }
                 }
             } else {
-                $alert = 'Perfil atualizado com sucesso.';
+                $alert = t('user.profile_updated');
                 $alertType = 'success';
             }
         }
@@ -149,11 +149,11 @@ $stmt->fetch();
 $stmt->close();
 ?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="<?= bb_is_en() ? 'en' : 'pt-br' ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Perfil | Bespoke BarberShop</title>
+    <title><?= t('user.edit_profile') ?> | Bespoke BarberShop</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="dashboard_usuario.css">
@@ -161,10 +161,22 @@ $stmt->close();
 <body style="background:#181818;">
 <div class="container py-5">
     <div class="dashboard-card mx-auto" style="max-width:420px;">
-        <h2 class="dashboard-section-title mb-3"><i class="bi bi-pencil-square"></i> Editar Perfil</h2>
+    <h2 class="dashboard-section-title mb-3"><i class="bi bi-pencil-square"></i> <?= t('user.edit_profile') ?></h2>
+        <?php
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $uri = $_SERVER['REQUEST_URI'] ?? '';
+            $currentUrl = $scheme.'://'.$host.$uri;
+        ?>
+        <div class="d-flex justify-content-end mb-2">
+            <div class="btn-group btn-group-sm" role="group" aria-label="<?= t('nav.language') ?>">
+                <a class="btn btn-outline-warning <?= bb_is_en() ? '' : 'active' ?>" href="../includes/locale.php?set=pt_BR&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.pt') ?></a>
+                <a class="btn btn-outline-warning <?= bb_is_en() ? 'active' : '' ?>" href="../includes/locale.php?set=en_US&redirect=<?= urlencode($currentUrl) ?>"><?= t('nav.en') ?></a>
+            </div>
+        </div>
         <?php if ($noPassword): ?>
             <div class="alert alert-warning py-2">
-                <i class="bi bi-info-circle"></i> Sua conta foi criada com Google e ainda não tem senha. Defina uma senha abaixo para também conseguir entrar por e-mail e senha.
+                <i class="bi bi-info-circle"></i> <?= t('user.google_pw_note') ?>
             </div>
         <?php endif; ?>
         <?php if ($alert): ?>
@@ -172,43 +184,43 @@ $stmt->close();
         <?php endif; ?>
         <form method="POST">
             <div class="mb-3">
-                <label class="form-label">Nome</label>
+                <label class="form-label"><?= t('user.name') ?></label>
                 <input type="text" name="nome" class="form-control" value="<?= htmlspecialchars($nome) ?>" required>
             </div>
             <div class="mb-3">
-                <label class="form-label">Email</label>
+                <label class="form-label"><?= t('user.email') ?></label>
                 <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($email) ?>" required>
             </div>
             <div class="mb-3">
-                <label class="form-label">Telefone</label>
+                <label class="form-label"><?= t('user.phone') ?></label>
                 <input type="tel" name="telefone" class="form-control bb-phone" value="<?= htmlspecialchars($telefone) ?>" required>
             </div>
             <hr class="border-secondary">
-            <h5 class="mb-2" style="color:#daa520;"><i class="bi bi-shield-lock"></i> <?= $noPassword ? 'Definir senha' : 'Alterar senha' ?></h5>
+            <h5 class="mb-2" style="color:#daa520;"><i class="bi bi-shield-lock"></i> <?= $noPassword ? t('user.set_password_title') : t('user.change_password_title') ?></h5>
             <div class="mb-3">
-                <label class="form-label">Senha atual</label>
-                <input type="password" name="senha_atual" class="form-control" placeholder="<?= $noPassword ? 'Conta criada via Google — deixe em branco' : 'Digite sua senha atual' ?>" data-bb-toggle="1" <?= $noPassword ? '' : '' ?>>
+                <label class="form-label"><?= t('user.current_password') ?></label>
+                <input type="password" name="senha_atual" class="form-control" placeholder="<?= $noPassword ? t('user.current_password_placeholder') : t('user.current_password') ?>" data-bb-toggle="1">
             </div>
             <div class="mb-3">
-                <label class="form-label">Nova senha</label>
-                <input type="password" name="nova_senha" class="form-control bb-password" placeholder="Nova senha (mín. 8, maiúscula, minúscula, número e símbolo)">
+                <label class="form-label"><?= t('user.new_password') ?></label>
+                <input type="password" name="nova_senha" class="form-control bb-password" placeholder="<?= t('user.new_password_placeholder') ?>">
             </div>
             <div class="mb-3">
-                <label class="form-label">Confirmar nova senha</label>
-                <input type="password" name="confirmar_senha" class="form-control bb-password-confirm" placeholder="Confirme a nova senha">
+                <label class="form-label"><?= t('user.confirm_new_password') ?></label>
+                <input type="password" name="confirmar_senha" class="form-control bb-password-confirm" placeholder="<?= t('user.confirm_new_password') ?>">
             </div>
-            <button type="submit" class="dashboard-action w-100">Salvar Alterações</button>
-            <a href="index_usuario.php" class="btn btn-link w-100 mt-2" style="color:#daa520;">Cancelar</a>
+            <button type="submit" class="dashboard-action w-100"><?= t('user.save_changes') ?></button>
+            <a href="index_usuario.php" class="btn btn-link w-100 mt-2" style="color:#daa520;">&laquo; <?= t('user.back') ?></a>
             <div class="text-center mt-2">
                 <form method="post" class="d-inline">
                     <input type="hidden" name="send_reset" value="1">
-                    <button type="submit" class="btn btn-outline-warning btn-sm"><i class="bi bi-envelope"></i> Enviar link de redefinição por e-mail</button>
+                    <button type="submit" class="btn btn-outline-warning btn-sm"><i class="bi bi-envelope"></i> <?= t('password.send_link') ?></button>
                 </form>
             </div>
             <hr class="border-secondary">
             <div class="d-flex justify-content-between align-items-center">
-                <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> Zona de risco</span>
-                <a href="excluir_conta.php" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> Excluir minha conta</a>
+                <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> <?= t('user.risk_zone') ?></span>
+                <a href="excluir_conta.php" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> <?= t('user.delete_account') ?></a>
             </div>
         </form>
     </div>

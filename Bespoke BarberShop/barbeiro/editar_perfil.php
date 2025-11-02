@@ -8,6 +8,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['papel'] !== 'barbeiro') {
 include "../includes/db.php";
 $bd = new Banco();
 $conn = $bd->getConexao();
+$includeI18n = __DIR__.'/../includes/i18n.php'; if (file_exists($includeI18n)) require_once $includeI18n;
 $idBarbeiro = (int)$_SESSION['usuario_id'];
 if (empty($_SESSION['csrf_token'])) { $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); }
 
@@ -22,8 +23,8 @@ $stmt->close();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF
     $token = $_POST['csrf_token'] ?? '';
-    if (!hash_equals($_SESSION['csrf_token'], $token)) {
-        header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Falha de segurança. Atualize a página e tente novamente.'));
+  if (!hash_equals($_SESSION['csrf_token'], $token)) {
+    header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('barber.security_fail')));
         exit;
     }
 
@@ -34,8 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nova_senha = $_POST['nova_senha'] ?? '';
     $confirma = $_POST['confirma_senha'] ?? '';
 
-    if (empty($nome) || empty($email) || empty($telefone)) {
-        header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Nome, email e telefone são obrigatórios.'));
+  if (empty($nome) || empty($email) || empty($telefone)) {
+    header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('barber.required_fields')));
         exit;
     }
 
@@ -44,9 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $chk->bind_param("si", $email, $idBarbeiro);
     $chk->execute();
     $chk->store_result();
-    if ($chk->num_rows > 0) {
+  if ($chk->num_rows > 0) {
         $chk->close();
-        header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Este e-mail já está em uso.'));
+    header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('barber.err_email_in_use')));
         exit;
     }
 
@@ -56,23 +57,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   // Se for obrigatório trocar a senha, exigir nova senha
   if ((int)$deveTrocarSenha === 1 && (empty($senha_atual) || empty($nova_senha))) {
-    header('Location: editar_perfil.php?ok=0&msg=' . urlencode('É obrigatório definir uma nova senha neste primeiro acesso. Informe a senha atual temporária e a nova.'));
+    header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('barber.must_change_required')));
     exit;
   }
 
   if (!empty($senha_atual) && !empty($nova_senha)) {
-        if ($nova_senha !== $confirma) {
+    if ($nova_senha !== $confirma) {
             $chk->close();
-            header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Confirmação de senha não confere.'));
+      header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('barber.err_pw_mismatch')));
             exit;
         }
         $temMaiuscula = preg_match('/[A-Z]/', $nova_senha);
         $temMinuscula = preg_match('/[a-z]/', $nova_senha);
         $temDigito    = preg_match('/\d/', $nova_senha);
         $temEspecial  = preg_match('/[^A-Za-z0-9]/', $nova_senha);
-        if (strlen($nova_senha) < 8 || !$temMaiuscula || !$temMinuscula || !$temDigito || !$temEspecial) {
+    if (strlen($nova_senha) < 8 || !$temMaiuscula || !$temMinuscula || !$temDigito || !$temEspecial) {
             $chk->close();
-            header('Location: editar_perfil.php?ok=0&msg=' . urlencode('A nova senha deve ter no mínimo 8 caracteres e incluir maiúscula, minúscula, dígito e símbolo.'));
+      header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('barber.err_pw_strength')));
             exit;
         }
         // Verificar senha atual (hash ou legado)
@@ -81,14 +82,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $okSenha = password_verify($senha_atual, $senhaHashAtual);
         }
         if (!$okSenha) { $okSenha = hash_equals((string)$senhaHashAtual, (string)$senha_atual); }
-        if (!$okSenha) {
+    if (!$okSenha) {
             $chk->close();
-            header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Senha atual incorreta.'));
+      header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('barber.err_wrong_current_password')));
             exit;
         }
-        if (hash_equals((string)$nova_senha, (string)$senha_atual)) {
+    if (hash_equals((string)$nova_senha, (string)$senha_atual)) {
             $chk->close();
-            header('Location: editar_perfil.php?ok=0&msg=' . urlencode('A nova senha deve ser diferente da atual.'));
+      header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('barber.err_new_pw_same')));
             exit;
         }
     $update_fields .= ", senhaBarbeiro = ?, deveTrocarSenha = 0, senhaTempExpiraEm = NULL";
@@ -103,21 +104,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if ($upd->execute()) {
         $upd->close(); $chk->close();
     if (!empty($_SESSION['must_change_password'])) { unset($_SESSION['must_change_password']); }
-    header('Location: editar_perfil.php?ok=1&msg=' . urlencode('Perfil atualizado com sucesso.'));
+  header('Location: editar_perfil.php?ok=1&msg=' . urlencode(t('barber.ok_profile_updated')));
         exit;
     } else {
         $upd->close(); $chk->close();
-        header('Location: editar_perfil.php?ok=0&msg=' . urlencode('Erro ao atualizar perfil.'));
+    header('Location: editar_perfil.php?ok=0&msg=' . urlencode(t('barber.err_profile_update')));
         exit;
     }
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="<?= function_exists('bb_is_en') && bb_is_en() ? 'en' : 'pt-BR' ?>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editar Perfil | Barbeiro</title>
+  <title><?= t('barber.edit_profile_title') ?> | Bespoke BarberShop</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="dashboard_barbeiro.css">
@@ -126,9 +127,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="container py-5">
   <div class="dashboard-card mx-auto" style="max-width:480px;">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2 class="dashboard-section-title mb-0"><i class="bi bi-pencil-square"></i> Editar Perfil</h2>
-      <a href="index_barbeiro.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> Voltar</a>
+  <h2 class="dashboard-section-title mb-0"><i class="bi bi-pencil-square"></i> <?= t('barber.edit_profile_title') ?></h2>
+  <a href="index_barbeiro.php" class="dashboard-action"><i class="bi bi-arrow-left"></i> <?= t('common.back') ?></a>
     </div>
+
+      <?php
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $currentUrl = $scheme.'://'.$host.$uri;
+      ?>
+      <div class="d-flex justify-content-end mb-2">
+        <div class="btn-group btn-group-sm" role="group" aria-label="<?= function_exists('t') ? t('nav.language') : 'Idioma' ?>">
+          <a class="btn btn-outline-warning <?= (function_exists('bb_is_en') && bb_is_en()) ? '' : 'active' ?>" href="../includes/locale.php?set=pt_BR&redirect=<?= urlencode($currentUrl) ?>"><?= function_exists('t') ? t('nav.pt') : 'Português' ?></a>
+          <a class="btn btn-outline-warning <?= (function_exists('bb_is_en') && bb_is_en()) ? 'active' : '' ?>" href="../includes/locale.php?set=en_US&redirect=<?= urlencode($currentUrl) ?>"><?= function_exists('t') ? t('nav.en') : 'English' ?></a>
+        </div>
+      </div>
 
     <!-- Toast container -->
     <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3 bb-toast-container" id="toast-msg-container"></div>
@@ -136,40 +150,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php if ((int)$deveTrocarSenha === 1 || (!empty($_SESSION['must_change_password']) && $_SESSION['must_change_password'] == 1)): ?>
       <div class="alert alert-warning" role="alert">
         <i class="bi bi-exclamation-triangle"></i>
-        Por segurança, você precisa alterar sua senha agora. Use a senha temporária como "Senha atual" e defina uma nova senha forte.
+        <?= t('barber.must_change_password_hint') ?>
       </div>
     <?php endif; ?>
 
     <form method="POST">
       <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
       <div class="mb-3">
-        <label class="form-label">Nome</label>
+        <label class="form-label"><?= t('user.name') ?></label>
         <input type="text" name="nome" class="form-control" value="<?= htmlspecialchars($nomeAtual) ?>" required>
       </div>
       <div class="mb-3">
-        <label class="form-label">Email</label>
+        <label class="form-label"><?= t('user.email') ?></label>
         <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($emailAtual) ?>" required>
       </div>
       <div class="mb-3">
-        <label class="form-label">Telefone</label>
+        <label class="form-label"><?= t('user.phone') ?></label>
         <input type="tel" name="telefone" class="form-control bb-phone" value="<?= htmlspecialchars($telefoneAtual) ?>" required>
       </div>
       <hr class="my-3" style="border-color: rgba(218,165,32,0.3);">
-      <h6 class="text-light">Alterar senha (opcional)</h6>
+      <h6 class="text-light"><?= t('admin.change_password_optional') ?></h6>
       <div class="mb-2">
-        <label class="form-label">Senha atual</label>
+        <label class="form-label"><?= t('admin.current_password') ?></label>
         <input type="password" name="senha_atual" id="senha_atual" class="form-control" data-bb-toggle="1">
       </div>
       <div class="mb-2">
-        <label class="form-label">Nova senha</label>
-        <input type="password" name="nova_senha" id="nova_senha" class="form-control bb-password" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}" title="Mínimo 8, com maiúscula, minúscula, número e símbolo.">
-        <small class="text-muted">Mínimo 8, com maiúscula, minúscula, número e símbolo.</small>
+        <label class="form-label"><?= t('admin.new_password') ?></label>
+        <input type="password" name="nova_senha" id="nova_senha" class="form-control bb-password" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}" title="<?= t('admin.password_hint') ?>">
       </div>
       <div class="mb-3">
-        <label class="form-label">Confirmar nova senha</label>
+        <label class="form-label"><?= t('admin.new_password_confirm') ?></label>
         <input type="password" name="confirma_senha" id="confirma_senha" class="form-control bb-password-confirm" data-match="#nova_senha">
       </div>
-      <button type="submit" class="dashboard-action w-100">Salvar</button>
+      <button type="submit" class="dashboard-action w-100"><?= t('user.save_changes') ?></button>
     </form>
   </div>
 </div>
