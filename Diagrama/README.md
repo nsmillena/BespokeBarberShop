@@ -1,4 +1,4 @@
-# Diagrama de Sequência – Agendamento de Serviço
+# Diagrama de Sequência – Agendamento
 
 Este diagrama de sequência representa as interações entre Cliente, Sistema e Banco de Dados durante o processo de agendamento na Bespoke Barbershop. Ele abrange desde o acesso à tela de agendamento até a confirmação final da reserva.
 
